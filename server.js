@@ -11,7 +11,7 @@ const wsPort = 3333;
 const host = 'localhost';
 
 // Mongo
-const connectionString = "mongodb://localhost:27017/myproject";
+const connectionString = "mongodb://localhost:27017/schulcloud";
 const mongoClient = new MongoClient.MongoClient(connectionString);
 const app = express();
 const server = http.createServer(app);
