@@ -1,6 +1,6 @@
-const WebSocket = require('ws')
-const http = require('http')
-const setupWSConnection = require('./utils.js')
+const WebSocket = require('ws');
+const http = require('http');
+const setupWSConnection = require('./utils.js');
 const Y = require('yjs');
 const express = require('express');
 const MongoClient = require('mongodb');
@@ -14,7 +14,7 @@ const host = 'localhost';
 const connectionString = "mongodb://localhost:27017/schulcloud";
 const mongoClient = new MongoClient.MongoClient(connectionString);
 const app = express();
-const server = http.createServer(app);
+const index = http.createServer(app);
 
 const wss = new WebSocket.Server({noServer: true})
 wss.on('connection', (socket, request, user) => {
@@ -37,7 +37,7 @@ const mdb = new MongodbPersistence.MongodbPersistence(connectionString, {
 setupWSConnection.setPersistence({
     bindState: async (docName, ydoc) => {
         // Here you listen to granular document updates and store them in the database
-        // You don't have to do this, but it ensures that you don't lose content when the server crashes
+        // You don't have to do this, but it ensures that you don't lose content when the index crashes
         // See https://github.com/yjs/yjs#Document-Updates for documentation on how to encode
         // document updates
 
@@ -64,14 +64,14 @@ setupWSConnection.setPersistence({
     }
 })
 
-server.on('upgrade', (request, socket, head) => {
+index.on('upgrade', (request, socket, head) => {
     const handleAuth = ws => {
         wss.emit('connection', ws, request)
     }
     wss.handleUpgrade(request, socket, head, handleAuth)
 });
 
-server.listen(wsPort, host, () => {
+index.listen(wsPort, host, () => {
     console.log(`running at '${host}' on port ${wsPort}`)
 });
 
