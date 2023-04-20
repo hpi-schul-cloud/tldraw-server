@@ -10,4 +10,4 @@ COPY . ./
 
 # production environment
 EXPOSE 3333
-CMD ["node", "server.js"]
+CMD ["node", "index.js"]
