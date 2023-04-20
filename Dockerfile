@@ -5,9 +5,9 @@ WORKDIR /app
 
 COPY package.json .
 COPY package-lock.json .
-RUN npm i --omit=dev
+RUN npm i
 COPY . ./
 
 # production environment
 EXPOSE 3333
-CMD ["node", "index.js"]
+CMD ["npm", "start"]

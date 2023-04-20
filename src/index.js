@@ -71,8 +71,8 @@ index.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, handleAuth)
 });
 
-index.listen(wsPort, host, () => {
-    console.log(`running at '${host}' on port ${wsPort}`)
+index.listen(wsPort, () => {
+    console.log(`running at on port ${wsPort}`)
 });
 
 app.post("/paintings", async (req, res) => {
