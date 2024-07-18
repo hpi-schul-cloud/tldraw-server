@@ -10,6 +10,8 @@ import * as promise from 'lib0/promise'
 import * as uws from 'uws'
 import { initStorage } from './storage.js'
 
+const apiHost = env.getConf('api-host') || 'http://localhost:3030';
+
 /**
  *
  * @param {string} room
@@ -32,7 +34,7 @@ const checkPermission = async (room, token) => {
             referenceId: room
         })
     };
-    const response = await fetch('http://localhost:3030/api/v3/authorization/by-reference', requestOptions);
+    const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
     return response;
 }
 
