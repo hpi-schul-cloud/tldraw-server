@@ -4,10 +4,10 @@ metadata:
   name: tldraw-deployment
   namespace: {{ NAMESPACE }}
   labels:
-    app: tldraw-server
+    app: tldraw-server-worker
     app.kubernetes.io/part-of: schulcloud-verbund
     app.kubernetes.io/version: {{ TLDRAW_SERVER_IMAGE_TAG }}
-    app.kubernetes.io/name: tldraw-server
+    app.kubernetes.io/name: tldraw-server-worker
     app.kubernetes.io/component: tldraw
     app.kubernetes.io/managed-by: ansible
     git.branch: {{ TLDRAW_SERVER_BRANCH_NAME }}
@@ -23,11 +23,11 @@ spec:
   paused: false
   selector:
     matchLabels:
-      app: tldraw-server
+      app: tldraw-server-worker
   template:
     metadata:
       labels:
-        app: tldraw-server
+        app: tldraw-server-worker
         app.kubernetes.io/part-of: schulcloud-verbund
         app.kubernetes.io/version: {{ TLDRAW_SERVER_IMAGE_TAG }}
         app.kubernetes.io/name: tldraw-server
@@ -57,21 +57,17 @@ spec:
           protocol: TCP
         envFrom:
         - configMapRef:
-            name: api-configmap
-        - secretRef:
-            name: api-secret
+            name: tldraw-server-configmap
         - secretRef:
             name: tldraw-server-secret
-        - secretRef:
-            name: api-files-secret
-        command: ['npm', 'run', 'nest:start:tldraw:prod']
+        command: ['npm', 'run', 'start:y-redis-worker']
         resources:
           limits:
-            cpu: {{ TLDRAW_EDITOR_CPU_LIMITS|default("2000m", true) }}
-            memory: {{ TLDRAW_EDITOR_MEMORY_LIMITS|default("4Gi", true) }}
+            cpu: {{ TLDRAW_SERVER_WORKER_CPU_LIMITS|default("2000m", true) }}
+            memory: {{ TLDRAW_SERVER_WORKER_MEMORY_LIMITS|default("2Gi", true) }}
           requests:
-            cpu: {{ TLDRAW_EDITOR_CPU_REQUESTS|default("100m", true) }}
-            memory: {{ TLDRAW_EDITOR_MEMORY_REQUESTS|default("150Mi", true) }}
+            cpu: {{ TLDRAW_SERVER_WORKER_CPU_REQUESTS|default("100m", true) }}
+            memory: {{ TLDRAW_SERVER_WORKER_MEMORY_REQUESTS|default("150Mi", true) }}
 {% if AFFINITY_ENABLE is defined and AFFINITY_ENABLE|bool %}
       affinity:
         podAffinity:
