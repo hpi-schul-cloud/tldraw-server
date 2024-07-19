@@ -1,5 +1,7 @@
 FROM docker.io/node:20-alpine
 
+RUN apk add gcompat
+
 ENV TZ=Europe/Berlin
 RUN mkdir /app && chown -R node:node /app
 WORKDIR /app
