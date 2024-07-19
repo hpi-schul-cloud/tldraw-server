@@ -13,14 +13,5 @@ spec:
       targetPort: 3345
       protocol: TCP
       name: tldraw-ws
-    # port for http managing drawing data
-    - port: 3349
-      targetPort: 3349
-      protocol: TCP
-      name: tldraw-http
-    - port: {{ PORT_METRICS_SERVER }}
-      targetPort: 9090
-      protocol: TCP
-      name: api-metrics
   selector:
     app: tldraw-server
