@@ -4,6 +4,7 @@ ENV TZ=Europe/Berlin
 RUN mkdir /app && chown -R node:node /app
 WORKDIR /app
 
+RUN touch .env
 COPY package.json package-lock.json ./
 RUN npm ci && npm cache clean --force
 COPY src /app/src
