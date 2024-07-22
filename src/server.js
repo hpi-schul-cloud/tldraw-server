@@ -11,6 +11,7 @@ import * as uws from 'uws'
 import { initStorage } from './storage.js'
 
 const apiHost = env.getConf('api-host') || 'http://localhost:3030';
+const wsPathPrefix = env.getConf('ws-path-prefix') || '';
 
 /**
  *
@@ -70,7 +71,7 @@ export const createYWebsocketServer = async ({
 }) => {
 
     const app = uws.App({})
-    await registerYWebsocketServer(app, '/:room', store, async (req) => {
+    await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, async (req) => {
         const room = req.getParameter(0)
         const headerWsProtocol = req.getHeader('sec-websocket-protocol')
         const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('yauth')]
