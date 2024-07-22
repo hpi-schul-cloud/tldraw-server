@@ -1,37 +1,26 @@
 {
   "name": "tldraw-server",
-  "version": "0.0.1",
-  "description": "",
   "type": "module",
+  "license": "AGPL-3.0",
+  "engines": {
+    "npm": ">=8.0.0",
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start:y-redis-server": "node --env-file .env src/server.js",
     "start:y-redis-worker": "node --env-file .env src/worker.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hpi-schul-cloud/tldraw-server.git"
-  },
-  "author": "dBildungscloud Team",
-  "license": "AGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/hpi-schul-cloud/tldraw-server/issues"
-  },
-  "homepage": "https://github.com/hpi-schul-cloud/tldraw-server#readme",
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.14.11",
-    "typescript": "^5.5.3"
-  },
-  "engines": {
-    "npm": ">=8.0.0",
-    "node": ">=20.0.0"
-  },
   "dependencies": {
     "@y/redis": "^0.1.4",
     "y-protocols": "^1.0.6",
     "lib0": "^0.2.93",
     "uws": "github:uNetworking/uWebSockets.js#v20.40.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.11",
+    "typescript": "^5.5.3"
   }
 }
