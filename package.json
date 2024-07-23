@@ -1,26 +1,27 @@
 {
-  "name": "tldraw-server",
-  "type": "module",
-  "license": "AGPL-3.0",
-  "engines": {
-    "npm": ">=8.0.0",
-    "node": ">=20.0.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start:y-redis-server": "node --env-file .env src/server.js",
-    "start:y-redis-worker": "node --env-file .env src/worker.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "@y/redis": "^0.1.4",
-    "y-protocols": "^1.0.6",
-    "lib0": "^0.2.93",
-    "uws": "github:uNetworking/uWebSockets.js#v20.40.0"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.14.11",
-    "typescript": "^5.5.3"
-  }
+	"name": "tldraw-server",
+	"type": "module",
+	"license": "AGPL-3.0",
+	"engines": {
+		"npm": ">=8.0.0",
+		"node": ">=20.0.0"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start:y-redis-server": "node --env-file .env src/server.js",
+		"start:y-redis-worker": "node --env-file .env src/worker.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"dependencies": {
+		"@y/redis": "^0.1.4",
+		"lib0": "^0.2.93",
+		"uws": "github:uNetworking/uWebSockets.js#v20.40.0",
+		"y-protocols": "^1.0.6"
+	},
+	"devDependencies": {
+		"@types/express": "^4.17.21",
+		"@types/node": "^20.14.11",
+		"prettier": "3.3.3",
+		"typescript": "^5.5.3"
+	}
 }

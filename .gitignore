@@ -130,3 +130,6 @@ dist
 .pnp.*
 
 .idea
+
+# VSCode settings
+.vscode/settings.json
