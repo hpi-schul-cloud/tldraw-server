@@ -2,6 +2,7 @@
 // @ts-nocheck
 
 import { registerYWebsocketServer } from '@y/redis';
+import { jwtDecode } from 'jwt-decode';
 import * as env from 'lib0/environment';
 import * as error from 'lib0/error';
 import * as logging from 'lib0/logging';
@@ -54,7 +55,8 @@ const checkAuthz = async (req) => {
 	if (token == null) {
 		throw new Error('Missing Token');
 	}
-	// @todo add user id for jwt
+
+	const { userId } = jwtDecode(token);
 
 	const requestOptions = createAuthzRequestOptions(room, token);
 	const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
@@ -63,7 +65,7 @@ const checkAuthz = async (req) => {
 		throw new Error('Authorization failed');
 	}
 
-	const result = { hasWriteAccess: true, room };
+	const result = { hasWriteAccess: true, room, userid: userId };
 
 	return result;
 };
