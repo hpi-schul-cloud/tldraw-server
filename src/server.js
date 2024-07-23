@@ -63,7 +63,9 @@ const checkAuthz = async (req) => {
 		throw new Error('Authorization failed');
 	}
 
-	return response;
+	const result = { hasWriteAccess: true, room };
+
+	return result;
 };
 
 const createAuthzRequestOptions = (room, token) => {
