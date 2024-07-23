@@ -13,33 +13,6 @@ import { initStorage } from './storage.js'
 const apiHost = env.getConf('api-host') || 'http://localhost:3030';
 const wsPathPrefix = env.getConf('ws-path-prefix') || '';
 
-/**
- *
- * @param {string} room
- * @param {string} token
- * @returns
- */
-const checkPermission = async (room, token) => {
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token,
-        },
-        body: JSON.stringify({
-            context: {
-                action: "read",
-                requiredPermissions: ["COURSE_EDIT"]
-            },
-            referenceType: "boardnodes",
-            referenceId: room
-        })
-    };
-    const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
-    return response;
-}
-
-
 class YWebsocketServer {
     /**
      * @param {uws.TemplatedApp} app
@@ -69,23 +42,8 @@ export const createYWebsocketServer = async ({
     store,
     initDocCallback = () => { }
 }) => {
-
     const app = uws.App({})
-    await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, async (req) => {
-        const room = req.getParameter(0)
-        const headerWsProtocol = req.getHeader('sec-websocket-protocol')
-        const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('yauth')]
-        if (token == null) {
-            throw new Error('Missing Token')
-        }
-        // @todo add user id for jwt
-        try {
-            await checkPermission(room, token);
-            return { hasWriteAccess: true, room, userid: '' }
-        } catch (e) {
-            throw e
-        }
-    }, { redisPrefix, initDocCallback })
+    await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, checkAuthz, { redisPrefix, initDocCallback })
 
     await promise.create((resolve, reject) => {
         app.listen(port, (token) => {
@@ -100,6 +58,45 @@ export const createYWebsocketServer = async ({
         })
     })
     return new YWebsocketServer(app)
+}
+
+const checkAuthz = async (req) => {
+    const room = req.getParameter(0)
+    const headerWsProtocol = req.getHeader('sec-websocket-protocol')
+    const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('yauth')]
+    if (token == null) {
+        throw new Error('Missing Token')
+    }
+    // @todo add user id for jwt
+    
+    const requestOptions = createAuthzRequestOptions(room, token);
+    const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
+
+    if (!response.ok) {
+        throw new Error('Authorization failed');
+    }
+
+    return response;
+}
+
+const createAuthzRequestOptions = (room, token) => {
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+        },
+        body: JSON.stringify({
+            context: {
+                action: "read",
+                requiredPermissions: ["COURSE_EDIT"]
+            },
+            referenceType: "boardnodes",
+            referenceId: room
+        })
+    };
+
+    return requestOptions;
 }
 
 const port = number.parseInt(env.getConf('port') || '3345')
