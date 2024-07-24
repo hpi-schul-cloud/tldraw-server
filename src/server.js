@@ -1,6 +1,3 @@
-#!/usr/bin/env node
-// @ts-nocheck
-
 import { registerYWebsocketServer } from '@y/redis';
 import * as env from 'lib0/environment';
 import * as error from 'lib0/error';
