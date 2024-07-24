@@ -29,6 +29,11 @@ class YWebsocketServer {
 }
 
 export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store }) => {
+	console.log('console log');
+	logging.print(logging.GREEN, 'logging green');
+	logging.print('logging no color');
+	log(() => ['logging with module logger']);
+
 	const app = uws.App({});
 
 	await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, checkAuthz, { redisPrefix });
@@ -50,10 +55,6 @@ export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store })
 };
 
 const checkAuthz = async (req) => {
-	logging.print(logging.GREEN, 'logging green');
-	logging.print('logging no color');
-	log(() => ['logging log']);
-
 	const room = req.getParameter(0);
 	const headerWsProtocol = req.getHeader('sec-websocket-protocol');
 	const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('yauth')];
@@ -61,22 +62,16 @@ const checkAuthz = async (req) => {
 		throw new Error('Missing Token');
 	}
 
-	console.log('checkAuthz', room, token);
-
 	const requestOptions = createAuthzRequestOptions(room, token);
 	const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
 
 	const { userId } = await response.json();
-
-	console.log('checkAuthz response', response);
 
 	if (!response.ok) {
 		throw new Error('Authorization failed');
 	}
 
 	const result = { hasWriteAccess: true, room, userid: userId };
-
-	console.log('checkAuthz result', result);
 
 	return result;
 };
