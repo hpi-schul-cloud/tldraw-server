@@ -7,7 +7,6 @@
 		"node": ">=20.0.0"
 	},
 	"scripts": {
-		"build": "tsc",
 		"dev:server": "nodemon --env-file=.env src/server.js",
 		"dev:worker": "nodemon --env-file=.env src/worker.js",
 		"start:y-redis-server": "node --env-file=.env src/server.js",
@@ -25,7 +24,6 @@
 		"@types/express": "^4.17.21",
 		"@types/node": "^20.14.11",
 		"nodemon": "^3.1.4",
-		"prettier": "3.3.3",
-		"typescript": "^5.5.3"
+		"prettier": "3.3.3"
 	}
 }
