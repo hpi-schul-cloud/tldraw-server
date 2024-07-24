@@ -11,6 +11,8 @@ import * as promise from 'lib0/promise';
 import * as uws from 'uws';
 import { initStorage } from './storage.js';
 
+const log = logging.createModuleLogger('server');
+
 const apiHost = env.getConf('api-host') || 'http://localhost:3030';
 const wsPathPrefix = env.getConf('ws-path-prefix') || '';
 
@@ -61,11 +63,18 @@ const checkAuthz = async (req) => {
 	const requestOptions = createAuthzRequestOptions(room, token);
 	const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
 
+	console.log('checkAuthz response', response);
+
 	if (!response.ok) {
 		throw new Error('Authorization failed');
 	}
 
 	const result = { hasWriteAccess: true, room, userid: userId };
+
+	console.log('checkAuthz result', result);
+	logging.print(logging.GREEN, 'logging green');
+	logging.print('logging no color');
+	log(() => ['logging log']);
 
 	return result;
 };
