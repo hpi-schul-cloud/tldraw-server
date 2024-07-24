@@ -2,7 +2,6 @@
 // @ts-nocheck
 
 import { registerYWebsocketServer } from '@y/redis';
-import { jwtDecode } from 'jwt-decode';
 import * as env from 'lib0/environment';
 import * as error from 'lib0/error';
 import * as logging from 'lib0/logging';
@@ -58,10 +57,10 @@ const checkAuthz = async (req) => {
 		throw new Error('Missing Token');
 	}
 
-	const { userId } = jwtDecode(token);
-
 	const requestOptions = createAuthzRequestOptions(room, token);
 	const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
+
+	const { userId } = await response.json();
 
 	console.log('checkAuthz response', response);
 
