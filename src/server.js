@@ -50,12 +50,18 @@ export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store })
 };
 
 const checkAuthz = async (req) => {
+	logging.print(logging.GREEN, 'logging green');
+	logging.print('logging no color');
+	log(() => ['logging log']);
+
 	const room = req.getParameter(0);
 	const headerWsProtocol = req.getHeader('sec-websocket-protocol');
 	const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('yauth')];
 	if (token == null) {
 		throw new Error('Missing Token');
 	}
+
+	console.log('checkAuthz', room, token);
 
 	const requestOptions = createAuthzRequestOptions(room, token);
 	const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
@@ -71,9 +77,6 @@ const checkAuthz = async (req) => {
 	const result = { hasWriteAccess: true, room, userid: userId };
 
 	console.log('checkAuthz result', result);
-	logging.print(logging.GREEN, 'logging green');
-	logging.print('logging no color');
-	log(() => ['logging log']);
 
 	return result;
 };
