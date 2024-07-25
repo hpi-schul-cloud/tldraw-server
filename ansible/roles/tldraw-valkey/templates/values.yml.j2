@@ -1,2 +1,15 @@
+master:
+  readinessProbe:
+    timeoutSeconds: 5
+
 sentinel:
   enabled: true
+  readinessProbe:
+    timeoutSeconds: 5
+
+metrics:
+  enabled: true
+
+# OPS-6762 still up to debate if we will enable this
+networkPolicy:
+  enabled: false
