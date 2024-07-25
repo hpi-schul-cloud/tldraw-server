@@ -28,6 +28,8 @@
         # OPS-6762 still up to debate if we will enable this
         networkPolicy:
           enabled: false
+        serviceAccount:
+          create: false
         resources:
           limits:
             cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
