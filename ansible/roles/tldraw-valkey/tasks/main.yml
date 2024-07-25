@@ -16,8 +16,18 @@
       kubeconfig: ~/.kube/config
       update_repo_cache: no
       values:
+        master:
+          readinessProbe:
+            timeoutSeconds: 5
         sentinel:
-          enables: true
+          enabled: true
+          readinessProbe:
+            timeoutSeconds: 5
+        metrics:
+          enabled: true
+        # OPS-6762 still up to debate if we will enable this
+        networkPolicy:
+          enabled: false
         resources:
           limits:
             cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
