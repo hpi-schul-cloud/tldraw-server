@@ -1,3 +1,5 @@
+import { number } from 'lib0';
+import * as env from 'lib0/environment';
 import { Gauge, register } from 'prom-client';
 import * as uws from 'uws';
 
@@ -12,14 +14,17 @@ export const decOpenConnectionsGauge = () => {
 };
 
 export const exposeMetricsToPrometheus = () => {
+	const route = env.getConf('prometheus-metrics-route');
+	const port = number.parseInt(env.getConf('prometheus-metrics-port'));
+
 	const app = uws.App({});
 
-	app.get('/metrics', async (res) => {
+	app.get(route, async (res) => {
 		const metrics = await register.metrics();
 		res.end(metrics);
 	});
 
-	app.listen(9090, () => {
+	app.listen(port, () => {
 		console.log('Prometheus metrics exposed on port 9090');
 	});
 };
