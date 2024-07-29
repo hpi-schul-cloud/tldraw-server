@@ -110,7 +110,7 @@ const port = number.parseInt(env.getConf('port') || '3345');
 const redisPrefix = env.getConf('redis-prefix') || 'y';
 const store = await initStorage();
 
-if (env.getConf('prometheus-metrics-enabled') === 'true') {
+if (env.getConf('feature-prometheus-metrics-enabled') === 'true') {
 	exposeMetricsToPrometheus();
 }
 
