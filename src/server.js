@@ -5,6 +5,7 @@ import * as logging from 'lib0/logging';
 import * as number from 'lib0/number';
 import * as promise from 'lib0/promise';
 import * as uws from 'uws';
+import { decOpenConnectionsGauge, exposeMetricsToPrometheus, incOpenConnectionsGauge } from './metrics.js';
 import { initStorage } from './storage.js';
 
 const log = logging.createModuleLogger('server');
@@ -33,7 +34,11 @@ export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store })
 
 	const app = uws.App({});
 
-	await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, checkAuthz, { redisPrefix });
+	await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, checkAuthz, {
+		redisPrefix,
+		openWsCallback,
+		closeWsCallback,
+	});
 
 	await promise.create((resolve, reject) => {
 		app.listen(port, (token) => {
@@ -93,8 +98,18 @@ const createAuthzRequestOptions = (room, token) => {
 	return requestOptions;
 };
 
+const openWsCallback = () => {
+	incOpenConnectionsGauge();
+};
+
+const closeWsCallback = () => {
+	decOpenConnectionsGauge();
+};
+
 const port = number.parseInt(env.getConf('port') || '3345');
 const redisPrefix = env.getConf('redis-prefix') || 'y';
 const store = await initStorage();
+
+exposeMetricsToPrometheus();
 
 createYWebsocketServer({ port, store, redisPrefix });
