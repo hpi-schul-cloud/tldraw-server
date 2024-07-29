@@ -3,7 +3,10 @@ import * as env from 'lib0/environment';
 import { Gauge, register } from 'prom-client';
 import * as uws from 'uws';
 
-const openConnectionsGauge = new Gauge({ name: 'open_connections', help: 'Number of open WebSocket connections' });
+const openConnectionsGauge = new Gauge({
+	name: 'tldraw_open_connections',
+	help: 'Number of open WebSocket connections on tldraw-server.',
+});
 
 export const incOpenConnectionsGauge = () => {
 	openConnectionsGauge.inc();
