@@ -30,6 +30,7 @@
           serviceMonitor:
             enabled: true
           extraArgs:
+            # https://github.com/bitnami/charts/issues/28564 redis exporter did not work by default
             redis.password: $VALKEY_PASSWORD
         # OPS-6762 still up to debate if we will enable this
         networkPolicy:
