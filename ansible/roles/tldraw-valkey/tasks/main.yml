@@ -25,6 +25,12 @@
             timeoutSeconds: 5
         metrics:
           enabled: true
+          podMonitor:
+            enabled: true
+          serviceMonitor:
+            enabled: true
+          extraArgs:
+            redis.password: $VALKEY_PASSWORD
         # OPS-6762 still up to debate if we will enable this
         networkPolicy:
           enabled: false
