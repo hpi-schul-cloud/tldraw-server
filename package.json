@@ -14,7 +14,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
-		"@y/redis": "^0.1.4",
+		"@y/redis": "github:hpi-schul-cloud/y-redis#1891d7631cd30d3f2d5c15c6e785013d4278b40e",
 		"lib0": "^0.2.93",
 		"uws": "github:uNetworking/uWebSockets.js#v20.40.0",
 		"y-protocols": "^1.0.6"
