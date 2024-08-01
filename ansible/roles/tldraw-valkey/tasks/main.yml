@@ -16,6 +16,9 @@
       kubeconfig: ~/.kube/config
       update_repo_cache: no
       values:
+        auth:
+          existingSecret: tldraw-valkey-password
+          existingSecretPasswordKey: REDIS_SENTINEL_PASSWORD
         master:
           readinessProbe:
             timeoutSeconds: 5
