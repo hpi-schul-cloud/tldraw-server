@@ -60,6 +60,8 @@ spec:
             name: tldraw-server-configmap
         - secretRef:
             name: tldraw-server-secret
+        - secretRef:
+            name: tldraw-valkey-password
         command: ['npm', 'run', 'start:y-redis-worker']
         resources:
           limits:
