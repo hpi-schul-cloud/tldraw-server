@@ -15,15 +15,8 @@ async function discoverSentinelHosts() {
         const records = await resolveSrv(sentinelServiceName);
 
         const hosts = records.map(record => ({
-            name: record.name,
+            host: record.name,
             port: record.port,
-            ip: ''
-        }));
-
-        // Get IP addresses for each host
-        await Promise.all(hosts.map(async (host) => {
-            const addresses = await dns.promises.lookup(host.name);
-            host.ip = addresses.address;
         }));
 
         return hosts;
