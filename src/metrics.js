@@ -17,8 +17,8 @@ export const decOpenConnectionsGauge = () => {
 };
 
 export const exposeMetricsToPrometheus = () => {
-	const route = env.getConf('prometheus-metrics-route');
-	const port = number.parseInt(env.getConf('prometheus-metrics-port'));
+	const route = env.getConf('prometheus-metrics-route') ?? '/metrics';
+	const port = number.parseInt(env.getConf('prometheus-metrics-port') ?? '9090');
 
 	const app = uws.App({});
 
