@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: tldraw-server-pod-monitor
+  namespace: {{ NAMESPACE }}
+  labels:
+    app: tldraw-server
+spec:
+  selector:
+    matchLabels:
+      app: tldraw-server
+  endpoints:
+  - path: /metrics
+    port: tldraw-server-metrics

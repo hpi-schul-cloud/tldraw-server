@@ -49,6 +49,9 @@ spec:
         - containerPort: 3345
           name: tldraw-ws
           protocol: TCP
+        - containerPort: 9090
+          name: tldraw-server-metrics
+          protocol: TCP
         envFrom:
         - configMapRef:
             name: tldraw-server-configmap
