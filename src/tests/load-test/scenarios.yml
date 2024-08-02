@@ -1,0 +1,12 @@
+config:
+  target: "http://localhost:3046"
+  phases:
+    - arrivalRate: 1
+      duration: 10
+  engines:
+    playwright: {}
+  processor: ./flows.cjs
+scenarios:
+  - name: "check_load_on_tldraw_document_scenario"
+    engine: playwright
+    flowFunction: "checkLoadOnTldrawDocument"
