@@ -36,6 +36,13 @@
       namespace: "{{ NAMESPACE }}"
       template: server-svc.yml.j2
     when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
+  
+   name: TlDraw server pod monitor
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: pod-monitor.yml.j2
+    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
 
   - name: Tldraw ingress
     kubernetes.core.k8s:
