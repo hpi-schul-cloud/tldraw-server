@@ -57,6 +57,8 @@ spec:
             name: tldraw-server-configmap
         - secretRef:
             name: tldraw-server-secret
+        - secretRef:
+            name: tldraw-valkey-password
         resources:
           limits:
             cpu: {{ TLDRAW_SERVER_CPU_LIMITS|default("2000m", true) }}

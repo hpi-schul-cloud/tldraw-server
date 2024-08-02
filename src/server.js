@@ -6,6 +6,7 @@ import * as number from 'lib0/number';
 import * as promise from 'lib0/promise';
 import * as uws from 'uws';
 import { decOpenConnectionsGauge, exposeMetricsToPrometheus, incOpenConnectionsGauge } from './metrics.js';
+import { redis } from './redis.js';
 import { initStorage } from './storage.js';
 
 const log = logging.createModuleLogger('server');
@@ -34,11 +35,18 @@ export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store })
 
 	const app = uws.App({});
 
-	await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, checkAuthz, {
-		redisPrefix,
-		openWsCallback,
-		closeWsCallback,
-	});
+	await registerYWebsocketServer(
+		app,
+		`${wsPathPrefix}/:room`,
+		store,
+		checkAuthz,
+		{
+			redisPrefix,
+			openWsCallback,
+			closeWsCallback,
+		},
+		redis,
+	);
 
 	await promise.create((resolve, reject) => {
 		app.listen(port, (token) => {
