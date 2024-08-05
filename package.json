@@ -14,7 +14,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
-		"@y/redis": "github:hpi-schul-cloud/y-redis#5d3a2659b7ba1cde96a74e0cd5dc160da27d3885",
+		"@y/redis": "github:hpi-schul-cloud/y-redis#16f481d078c236a5e9171941ed274e98761aedfb",
 		"ioredis": "^5.4.1",
 		"lib0": "^0.2.93",
 		"prom-client": "^15.1.3",
