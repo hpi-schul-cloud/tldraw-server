@@ -8,6 +8,7 @@ metadata:
 data:
   API_HOST: "http://api-svc:3030"
   WS_PATH_PREFIX: "/tldraw-server"
-  LOG: "^(yjs|@y|server)"
+  LOG: "@y/redis"
+  NO_COLOR: 1
   FEATURE_PROMETHEUS_METRICS_ENABLED: "true"
   REDIS_SENTINEL_SERVICE_NAME: valkey-headless.{{ NAMESPACE }}.svc.cluster.local
