@@ -9,8 +9,6 @@ import { decOpenConnectionsGauge, exposeMetricsToPrometheus, incOpenConnectionsG
 import { redis } from './redis.js';
 import { initStorage } from './storage.js';
 
-const log = logging.createModuleLogger('server');
-
 const apiHost = env.getConf('api-host') || 'http://localhost:3030';
 const wsPathPrefix = env.getConf('ws-path-prefix') || '';
 
@@ -28,11 +26,6 @@ class YWebsocketServer {
 }
 
 export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store }) => {
-	console.log('console log');
-	logging.print(logging.GREEN, 'logging green');
-	logging.print('logging no color');
-	log(() => ['logging with module logger']);
-
 	const app = uws.App({});
 
 	await registerYWebsocketServer(
