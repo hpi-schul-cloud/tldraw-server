@@ -15,7 +15,7 @@
 		"test:load": "artillery run src/tests/load-test/scenarios.yml"
 	},
 	"dependencies": {
-		"@y/redis": "github:hpi-schul-cloud/y-redis#5d3a2659b7ba1cde96a74e0cd5dc160da27d3885",
+		"@y/redis": "github:hpi-schul-cloud/y-redis#935168c9810ba4f84aa089092f04f92e5aa709f8",
 		"ioredis": "^5.4.1",
 		"lib0": "^0.2.93",
 		"prom-client": "^15.1.3",
