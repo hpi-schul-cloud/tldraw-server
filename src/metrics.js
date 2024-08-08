@@ -1,7 +1,8 @@
 import { number } from 'lib0';
 import * as env from 'lib0/environment';
-import { Gauge, register } from 'prom-client';
+import { Gauge, Histogram, register } from 'prom-client';
 import * as uws from 'uws';
+import { Api } from '@y/redis';
 
 const openConnectionsGauge = new Gauge({
 	name: 'tldraw_open_connections',
@@ -30,4 +31,26 @@ export const exposeMetricsToPrometheus = () => {
 	app.listen(port, () => {
 		console.log('Prometheus metrics exposed on port 9090');
 	});
+};
+
+// The below histogram for getDoc uses monkey patching and is only for testing the POC. It has to be removed in the final implementation.
+const methodDurationHistogram = new Histogram({
+	name: 'getDoc_duration_seconds',
+	help: 'Duration of getDoc in seconds',
+	labelNames: ['method'],
+});
+
+const originalGetDoc = Api.prototype.getDoc;
+
+Api.prototype.getDoc = async function (room, docId) {
+	const end = methodDurationHistogram.startTimer();
+
+	try {
+		const result = await originalGetDoc.call(this, room, docId);
+		end({ method: 'getDoc' });
+		return result;
+	} catch (error) {
+		end({ method: 'getDoc', error: true });
+		throw error;
+	}
 };
