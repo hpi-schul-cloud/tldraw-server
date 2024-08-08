@@ -35,7 +35,7 @@ export const exposeMetricsToPrometheus = () => {
 
 // The below histogram for getDoc uses monkey patching and is only for testing the POC. It has to be removed in the final implementation.
 const methodDurationHistogram = new Histogram({
-	name: 'getDoc_duration_seconds',
+	name: 'tldraw_getDoc_duration_seconds',
 	help: 'Duration of getDoc in seconds',
 	labelNames: ['method'],
 });
