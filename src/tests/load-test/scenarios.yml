@@ -1,7 +1,7 @@
 config:
   target: "http://localhost:3046"
   phases:
-    - arrivalRate: 1
+    - arrivalRate: 10
       duration: 10
   engines:
     playwright: {}
