@@ -10,4 +10,5 @@ spec:
     matchLabels:
       app: tldraw-server
   podMetricsEndpoints:
-  - port: "metrics"
+  - port: metrics
+    interval: 5s
