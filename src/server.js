@@ -8,6 +8,7 @@ import * as uws from 'uws';
 import { decOpenConnectionsGauge, exposeMetricsToPrometheus, incOpenConnectionsGauge } from './metrics.js';
 import { redis } from './redis.js';
 import { initStorage } from './storage.js';
+import { exposeDocAnalysisEndpoint } from './doc-analysis.js';
 
 const apiHost = env.getConf('api-host') || 'http://localhost:3030';
 const wsPathPrefix = env.getConf('ws-path-prefix') || '';
@@ -114,5 +115,7 @@ const store = await initStorage();
 if (env.getConf('feature-prometheus-metrics-enabled') === 'true') {
 	exposeMetricsToPrometheus();
 }
+
+await exposeDocAnalysisEndpoint({ store });
 
 createYWebsocketServer({ port, store, redisPrefix });
