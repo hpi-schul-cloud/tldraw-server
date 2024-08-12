@@ -116,6 +116,8 @@ if (env.getConf('feature-prometheus-metrics-enabled') === 'true') {
 	exposeMetricsToPrometheus();
 }
 
-await exposeDocAnalysisEndpoint({ store });
+if (env.getConf('feature-doc-analysis-enabled') === 'true') {
+	await exposeDocAnalysisEndpoint({ store });
+}
 
 createYWebsocketServer({ port, store, redisPrefix });
