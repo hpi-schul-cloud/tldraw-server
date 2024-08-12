@@ -37,7 +37,7 @@ export const exposeMetricsToPrometheus = () => {
 const methodDurationHistogram = new Histogram({
 	name: 'tldraw_getDoc_duration_seconds',
 	help: 'Duration of getDoc in seconds',
-	labelNames: ['method'],
+	buckets: [0.1, 0.2, 0.5, 1, 2, 5, 10],
 });
 
 const originalGetDoc = Api.prototype.getDoc;
@@ -45,12 +45,9 @@ const originalGetDoc = Api.prototype.getDoc;
 Api.prototype.getDoc = async function (room, docId) {
 	const end = methodDurationHistogram.startTimer();
 
-	try {
-		const result = await originalGetDoc.call(this, room, docId);
-		end({ method: 'getDoc' });
-		return result;
-	} catch (error) {
-		end({ method: 'getDoc', error: true });
-		throw error;
-	}
+	const result = await originalGetDoc.call(this, room, docId);
+
+	end();
+
+	return result;
 };
