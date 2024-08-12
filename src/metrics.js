@@ -29,7 +29,7 @@ export const exposeMetricsToPrometheus = () => {
 	});
 
 	app.listen(port, () => {
-		console.log('Prometheus metrics exposed on port 9090');
+		console.log(`Prometheus metrics exposed on port ${port}`);
 	});
 };
 
