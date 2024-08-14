@@ -1,0 +1,28 @@
+{
+	"$schema": "https://json.schemastore.org/nest-cli",
+	"collection": "@nestjs/schematics",
+	"sourceRoot": "src",
+	"compilerOptions": {
+		"deleteOutDir": true
+	},
+	"projects": {
+		"server": {
+			"type": "application",
+			"root": "apps/server",
+			"entryFile": "apps/tldraw-server",
+			"sourceRoot": "src",
+			"compilerOptions": {
+				"tsConfigPath": "tsconfig.json"
+			}
+		},
+		"worker": {
+			"type": "application",
+			"root": "apps/worker",
+			"entryFile": "apps/tldraw-worker",
+			"sourceRoot": "src",
+			"compilerOptions": {
+				"tsConfigPath": "tsconfig.json"
+			}
+		}
+	}
+}
