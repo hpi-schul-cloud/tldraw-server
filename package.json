@@ -1,11 +1,15 @@
 {
-  "name": "project-name",
-  "type": "module",
+	"name": "tldraw-server",
+	"type": "module",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "license": "AGPL-3.0",
+  "description": "tldraw backend",
+  "author": "Schulcloud-Verbund",
   "private": true,
-  "license": "UNLICENSED",
+	"engines": {
+    "npm": ">=8.0.0",
+		"node": ">=20.0.0"
+	},
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -16,12 +20,11 @@
     "start:worker:dev": "nest start worker --watch",
     "start:worker:debug": "nest start worker --debug --watch",
     "start:worker:prod": "node  --env-file .env dist/apps/tldraw-worker.js",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.1",

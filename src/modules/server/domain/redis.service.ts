@@ -17,21 +17,33 @@ export class RedisService {
   async getRedisInstance() {
     let redisInstance: Redis;
     if (this.sentinelServiceName) {
-      const sentinelName = this.configService.get<string>('REDIS_SENTINEL_NAME') || 'mymaster';
-      const sentinelPassword = this.configService.getOrThrow('REDIS_SENTINEL_PASSWORD');
-      const sentinels = await this.discoverSentinelHosts();
-      console.log('Discovered sentinels:', sentinels);
-
-      redisInstance = new Redis({
-        sentinels,
-        sentinelPassword,
-        password: sentinelPassword,
-        name: sentinelName,
-      });
+      redisInstance = await this.createRedisSentinelInstance();
     } else {
-      const redisUrl = this.configService.getOrThrow('REDIS');;
-      redisInstance = new Redis(redisUrl);
+      redisInstance = this.createNewRedisInstance(redisInstance);
     }
+
+    return redisInstance;
+  }
+
+  private createNewRedisInstance(redisInstance: Redis) {
+    const redisUrl = this.configService.getOrThrow('REDIS');;
+    redisInstance = new Redis(redisUrl);
+
+    return redisInstance;
+  }
+
+  private async createRedisSentinelInstance() {
+    const sentinelName = this.configService.get<string>('REDIS_SENTINEL_NAME') || 'mymaster';
+    const sentinelPassword = this.configService.getOrThrow('REDIS_SENTINEL_PASSWORD');
+    const sentinels = await this.discoverSentinelHosts();
+    console.log('Discovered sentinels:', sentinels);
+
+    const redisInstance = new Redis({
+      sentinels,
+      sentinelPassword,
+      password: sentinelPassword,
+      name: sentinelName,
+    });
 
     return redisInstance;
   }

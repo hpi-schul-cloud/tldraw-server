@@ -14,7 +14,8 @@ export class AuthorizationService {
       null,
       req.getQuery('yauth'),
     ];
-    if (token == null) {
+
+    if (!token) {
       throw new Error('Missing Token');
     }
 

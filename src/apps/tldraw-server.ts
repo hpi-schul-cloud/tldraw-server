@@ -14,13 +14,13 @@ async function bootstrap() {
   const wsPort = 3345;
   const httpPort = 3347;
 
-  const wss = App({});
-  const nestApp = await NestFactory.create(ServerModule.register(wss));
+  const webSocketServer = App({});
+  const nestApp = await NestFactory.create(ServerModule.register(webSocketServer));
 
   nestApp.enableCors();
 
   await nestApp.init();
-  wss.listen(wsPort, (t) => {
+  webSocketServer.listen(wsPort, (t) => {
     if (t) {
       console.log(`TLDRAW Websocket Server is running on port ${wsPort}`);
     }

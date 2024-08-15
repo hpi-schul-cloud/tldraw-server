@@ -5,7 +5,6 @@ import { Histogram, register } from 'prom-client';
 
 @Injectable()
 export class MetricsService {
-
   constructor(private configService: ConfigService) {}
 
   async getMetrics(): Promise<string> {
