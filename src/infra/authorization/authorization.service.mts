@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { HttpRequest } from 'uws';
 
 @Injectable()
 export class AuthorizationService {
   constructor(private configService: ConfigService) {}
 
-  async hasPermission(req: any) {
+  async hasPermission(req: HttpRequest) {
     const apiHost = this.configService.get<string>('API_HOST');
     const room = req.getParameter(0);
     const headerWsProtocol = req.getHeader('sec-websocket-protocol');

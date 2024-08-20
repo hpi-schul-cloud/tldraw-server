@@ -10,8 +10,7 @@ export class RedisService {
 
   constructor(private configService: ConfigService) {
     this.sentinelServiceName = this.configService.get<string>(
-      'REDIS_SENTINEL_SERVICE_NAME',
-    );
+      'REDIS_SENTINEL_SERVICE_NAME') || '';
   }
 
   async getRedisInstance() {
@@ -19,15 +18,15 @@ export class RedisService {
     if (this.sentinelServiceName) {
       redisInstance = await this.createRedisSentinelInstance();
     } else {
-      redisInstance = this.createNewRedisInstance(redisInstance);
+      redisInstance = this.createNewRedisInstance();
     }
 
     return redisInstance;
   }
 
-  private createNewRedisInstance(redisInstance: Redis) {
+  private createNewRedisInstance() {
     const redisUrl = this.configService.getOrThrow('REDIS');;
-    redisInstance = new Redis(redisUrl);
+    const redisInstance = new Redis(redisUrl);
 
     return redisInstance;
   }

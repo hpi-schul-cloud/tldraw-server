@@ -2,8 +2,8 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createWorker } from '@y/redis';
-import { RedisService } from '../../server/domain/redis.service.js';
-import { StorageService } from '../../server/domain/storage.service.js';
+import { RedisService } from '../../../infra/redis/redis.service.mjs';
+import { StorageService } from '../../../infra/storage/storage.service.mjs';
 
 @Injectable()
 export class WorkerService implements OnModuleInit, OnModuleDestroy {
