@@ -3,14 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
+import { Logger } from '../logging/logger.mjs';
 
 @Injectable()
 export class RedisService {
   private sentinelServiceName: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(private configService: ConfigService, private logger: Logger) {
     this.sentinelServiceName = this.configService.get<string>(
       'REDIS_SENTINEL_SERVICE_NAME') || '';
+
+    this.logger.setContext(RedisService.name);
   }
 
   async getRedisInstance() {
@@ -35,7 +38,7 @@ export class RedisService {
     const sentinelName = this.configService.get<string>('REDIS_SENTINEL_NAME') || 'mymaster';
     const sentinelPassword = this.configService.getOrThrow('REDIS_SENTINEL_PASSWORD');
     const sentinels = await this.discoverSentinelHosts();
-    console.log('Discovered sentinels:', sentinels);
+    this.logger.log('Discovered sentinels:', sentinels);
 
     const redisInstance = new Redis({
       sentinels,
@@ -59,7 +62,7 @@ export class RedisService {
 
       return hosts;
     } catch (err) {
-      console.error('Error during service discovery:', err);
+      this.logger.error('Error during service discovery:', err);
       throw err;
     }
   }

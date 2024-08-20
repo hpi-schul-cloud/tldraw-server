@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { App } from 'uws';
+import { Logger } from '../infra/logging/logger.mjs';
 import { ServerModule } from '../modules/server/server.module.mjs';
 
 async function bootstrap() {
@@ -11,14 +12,18 @@ async function bootstrap() {
   nestApp.enableCors();
 
   await nestApp.init();
+
+  const logger = await nestApp.resolve(Logger);
+  logger.setContext('TLDRAW');
+
   webSocketServer.listen(wsPort, (t) => {
     if (t) {
-      console.log(`TLDRAW Websocket Server is running on port ${wsPort}`);
+      logger.log(`Websocket Server is running on port ${wsPort}`);
     }
   });
 
   await nestApp.listen(httpPort, () => {
-    console.log(`TLDRAW Server is running on port ${httpPort}`);
+    logger.log(`Server is running on port ${httpPort}`);
   });
 }
 bootstrap();

@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '../logging/logger.mjs';
 
 @Injectable()
 export class StorageService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService, private logger: Logger) {
+    this.logger.setContext(StorageService.name);
+  }
 
   async get() {
     const s3Endpoint = this.configService.get<string>('S3_ENDPOINT');
@@ -12,7 +15,7 @@ export class StorageService {
     let store;
 
     if (s3Endpoint) {
-      console.log('using s3 store');
+      this.logger.log('using s3 store');
       const { createS3Storage } = await import('@y/redis/storage/s3');
 
       store = createS3Storage(bucketName);
@@ -21,7 +24,7 @@ export class StorageService {
         await store.client.makeBucket(bucketName);
       } catch (e) {}
     } else {
-      console.log('ATTENTION! using in-memory store');
+      this.logger.log('ATTENTION! using in-memory store');
       const { createMemoryStorage } = await import('@y/redis/storage/memory');
       store = createMemoryStorage();
     }
