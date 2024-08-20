@@ -16,4 +16,4 @@ RUN npx 0ecdsa-generate-keypair --name auth >> .env
 ENV NODE_ENV=production
 ENV NO_COLOR="true"
 
-CMD npm run start:y-redis-server
+CMD npm run start:server:prod
