@@ -1,10 +1,10 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { registerYWebsocketServer } from '@y/redis';
-import { Gauge } from 'prom-client';
 import { TemplatedApp } from 'uws';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
 import { Logger } from '../../../infra/logging/logger.js';
+import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
 
@@ -12,10 +12,6 @@ export const UWS = 'UWS';
 
 @Injectable()
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
-	private openConnectionsGauge = new Gauge({
-		name: 'tldraw_open_connections',
-		help: 'Number of open WebSocket connections on tldraw-server.',
-	});
 
 	constructor(
 		@Inject(UWS) private webSocketServer: TemplatedApp,
@@ -57,10 +53,10 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	private incOpenConnectionsGauge() {
-		this.openConnectionsGauge.inc();
+		MetricsService.openConnectionsGauge.inc();
 	}
 
 	private decOpenConnectionsGauge() {
-		this.openConnectionsGauge.dec();
+		MetricsService.openConnectionsGauge.dec();
 	}
 }

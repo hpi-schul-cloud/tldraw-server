@@ -1,17 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Api } from '@y/redis';
-import { Histogram, register } from 'prom-client';
+import { Gauge, Histogram, register } from 'prom-client';
 
 @Injectable()
 export class MetricsService {
-  constructor(private configService: ConfigService) {}
+	static readonly openConnectionsGauge = new Gauge({
+		name: 'tldraw_open_connections',
+		help: 'Number of open WebSocket connections on tldraw-server.',
+	});
 
-  async getMetrics(): Promise<string> {
-    const metrics = await register.metrics();
+	async getMetrics(): Promise<string> {
+		const metrics = await register.metrics();
 
-    return metrics;
-  }
+		return metrics;
+	}
 }
 
 // The below histogram for getDoc uses monkey patching and is only for testing the POC. It has to be removed in the final implementation.
