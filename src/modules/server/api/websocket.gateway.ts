@@ -33,7 +33,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	async onModuleInit() {
-		const wsPathPrefix = this.configService.get<string>('WS_PATH_PREFIX');
+		const wsPathPrefix = this.configService.get<string>('WS_PATH_PREFIX') || '';
 		const wsPort = this.configService.get<number>('WS_PORT') || 3345;
 
 		await registerYWebsocketServer(
@@ -51,7 +51,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 		this.webSocketServer.listen(wsPort, (t) => {
 			if (t) {
-			  this.logger.log(`Websocket Server is running on port ${wsPort}`);
+				this.logger.log(`Websocket Server is running on port ${wsPort}`);
 			}
 		});
 	}
