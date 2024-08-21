@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { MetricsService } from '../domain/metrics.service.mjs';
+import { MetricsService } from '../domain/metrics.service.js';
 
 @Controller()
 export class AppController {

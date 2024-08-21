@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { LoggerModule } from '../logging/logger.module.mjs';
-import { RedisService } from './redis.service.mjs';
+import { LoggerModule } from '../logging/logger.module.js';
+import { RedisService } from './redis.service.js';
 
 @Module({
     imports: [LoggerModule],

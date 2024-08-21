@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '../logging/logger.mjs';
+import { Logger } from '../logging/logger.js';
 
 @Injectable()
 export class StorageService {

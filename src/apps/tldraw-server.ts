@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger } from '../infra/logging/logger.mjs';
-import { ServerModule } from '../modules/server/server.module.mjs';
+import { Logger } from '../infra/logging/logger.js';
+import { ServerModule } from '../modules/server/server.module.js';
 
 async function bootstrap() {
   const httpPort = 3347;

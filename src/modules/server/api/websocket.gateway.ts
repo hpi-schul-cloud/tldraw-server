@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { registerYWebsocketServer } from '@y/redis';
 import { Gauge } from 'prom-client';
 import { TemplatedApp } from 'uws';
-import { AuthorizationService } from '../../../infra/authorization/authorization.service.mjs';
-import { Logger } from '../../../infra/logging/logger.mjs';
-import { RedisService } from '../../../infra/redis/redis.service.mjs';
-import { StorageService } from '../../../infra/storage/storage.service.mjs';
+import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
+import { Logger } from '../../../infra/logging/logger.js';
+import { RedisService } from '../../../infra/redis/redis.service.js';
+import { StorageService } from '../../../infra/storage/storage.service.js';
 
 export const UWS = 'UWS';
 

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
-import { Logger } from '../logging/logger.mjs';
+import { Logger } from '../logging/logger.js';
 
 @Injectable()
 export class RedisService {
