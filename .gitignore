@@ -30,9 +30,8 @@ lerna-debug.log*
 
 # IDE - VSCode
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
+!.vscode/settings.default.json
+!.vscode/launch.default.json
 !.vscode/extensions.json
 yarn-debug.log*
 yarn-error.log*
@@ -174,6 +173,3 @@ dist
 .pnp.*
 
 .idea
-
-# VSCode settings
-.vscode/settings.json
