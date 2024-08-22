@@ -15,7 +15,7 @@ async function bootstrap() {
 	await metricsApp.listen(metricsPort, async () => {
 		const logger = await metricsApp.resolve(Logger);
 		logger.setContext('METRICS');
-		logger.log(`Server is running on port ${metricsPort}`);
+		logger.log(`Metrics server is running on port ${metricsPort}`);
 	});
 
 	await nestApp.listen(httpPort, async () => {
