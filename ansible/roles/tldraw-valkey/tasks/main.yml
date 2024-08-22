@@ -40,6 +40,8 @@
           enabled: false
         serviceAccount:
           create: false
+        # https://github.com/bitnami/charts/issues/9689
+        useHostnames: false
         resources:
           limits:
             cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
