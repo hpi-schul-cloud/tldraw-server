@@ -5,7 +5,7 @@
       template: onepassword.yml.j2
     when:
      - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
-     - WITH_TLDRAW is defined and WITH_TLDRAW|bool
+     - WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
 
   - name: TlDraw server configmap
     kubernetes.core.k8s:
@@ -14,35 +14,35 @@
       template: configmap.yml.j2
     when:
       - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
-      - WITH_TLDRAW is defined and WITH_TLDRAW|bool
+      - WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
 
   - name: TlDraw server deployment
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: deployment.yml.j2
-    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
 
   - name: TlDraw worker deployment
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: worker-deployment.yml.j2
-    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
 
   - name: TlDraw server service
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: server-svc.yml.j2
-    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
   
   - name: TlDraw server pod monitor
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: pod-monitor.yml.j2
-    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
 
   - name: Tldraw ingress
     kubernetes.core.k8s:
@@ -50,4 +50,4 @@
       namespace: "{{ NAMESPACE }}"
       template: ingress.yml.j2
       apply: yes
-    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
