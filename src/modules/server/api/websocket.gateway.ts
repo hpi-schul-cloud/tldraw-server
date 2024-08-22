@@ -12,7 +12,6 @@ export const UWS = 'UWS';
 
 @Injectable()
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
-
 	constructor(
 		@Inject(UWS) private webSocketServer: TemplatedApp,
 		private storage: StorageService,

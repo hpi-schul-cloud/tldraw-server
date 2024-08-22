@@ -5,9 +5,7 @@ import { StorageModule } from '../../infra/storage/storage.module.js';
 import { WorkerService } from './domain/worker.service.js';
 
 @Module({
-  imports: [ConfigModule.forRoot({isGlobal: true}), RedisModule, StorageModule],
-  providers: [
-    WorkerService
-  ],
+	imports: [ConfigModule.forRoot({ isGlobal: true }), RedisModule, StorageModule],
+	providers: [WorkerService],
 })
 export class WorkerModule {}

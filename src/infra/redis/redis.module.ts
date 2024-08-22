@@ -3,8 +3,8 @@ import { LoggerModule } from '../logging/logger.module.js';
 import { RedisService } from './redis.service.js';
 
 @Module({
-    imports: [LoggerModule],
-    providers: [RedisService],
-    exports: [RedisService],
+	imports: [LoggerModule],
+	providers: [RedisService],
+	exports: [RedisService],
 })
 export class RedisModule {}

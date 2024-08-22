@@ -20,7 +20,7 @@
 		"start:worker:dev": "nest start worker --watch",
 		"start:worker:debug": "nest start worker --debug --watch",
 		"start:worker:prod": "node dist/apps/tldraw-worker.js",
-		"lint": "eslint \"{src}/**/*.ts\" --fix",
+		"lint": "eslint \"src/**/*.ts\" --fix",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
