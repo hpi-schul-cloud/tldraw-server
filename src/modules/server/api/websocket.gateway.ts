@@ -29,7 +29,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 	async onModuleInit() {
 		const wsPathPrefix = this.configService.get<string>('WS_PATH_PREFIX') || '';
-		const wsPort = this.configService.get<number>('WS_PORT') || 3345;
+		const wsPort = Number(this.configService.get('WS_PORT', { infer: true })) || 3345;
 
 		await registerYWebsocketServer(
 			this.webSocketServer,
