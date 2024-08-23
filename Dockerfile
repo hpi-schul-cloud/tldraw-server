@@ -9,7 +9,7 @@ WORKDIR /app
 RUN touch .env
 COPY package.json package-lock.json ./
 RUN npm ci && npm cache clean --force
-COPY src /app/src
+COPY dist /app/dist
 # temporey hack to fix dependencies on var AUTH_PUBLIC_KEY
 RUN npx 0ecdsa-generate-keypair --name auth >> .env
 
