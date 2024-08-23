@@ -21,28 +21,28 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: deployment.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW else 'absent'}}"
+      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
 
   - name: TlDraw worker deployment
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: worker-deployment.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW else 'absent'}}"
+      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
 
   - name: TlDraw server service
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: server-svc.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW else 'absent'}}"
+      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
 
   - name: TlDraw server pod monitor
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: pod-monitor.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW else 'absent'}}"
+      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
 
   - name: Tldraw ingress
     kubernetes.core.k8s:
@@ -50,4 +50,4 @@
       namespace: "{{ NAMESPACE }}"
       template: ingress.yml.j2
       apply: yes
-      state: "{{ 'present' if WITH_TLDRAW else 'absent'}}"
+      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
