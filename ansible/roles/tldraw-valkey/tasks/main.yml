@@ -51,7 +51,5 @@
           requests:
             cpu: "{{ TLDRAW_VALKEY_CPU_REQUESTS|default('100m', true) }}"
             memory: "{{ TLDRAW_VALKEY_MEMORY_REQUESTS|default('1Gi', true) }}"
-      tags:
-        - helm
-
-
+    tags:
+      - helm
