@@ -31,7 +31,7 @@
 		"@nestjs/config": "^3.2.3",
 		"@nestjs/core": "^10.4.1",
 		"@nestjs/platform-express": "^10.4.1",
-		"@y/redis": "github:hpi-schul-cloud/y-redis#0211a7c3645ffb740279e28e491539cda2e4afaf",
+		"@y/redis": "github:hpi-schul-cloud/y-redis#9b7be2bfcf5ffa93a80e0179e2a25b3746a699d5",
 		"ioredis": "^5.4.1",
 		"prom-client": "^15.1.3",
 		"reflect-metadata": "^0.2.2",
