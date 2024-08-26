@@ -6,6 +6,8 @@
     when:
      - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
      - WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+    tags:
+      - 1password
 
   - name: TlDraw server configmap
     kubernetes.core.k8s:
@@ -15,6 +17,8 @@
     when:
       - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
       - WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+    tags:
+      - configmap
 
   - name: TlDraw server deployment
     kubernetes.core.k8s:
@@ -22,6 +26,8 @@
       namespace: "{{ NAMESPACE }}"
       template: deployment.yml.j2
       state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    tags:
+      - deployment
 
   - name: TlDraw worker deployment
     kubernetes.core.k8s:
@@ -29,6 +35,8 @@
       namespace: "{{ NAMESPACE }}"
       template: worker-deployment.yml.j2
       state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    tags:
+      - deployment
 
   - name: TlDraw server service
     kubernetes.core.k8s:
@@ -36,6 +44,8 @@
       namespace: "{{ NAMESPACE }}"
       template: server-svc.yml.j2
       state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    tags:
+      - service
 
   - name: TlDraw server pod monitor
     kubernetes.core.k8s:
@@ -43,6 +53,8 @@
       namespace: "{{ NAMESPACE }}"
       template: pod-monitor.yml.j2
       state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    tags:
+      - prometheus
 
   - name: Tldraw ingress
     kubernetes.core.k8s:
@@ -51,3 +63,5 @@
       template: ingress.yml.j2
       apply: yes
       state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    tags:
+      - ingress
