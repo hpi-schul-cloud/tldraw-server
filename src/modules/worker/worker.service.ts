@@ -17,7 +17,7 @@ export class WorkerService implements OnModuleInit {
 			await this.storage.get(),
 			this.configService.get<string>('REDIS_PREFIX') || 'y',
 			{},
-			await this.redisService.getRedisInstance(),
+			this.redisService.createRedisInstance.bind(this.redisService),
 		);
 	}
 }

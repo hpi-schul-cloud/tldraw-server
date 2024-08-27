@@ -18,7 +18,7 @@ export class RedisService {
 		this.logger.setContext(RedisService.name);
 	}
 
-	async getRedisInstance() {
+	async createRedisInstance() {
 		let redisInstance: Redis;
 		if (this.sentinelServiceName) {
 			redisInstance = await this.createRedisSentinelInstance();
