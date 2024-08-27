@@ -41,7 +41,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 				openWsCallback: () => this.incOpenConnectionsGauge(),
 				closeWsCallback: () => this.decOpenConnectionsGauge(),
 			},
-			await this.redisService.getRedisInstance(),
+			this.redisService.createRedisInstance.bind(this.redisService),
 		);
 
 		this.webSocketServer.listen(wsPort, (t) => {
