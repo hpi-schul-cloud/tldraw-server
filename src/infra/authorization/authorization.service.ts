@@ -18,9 +18,13 @@ export class AuthorizationService {
 		const requestOptions = this.createAuthzRequestOptions(room, token);
 		const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
 
-		const { userId } = await response.json();
-
 		if (!response.ok) {
+			throw new Error('Authorization failed');
+		}
+
+		const { isAuthorized, userId } = await response.json();
+
+		if (!isAuthorized) {
 			throw new Error('Authorization failed');
 		}
 
