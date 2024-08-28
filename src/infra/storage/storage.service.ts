@@ -19,6 +19,7 @@ export class StorageService {
 
 		if (s3Endpoint) {
 			this.logger.log('using s3 store');
+			// @ts-expect-error - @y/redis is only having jsdoc types
 			const { createS3Storage } = await import('@y/redis/storage/s3');
 
 			store = createS3Storage(bucketName);
@@ -28,6 +29,7 @@ export class StorageService {
 			} catch (e) {}
 		} else {
 			this.logger.log('ATTENTION! using in-memory store');
+			// @ts-expect-error - @y/redis is only having jsdoc types
 			const { createMemoryStorage } = await import('@y/redis/storage/memory');
 			store = createMemoryStorage();
 		}
