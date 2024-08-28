@@ -43,7 +43,7 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: server-svc.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
     tags:
       - service
 
@@ -52,7 +52,7 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: pod-monitor.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
     tags:
       - prometheus
 
@@ -62,6 +62,6 @@
       namespace: "{{ NAMESPACE }}"
       template: ingress.yml.j2
       apply: yes
-      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
     tags:
       - ingress
