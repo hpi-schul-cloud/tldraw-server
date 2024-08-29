@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 // @ts-expect-error - @y/redis is only having jsdoc types
 import { Api } from '@y/redis';
 import { Gauge, Histogram, register } from 'prom-client';
+
 @Injectable()
 export class MetricsService {
 	static readonly openConnectionsGauge = new Gauge({
