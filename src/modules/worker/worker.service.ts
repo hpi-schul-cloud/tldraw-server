@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+// @ts-expect-error - @y/redis is only having jsdoc types
 import { createWorker } from '@y/redis';
 import { RedisService } from '../../infra/redis/redis.service.js';
 import { StorageService } from '../../infra/storage/storage.service.js';

@@ -8,7 +8,7 @@
 	"projects": {
 		"server": {
 			"type": "application",
-			"root": "apps/server",
+			"root": ".",
 			"entryFile": "apps/tldraw-server.js",
 			"sourceRoot": "src",
 			"compilerOptions": {
@@ -17,7 +17,7 @@
 		},
 		"worker": {
 			"type": "application",
-			"root": "apps/worker",
+			"root": ".",
 			"entryFile": "apps/tldraw-worker.js",
 			"sourceRoot": "src",
 			"compilerOptions": {

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+// @ts-expect-error - @y/redis is only having jsdoc types
 import { Api } from '@y/redis';
 import { Gauge, Histogram, register } from 'prom-client';
 
@@ -25,7 +26,7 @@ const methodDurationHistogram = new Histogram({
 
 const originalGetDoc = Api.prototype.getDoc;
 
-Api.prototype.getDoc = async function (room, docId) {
+Api.prototype.getDoc = async function (room: string, docId: string) {
 	const end = methodDurationHistogram.startTimer();
 
 	const result = await originalGetDoc.call(this, room, docId);
