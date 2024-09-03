@@ -7,6 +7,7 @@ import { RedisModule } from '../../infra/redis/index.js';
 import { StorageModule } from '../../infra/storage/storage.module.js';
 import { UWS, WebsocketGateway } from './api/websocket.gateway.js';
 import { AuthGuardModule } from '../../infra/auth-guard/auth-guard.module.js';
+import { TldrawDocumentController } from './api/tldraw-document.controller.js';
 
 @Module({
 	imports: [
@@ -24,5 +25,6 @@ import { AuthGuardModule } from '../../infra/auth-guard/auth-guard.module.js';
 			useValue: App({}),
 		},
 	],
+	controllers: [TldrawDocumentController],
 })
 export class ServerModule {}

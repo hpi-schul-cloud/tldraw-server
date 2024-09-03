@@ -4,7 +4,7 @@ import { MetricsModule } from '../infra/metrics/metrics.module.js';
 import { ServerModule } from '../modules/server/server.module.js';
 
 async function bootstrap() {
-	const httpPort = 3347;
+	const httpPort = 3349;
 	const nestApp = await NestFactory.create(ServerModule);
 	nestApp.enableCors();
 	await nestApp.init();
