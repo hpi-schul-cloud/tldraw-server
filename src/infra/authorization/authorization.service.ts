@@ -76,7 +76,7 @@ export class AuthorizationService {
 			body: JSON.stringify({
 				context: {
 					action: 'read',
-					requiredPermissions: ['COURSE_EDIT'],
+					requiredPermissions: ['COURSE_VIEW'],
 				},
 				referenceType: 'boardnodes',
 				referenceId: room,
