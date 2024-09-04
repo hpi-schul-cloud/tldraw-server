@@ -1,16 +1,17 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ConfigService } from '@nestjs/config';
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
 import { AuthorizationService } from './authorization.service.js';
 
 describe(AuthorizationService.name, () => {
+	let module: TestingModule;
 	let service: AuthorizationService;
 	let configService: DeepMocked<ConfigService>;
 
-	beforeEach(async () => {
-		const module = await Test.createTestingModule({
+	beforeAll(async () => {
+		module = await Test.createTestingModule({
 			providers: [
 				AuthorizationService,
 				{
@@ -28,25 +29,41 @@ describe(AuthorizationService.name, () => {
 		configService = module.get(ConfigService);
 	});
 
+	afterAll(async () => {
+		await module.close();
+	});
+
+	afterEach(() => {
+		jest.resetAllMocks();
+	});
+
+	const setupRequest = (roomId = 'roomId', cookies = 'other=ABC;jwt=eyJhbGciOiJIU') => {
+		const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
+		jest.spyOn(req, 'getParameter').mockReturnValue(roomId);
+		jest.spyOn(req, 'getHeader').mockReturnValue(cookies);
+		configService.getOrThrow.mockReturnValue('API_HOST');
+		const fetchSpy = jest.spyOn(global, 'fetch');
+
+		return { req, fetchSpy };
+	};
+
 	describe('hasPermission', () => {
 		describe('when the user request has permission', () => {
 			const setup = () => {
-				const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
-				jest.spyOn(req, 'getParameter').mockReturnValue('roomId');
-				jest.spyOn(req, 'getHeader').mockReturnValue('other=ABC;jwt=eyJhbGciOiJIU');
-				configService.getOrThrow.mockReturnValue('API_HOST');
-				const fetchSpy = jest.spyOn(global, 'fetch');
+				const { req, fetchSpy } = setupRequest();
+
 				fetchSpy.mockResolvedValue({
 					ok: true,
 					json: () => Promise.resolve({ isAuthorized: true, userId: '123' }),
 				} as any);
 
-				return { req };
+				const expectedResult = { error: null, hasWriteAccess: true, room: 'roomId', userid: '123' };
+
+				return { req, expectedResult };
 			};
 
 			it('should return an expectedResult response payload', async () => {
-				const expectedResult = { error: null, hasWriteAccess: true, room: 'roomId', userid: '123' };
-				const { req } = setup();
+				const { req, expectedResult } = setup();
 
 				const response = await service.hasPermission(req);
 
@@ -56,20 +73,13 @@ describe(AuthorizationService.name, () => {
 
 		describe('when the user request has not permission', () => {
 			const setup = () => {
-				const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
-				jest.spyOn(req, 'getParameter').mockReturnValue('roomId');
-				jest.spyOn(req, 'getHeader').mockReturnValue('other=ABC;jwt=eyJhbGciOiJIU');
-				configService.getOrThrow.mockReturnValue('API_HOST');
-				const fetchSpy = jest.spyOn(global, 'fetch');
+				const { req, fetchSpy } = setupRequest();
+
 				fetchSpy.mockResolvedValue({
 					ok: true,
 					json: () => Promise.resolve({ isAuthorized: false, userId: '123' }),
 				} as any);
 
-				return { req };
-			};
-
-			it('should return an expectedResult response payload', async () => {
 				const expectedResult = {
 					error: {
 						code: 4401,
@@ -79,28 +89,23 @@ describe(AuthorizationService.name, () => {
 					room: null,
 					userid: null,
 				};
-				const { req } = setup();
+
+				return { req, expectedResult };
+			};
+
+			it('should return an expectedResult response payload', async () => {
+				const { req, expectedResult } = setup();
+
 				const response = await service.hasPermission(req);
+
 				expect(response).toEqual(expectedResult);
 			});
 		});
 
 		describe('when the roomId is not in request params', () => {
 			const setup = () => {
-				const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
-				jest.spyOn(req, 'getParameter').mockReturnValue('');
-				jest.spyOn(req, 'getHeader').mockReturnValue('other=ABC;jwt=eyJhbGciOiJIU');
-				configService.getOrThrow.mockReturnValue('API_HOST');
-				const fetchSpy = jest.spyOn(global, 'fetch');
-				fetchSpy.mockResolvedValue({
-					ok: true,
-					json: () => Promise.resolve({ isAuthorized: false, userId: '123' }),
-				} as any);
+				const { req } = setupRequest('');
 
-				return { req };
-			};
-
-			it('should return an expectedResult response payload', async () => {
 				const expectedResult = {
 					error: {
 						code: 4500,
@@ -110,28 +115,22 @@ describe(AuthorizationService.name, () => {
 					room: null,
 					userid: null,
 				};
-				const { req } = setup();
+
+				return { req, expectedResult };
+			};
+
+			it('should return an expectedResult response payload', async () => {
+				const { req, expectedResult } = setup();
+
 				const response = await service.hasPermission(req);
+
 				expect(response).toEqual(expectedResult);
 			});
 		});
 
 		describe('when the jwtToken is not in request cookies', () => {
 			const setup = () => {
-				const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
-				jest.spyOn(req, 'getParameter').mockReturnValue('roomId');
-				jest.spyOn(req, 'getHeader').mockReturnValue('other=ABC;');
-				configService.getOrThrow.mockReturnValue('API_HOST');
-				const fetchSpy = jest.spyOn(global, 'fetch');
-				fetchSpy.mockResolvedValue({
-					ok: true,
-					json: () => Promise.resolve({ isAuthorized: false, userId: '123' }),
-				} as any);
-
-				return { req };
-			};
-
-			it('should return an expectedResult response payload', async () => {
+				const { req } = setupRequest('roomId', 'other=ABC');
 				const expectedResult = {
 					error: {
 						code: 4500,
@@ -141,19 +140,23 @@ describe(AuthorizationService.name, () => {
 					room: null,
 					userid: null,
 				};
-				const { req } = setup();
+
+				return { req, expectedResult };
+			};
+
+			it('should return an expectedResult response payload', async () => {
+				const { req, expectedResult } = setup();
+
 				const response = await service.hasPermission(req);
+
 				expect(response).toEqual(expectedResult);
 			});
 		});
 
 		describe('when the roomId not found on server', () => {
 			const setup = () => {
-				const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
-				jest.spyOn(req, 'getParameter').mockReturnValue('roomId');
-				jest.spyOn(req, 'getHeader').mockReturnValue('other=ABC;jwt=eyJhbGciOiJIU');
-				configService.getOrThrow.mockReturnValue('API_HOST');
-				const fetchSpy = jest.spyOn(global, 'fetch');
+				const { req, fetchSpy } = setupRequest();
+
 				fetchSpy.mockResolvedValue({
 					ok: false,
 					status: 404,
@@ -161,10 +164,6 @@ describe(AuthorizationService.name, () => {
 					json: () => Promise.resolve({}),
 				} as any);
 
-				return { req };
-			};
-
-			it('should return an expectedResult response payload', async () => {
 				const expectedResult = {
 					error: {
 						code: 4404,
@@ -174,8 +173,15 @@ describe(AuthorizationService.name, () => {
 					room: null,
 					userid: null,
 				};
-				const { req } = setup();
+
+				return { req, expectedResult };
+			};
+
+			it('should return an expectedResult response payload', async () => {
+				const { req, expectedResult } = setup();
+
 				const response = await service.hasPermission(req);
+
 				expect(response).toEqual(expectedResult);
 			});
 		});
