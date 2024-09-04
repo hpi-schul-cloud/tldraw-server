@@ -5,6 +5,8 @@ import { StorageService } from '../../../infra/storage/storage.service.js';
 import { TemplatedApp } from 'uws';
 import { UWS } from './websocket.gateway.js';
 import { RedisService } from '../../../infra/redis/index.js';
+import * as encoding from 'lib0/encoding';
+import * as Y from 'yjs';
 
 @UseGuards(ApiKeyGuard)
 @Controller('tldraw-document')
@@ -21,7 +23,7 @@ export class TldrawDocumentController {
 		const docName = `y:room:${urlParams.docName}:index`;
 
 		// Tell the client that the doc is deleted
-		this.webSocketServer.publish(docName, 'deleted');
+		this.sendDeleteMessage(docName);
 
 		// Delete doc in redis
 		const redis = await this.redisService.createRedisInstance();
@@ -38,5 +40,14 @@ export class TldrawDocumentController {
 		}
 
 		await store.client.removeObjects('ydocs', objectsList);
+	}
+
+	private sendDeleteMessage(topic: string) {
+		const encoder = encoding.createEncoder();
+		encoding.writeVarUint(encoder, 3);
+		encoding.writeVarString(encoder, 'deleted');
+		const message = encoding.toUint8Array(encoder);
+
+		this.webSocketServer.publish(topic, message, true);
 	}
 }
