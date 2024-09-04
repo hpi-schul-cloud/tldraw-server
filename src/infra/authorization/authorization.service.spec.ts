@@ -71,7 +71,7 @@ describe(AuthorizationService.name, () => {
 			});
 		});
 
-		describe('when the user request has not permission', () => {
+		describe('when the user has no permission', () => {
 			const setup = () => {
 				const { req, fetchSpy } = setupRequest();
 
