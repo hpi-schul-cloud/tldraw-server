@@ -18,7 +18,7 @@ export class RedisService {
 		this.logger.setContext(RedisService.name);
 	}
 
-	async createRedisInstance() {
+	public async createRedisInstance(): Promise<Redis> {
 		let redisInstance: Redis;
 		if (this.sentinelServiceName) {
 			redisInstance = await this.createRedisSentinelInstance();
@@ -27,6 +27,12 @@ export class RedisService {
 		}
 
 		return redisInstance;
+	}
+
+	public async deleteDocument(docName: string): Promise<void> {
+		const redisInstance = await this.createRedisInstance();
+
+		await redisInstance.del(docName);
 	}
 
 	private createNewRedisInstance() {

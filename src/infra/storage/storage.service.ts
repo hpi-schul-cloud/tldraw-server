@@ -11,7 +11,7 @@ export class StorageService {
 		this.logger.setContext(StorageService.name);
 	}
 
-	async get() {
+	public async get() {
 		const s3Endpoint = this.configService.get<string>('S3_ENDPOINT');
 		const bucketName = this.configService.get<string>('S3_BUCKET') || 'ydocs';
 
@@ -34,5 +34,18 @@ export class StorageService {
 			store = createMemoryStorage();
 		}
 		return store;
+	}
+
+	public async deleteDocument(parentId: string): Promise<void> {
+		const store = await this.get();
+
+		const objectsList = [];
+		const stream = store.client.listObjectsV2('ydocs', parentId, true);
+
+		for await (const obj of stream) {
+			objectsList.push(obj.name);
+		}
+
+		await store.client.removeObjects('ydocs', objectsList);
 	}
 }

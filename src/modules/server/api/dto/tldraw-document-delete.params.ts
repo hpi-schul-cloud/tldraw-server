@@ -1,3 +1,3 @@
 export class TldrawDocumentDeleteParams {
-	docName!: string;
+	parentId!: string;
 }

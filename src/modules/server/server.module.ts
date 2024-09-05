@@ -8,6 +8,7 @@ import { StorageModule } from '../../infra/storage/storage.module.js';
 import { UWS, WebsocketGateway } from './api/websocket.gateway.js';
 import { AuthGuardModule } from '../../infra/auth-guard/auth-guard.module.js';
 import { TldrawDocumentController } from './api/tldraw-document.controller.js';
+import { TldrawDocumentService } from './service/tldraw-document.service.js';
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { TldrawDocumentController } from './api/tldraw-document.controller.js';
 	],
 	providers: [
 		WebsocketGateway,
+		TldrawDocumentService,
 		{
 			provide: UWS,
 			useValue: App({}),
