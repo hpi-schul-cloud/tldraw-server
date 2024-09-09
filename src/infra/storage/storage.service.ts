@@ -7,6 +7,7 @@ export class StorageService {
 	constructor(
 		private configService: ConfigService,
 		private logger: Logger,
+		private internalStorageInstance?: any,
 	) {
 		this.logger.setContext(StorageService.name);
 	}
@@ -33,11 +34,12 @@ export class StorageService {
 			const { createMemoryStorage } = await import('@y/redis/storage/memory');
 			store = createMemoryStorage();
 		}
+
 		return store;
 	}
 
 	public async deleteDocument(parentId: string): Promise<void> {
-		const store = await this.get();
+		const store = await this.getInternalStorageInstance();
 
 		const objectsList = [];
 		const stream = store.client.listObjectsV2('ydocs', parentId, true);
@@ -47,5 +49,13 @@ export class StorageService {
 		}
 
 		await store.client.removeObjects('ydocs', objectsList);
+	}
+
+	private async getInternalStorageInstance(): Promise<any> {
+		if (!this.internalStorageInstance) {
+			this.internalStorageInstance = await this.get();
+		}
+
+		return this.internalStorageInstance;
 	}
 }

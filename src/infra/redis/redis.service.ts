@@ -4,17 +4,18 @@ import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
 import { Logger } from '../logging/logger.js';
+import internal from 'stream';
 
 @Injectable()
 export class RedisService {
 	private sentinelServiceName: string;
+	private internalRedisInstance?: Redis;
 
 	constructor(
 		private configService: ConfigService,
 		private logger: Logger,
 	) {
 		this.sentinelServiceName = this.configService.get<string>('REDIS_SENTINEL_SERVICE_NAME') || '';
-
 		this.logger.setContext(RedisService.name);
 	}
 
@@ -30,19 +31,27 @@ export class RedisService {
 	}
 
 	public async deleteDocument(docName: string): Promise<void> {
-		const redisInstance = await this.createRedisInstance();
+		const redisInstance = await this.getInternalRedisInstance();
 
 		await redisInstance.del(docName);
 	}
 
-	private createNewRedisInstance() {
+	private async getInternalRedisInstance(): Promise<Redis> {
+		if (!this.internalRedisInstance) {
+			this.internalRedisInstance = this.createNewRedisInstance();
+		}
+
+		return this.internalRedisInstance;
+	}
+
+	private createNewRedisInstance(): Redis {
 		const redisUrl = this.configService.getOrThrow('REDIS');
 		const redisInstance = new Redis(redisUrl);
 
 		return redisInstance;
 	}
 
-	private async createRedisSentinelInstance() {
+	private async createRedisSentinelInstance(): Promise<Redis> {
 		const sentinelName = this.configService.get<string>('REDIS_SENTINEL_NAME') || 'mymaster';
 		const sentinelPassword = this.configService.getOrThrow('REDIS_SENTINEL_PASSWORD');
 		const sentinels = await this.discoverSentinelHosts();
