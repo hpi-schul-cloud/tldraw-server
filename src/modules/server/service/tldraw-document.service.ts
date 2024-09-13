@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { RedisService } from '../../../infra/redis/index.js';
 import { StorageService } from '../../../infra/storage/index.js';
 import { TemplatedApp } from 'uws';
-import { UWS } from '../api/websocket.gateway.js';
+const UWS = 'UWS';
 
 @Injectable()
 export class TldrawDocumentService {

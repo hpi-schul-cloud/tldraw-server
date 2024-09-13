@@ -4,10 +4,11 @@ import { Logger } from '../logging/logger.js';
 
 @Injectable()
 export class StorageService {
+	private internalStorageInstance?: any;
+
 	constructor(
 		private configService: ConfigService,
 		private logger: Logger,
-		private internalStorageInstance?: any,
 	) {
 		this.logger.setContext(StorageService.name);
 	}
