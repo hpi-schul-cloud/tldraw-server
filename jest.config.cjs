@@ -5,7 +5,7 @@ module.exports = {
 		'^(\\.{1,2}/.*)\\.js$': '$1',
 	},
 	transform: {
-		'^.+\\.(t|j)s$': [
+		'^.+\\.tsx?$': [
 			'ts-jest',
 			{
 				useESM: true,
@@ -18,7 +18,4 @@ module.exports = {
 	collectCoverageFrom: ['**/*.(t|j)s'],
 	coverageDirectory: '../coverage',
 	testEnvironment: 'node',
-	moduleNameMapper: {
-		'@y/redis': '@y/redis',
-	},
 };
