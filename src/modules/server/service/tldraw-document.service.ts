@@ -7,7 +7,7 @@ const UWS = 'UWS';
 @Injectable()
 export class TldrawDocumentService {
 	constructor(
-		private readonly storage: StorageService,
+		private readonly storageService: StorageService,
 		@Inject(UWS) private webSocketServer: TemplatedApp,
 		private readonly redisService: RedisService,
 	) {}
@@ -19,6 +19,6 @@ export class TldrawDocumentService {
 
 		await this.redisService.deleteDocument(docName);
 
-		this.storage.deleteDocument(parentId);
+		await this.storageService.deleteDocument(parentId);
 	}
 }
