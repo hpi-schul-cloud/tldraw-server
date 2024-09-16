@@ -58,8 +58,8 @@ describe('Redis Service', () => {
 					const resolveSrv = jest.fn().mockResolvedValueOnce(records);
 					jest.spyOn(util, 'promisify').mockReturnValueOnce(resolveSrv);
 
-					const redisMock = createMock<Redis>();
-					jest.spyOn(ioredisModule, 'Redis').mockReturnValueOnce(redisMock);
+					//const redisMock = createMock<Redis>();
+					//jest.spyOn(ioredisModule, 'Redis').mockReturnValueOnce(redisMock);
 
 					return { resolveSrv, sentinelServiceName };
 				};
