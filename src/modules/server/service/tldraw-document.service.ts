@@ -15,7 +15,7 @@ export class TldrawDocumentService {
 	async deleteByDocName(parentId: string) {
 		const docName = `y:room:${parentId}:index`;
 
-		this.webSocketServer.publish(docName, 'deleted');
+		this.webSocketServer.publish(docName, 'action:delete');
 
 		await this.redisService.deleteDocument(docName);
 
