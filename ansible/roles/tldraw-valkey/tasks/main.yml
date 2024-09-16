@@ -18,6 +18,8 @@
       kubeconfig: ~/.kube/config
       update_repo_cache: no
       values:
+        global:
+          defaultStorageClass: {{ SC_DEFAULT_STORAGE_CLASS_NAME }}
         auth:
           existingSecret: tldraw-valkey-password
           existingSecretPasswordKey: REDIS_SENTINEL_PASSWORD
