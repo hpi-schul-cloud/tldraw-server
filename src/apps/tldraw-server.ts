@@ -6,6 +6,7 @@ import { ServerModule } from '../modules/server/server.module.js';
 async function bootstrap() {
 	const httpPort = 3349;
 	const nestApp = await NestFactory.create(ServerModule);
+	nestApp.setGlobalPrefix('api');
 	nestApp.enableCors();
 	await nestApp.init();
 
