@@ -26,7 +26,7 @@ const methodDurationHistogram = new Histogram({
 
 const originalGetDoc = Api.prototype.getDoc;
 
-Api.prototype.getDoc = async (room: string, docId: string): Promise<unknown> => {
+Api.prototype.getDoc = async function (room: string, docId: string): Promise<unknown> {
 	const end = methodDurationHistogram.startTimer();
 
 	const result = await originalGetDoc.call(this, room, docId);
