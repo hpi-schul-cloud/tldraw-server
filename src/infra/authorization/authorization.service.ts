@@ -108,6 +108,7 @@ export class AuthorizationService {
 		if (!cookieValue) {
 			return null;
 		}
+
 		return cookieValue.split('=')[1];
 	}
 }

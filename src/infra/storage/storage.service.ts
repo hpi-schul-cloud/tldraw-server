@@ -33,6 +33,7 @@ export class StorageService {
 			const { createMemoryStorage } = await import('@y/redis/storage/memory');
 			store = createMemoryStorage();
 		}
+
 		return store;
 	}
 }

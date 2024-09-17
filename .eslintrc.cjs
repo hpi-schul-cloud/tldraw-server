@@ -15,6 +15,7 @@ module.exports = {
 	},
 	ignorePatterns: ['.eslintrc.cjs'],
 	rules: {
+	"newline-before-return": "error",
     "require-await": "error",
     "no-return-assign": "error",
     "max-classes-per-file": 'error',
