@@ -5,7 +5,7 @@ export const ResponsePayloadBuilder = {
 		room: string | null = null,
 		userid: string | null = null,
 		error: Partial<CloseEvent> | null = null,
-		hasWriteAccess: boolean = false,
+		hasWriteAccess = false,
 	): ResponsePayload => {
 		return { hasWriteAccess, room, userid, error };
 	},

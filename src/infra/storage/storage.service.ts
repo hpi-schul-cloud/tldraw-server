@@ -4,16 +4,16 @@ import { Logger } from '../logging/logger.js';
 
 @Injectable()
 export class StorageService {
-	constructor(
+	public constructor(
 		private configService: ConfigService,
 		private logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
 	}
 
-	async get() {
+	public async get(): Promise<unknown> {
 		const s3Endpoint = this.configService.get<string>('S3_ENDPOINT');
-		const bucketName = this.configService.get<string>('S3_BUCKET') || 'ydocs';
+		const bucketName = this.configService.get<string>('S3_BUCKET') ?? 'ydocs';
 
 		let store;
 

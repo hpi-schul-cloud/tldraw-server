@@ -9,16 +9,16 @@ import { Logger } from '../logging/logger.js';
 export class RedisService {
 	private sentinelServiceName: string;
 
-	constructor(
+	public constructor(
 		private configService: ConfigService,
 		private logger: Logger,
 	) {
-		this.sentinelServiceName = this.configService.get<string>('REDIS_SENTINEL_SERVICE_NAME') || '';
+		this.sentinelServiceName = this.configService.get<string>('REDIS_SENTINEL_SERVICE_NAME') ?? '';
 
 		this.logger.setContext(RedisService.name);
 	}
 
-	async createRedisInstance() {
+	public async createRedisInstance(): Promise<Redis> {
 		let redisInstance: Redis;
 		if (this.sentinelServiceName) {
 			redisInstance = await this.createRedisSentinelInstance();
@@ -29,15 +29,15 @@ export class RedisService {
 		return redisInstance;
 	}
 
-	private createNewRedisInstance() {
+	private createNewRedisInstance(): Redis {
 		const redisUrl = this.configService.getOrThrow('REDIS');
 		const redisInstance = new Redis(redisUrl);
 
 		return redisInstance;
 	}
 
-	private async createRedisSentinelInstance() {
-		const sentinelName = this.configService.get<string>('REDIS_SENTINEL_NAME') || 'mymaster';
+	private async createRedisSentinelInstance(): Promise<Redis> {
+		const sentinelName = this.configService.get<string>('REDIS_SENTINEL_NAME') ?? 'mymaster';
 		const sentinelPassword = this.configService.getOrThrow('REDIS_SENTINEL_PASSWORD');
 		const sentinels = await this.discoverSentinelHosts();
 		this.logger.log('Discovered sentinels:', sentinels);
@@ -52,7 +52,7 @@ export class RedisService {
 		return redisInstance;
 	}
 
-	private async discoverSentinelHosts() {
+	private async discoverSentinelHosts(): Promise<{ host: string; port: number }[]> {
 		const resolveSrv = util.promisify(dns.resolveSrv);
 		try {
 			const records = await resolveSrv(this.sentinelServiceName);

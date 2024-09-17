@@ -3,7 +3,7 @@ import { Logger } from '../infra/logging/logger.js';
 import { MetricsModule } from '../infra/metrics/metrics.module.js';
 import { ServerModule } from '../modules/server/server.module.js';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
 	const httpPort = 3347;
 	const nestApp = await NestFactory.create(ServerModule);
 	nestApp.enableCors();
