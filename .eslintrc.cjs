@@ -15,18 +15,18 @@ module.exports = {
 	},
 	ignorePatterns: ['.eslintrc.cjs'],
 	rules: {
-	"newline-before-return": "error",
-    "require-await": "error",
-    "no-return-assign": "error",
-    "max-classes-per-file": 'error',
-    "@typescript-eslint/explicit-member-accessibility": "error",
-    "@typescript-eslint/explicit-function-return-type": "error",
+		'newline-before-return': 'error',
+		'require-await': 'error',
+		'no-return-assign': 'error',
+		'max-classes-per-file': 'error',
+		'@typescript-eslint/explicit-member-accessibility': 'error',
+		'@typescript-eslint/explicit-function-return-type': 'error',
 		'@typescript-eslint/explicit-module-boundary-types': 'error',
 		'@typescript-eslint/no-explicit-any': 'error',
 		'@typescript-eslint/unbound-method': 'error',
 		'@typescript-eslint/no-unused-vars': 'error',
-    "@typescript-eslint/no-non-null-assertion": "error",
-    '@typescript-eslint/naming-convention': [
+		'@typescript-eslint/no-non-null-assertion': 'error',
+		'@typescript-eslint/naming-convention': [
 			'error',
 			{
 				selector: 'interface',
@@ -44,20 +44,20 @@ module.exports = {
 			},
 		],
 	},
-  overrides: [
-    {
-      files: ['**/*spec.ts'],
-      plugins: ['jest'],
-      env: {
-        jest: true,
-      },
-      rules: {
-        // you should turn the original rule off *only* for test files
-        '@typescript-eslint/unbound-method': 'off',
-        "@typescript-eslint/explicit-function-return-type": "off",
-        'jest/unbound-method': 'error',
-        'jest/prefer-spy-on': 'error',
-      },
-    },
-  ],
+	overrides: [
+		{
+			files: ['**/*spec.ts'],
+			plugins: ['jest'],
+			env: {
+				jest: true,
+			},
+			rules: {
+				// you should turn the original rule off *only* for test files
+				'@typescript-eslint/unbound-method': 'off',
+				'@typescript-eslint/explicit-function-return-type': 'off',
+				'jest/unbound-method': 'error',
+				'jest/prefer-spy-on': 'error',
+			},
+		},
+	],
 };
