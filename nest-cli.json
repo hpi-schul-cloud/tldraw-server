@@ -9,7 +9,7 @@
 		"server": {
 			"type": "application",
 			"root": ".",
-			"entryFile": "apps/tldraw-server.js",
+			"entryFile": "apps/tldraw-server.app.js",
 			"sourceRoot": "src",
 			"compilerOptions": {
 				"tsConfigPath": "tsconfig.json"
@@ -18,7 +18,7 @@
 		"worker": {
 			"type": "application",
 			"root": ".",
-			"entryFile": "apps/tldraw-worker.js",
+			"entryFile": "apps/tldraw-worker.app.js",
 			"sourceRoot": "src",
 			"compilerOptions": {
 				"tsConfigPath": "tsconfig.json"

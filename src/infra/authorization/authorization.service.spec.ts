@@ -55,7 +55,7 @@ describe(AuthorizationService.name, () => {
 				fetchSpy.mockResolvedValue({
 					ok: true,
 					json: () => Promise.resolve({ isAuthorized: true, userId: '123' }),
-				} as any);
+				} as unknown as Promise<Response>);
 
 				const expectedResult = { error: null, hasWriteAccess: true, room: 'roomId', userid: '123' };
 
@@ -78,7 +78,7 @@ describe(AuthorizationService.name, () => {
 				fetchSpy.mockResolvedValue({
 					ok: true,
 					json: () => Promise.resolve({ isAuthorized: false, userId: '123' }),
-				} as any);
+				} as unknown as Promise<Response>);
 
 				const expectedResult = {
 					error: {
@@ -162,7 +162,7 @@ describe(AuthorizationService.name, () => {
 					status: 404,
 					statusText: 'Not Found',
 					json: () => Promise.resolve({}),
-				} as any);
+				} as unknown as Promise<Response>);
 
 				const expectedResult = {
 					error: {
