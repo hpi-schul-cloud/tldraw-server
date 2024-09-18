@@ -30,10 +30,19 @@ export class RedisService {
 		return redisInstance;
 	}
 
-	public async deleteDocument(docName: string): Promise<void> {
+	public async addDeleteDocument(docName: string): Promise<void> {
 		const redisInstance = await this.getInternalRedisInstance();
 
-		await redisInstance.del(docName);
+		await redisInstance.xadd('delete', '*', 'docName', docName);
+		await redisInstance.publish('delete', docName);
+	}
+
+	public subscribeToDeleteChannel(callback: (message: string) => void): void {
+		const redisInstance = this.createNewRedisInstance();
+		redisInstance.subscribe('delete');
+		redisInstance.on('message', (chan, message) => {
+			callback(message);
+		});
 	}
 
 	private async getInternalRedisInstance(): Promise<Redis> {

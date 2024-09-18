@@ -52,37 +52,12 @@ describe('Tldraw-Document Service', () => {
 			expect(webSocketServer.publish).toHaveBeenCalledWith(docName, expectedMessage);
 		});
 
-		it('should call redisService deleteDocument', async () => {
-			const { parentId, docName, expectedMessage } = setup();
-
-			await service.deleteByDocName(parentId);
-
-			expect(redisService.deleteDocument).toHaveBeenCalledWith(docName);
-		});
-
 		it('should call storageService deleteDocument', async () => {
 			const { parentId, docName, expectedMessage } = setup();
 
 			await service.deleteByDocName(parentId);
 
 			expect(storageService.deleteDocument).toHaveBeenCalledWith(parentId);
-		});
-	});
-
-	describe('when redis service throws error', () => {
-		const setup = () => {
-			const error = new Error('error');
-			const parentId = '123';
-
-			redisService.deleteDocument.mockRejectedValueOnce(error);
-
-			return { error, parentId };
-		};
-
-		it('should return error', () => {
-			const { error, parentId } = setup();
-
-			expect(service.deleteByDocName(parentId)).rejects.toThrow(error);
 		});
 	});
 

@@ -1,7 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { RedisService } from '../../../infra/redis/index.js';
 import { StorageService } from '../../../infra/storage/index.js';
-import { TemplatedApp } from 'uws';
+import { TemplatedApp, WebSocketBehavior } from 'uws';
+// @ts-expect-error - @y/redis is only having jsdoc types
+import { Api } from '@y/redis';
 const UWS = 'UWS';
 
 @Injectable()
@@ -17,7 +19,7 @@ export class TldrawDocumentService {
 
 		this.webSocketServer.publish(docName, 'action:delete');
 
-		await this.redisService.deleteDocument(docName);
+		await this.redisService.addDeleteDocument(docName);
 
 		await this.storageService.deleteDocument(parentId);
 	}
