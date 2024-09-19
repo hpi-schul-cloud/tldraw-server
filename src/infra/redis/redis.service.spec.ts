@@ -1,12 +1,9 @@
-import { ConfigService } from '@nestjs/config';
-import { RedisService } from './redis.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import * as util from 'util';
-import * as ioredisModule from 'ioredis';
 import { Logger } from '../logging/logger.js';
-
-const Redis = ioredisModule.Redis;
+import { RedisService } from './redis.service.js';
 
 describe('Redis Service', () => {
 	let service: RedisService;
@@ -42,9 +39,12 @@ describe('Redis Service', () => {
 					const sentinelServiceName = 'serviceName';
 					const sentinelName = 'sentinelName';
 					const sentinelPassword = 'sentinelPassword';
+					const redisPrefix = 'y';
 
 					configService.get.mockReturnValueOnce(sentinelServiceName);
+					configService.get.mockReturnValueOnce(redisPrefix);
 					configService.get.mockReturnValueOnce(sentinelName);
+					configService.get.mockReturnValueOnce(sentinelPassword);
 					configService.get.mockReturnValueOnce(sentinelPassword);
 
 					const name1 = 'name1';
@@ -64,7 +64,7 @@ describe('Redis Service', () => {
 					return { resolveSrv, sentinelServiceName };
 				};
 
-				it('calls resolveSrv', async () => {
+				it.only('calls resolveSrv', async () => {
 					const { resolveSrv, sentinelServiceName } = setup();
 
 					await service.createRedisInstance();

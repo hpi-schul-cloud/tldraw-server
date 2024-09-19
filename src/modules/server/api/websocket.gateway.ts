@@ -51,7 +51,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 		});
 
-		this.redisService.subscribeToDeleteChannel(async (message: string) => {
+		this.redisService.subscribeToDeleteChannel((message: string) => {
 			console.log('Received message in delete channel:', message);
 			this.webSocketServer.publish(message, 'action:delete');
 		});

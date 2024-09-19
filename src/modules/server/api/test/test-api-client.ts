@@ -25,10 +25,10 @@ export class TestApiClient {
 
 	private readonly kindOfAuth: string;
 
-	constructor(app: INestApplication, baseRoute: string, authValue?: string, useAsApiKey = false) {
+	public constructor(app: INestApplication, baseRoute: string, authValue?: string, useAsApiKey = false) {
 		this.app = app;
 		this.baseRoute = this.checkAndAddPrefix(baseRoute);
-		this.authHeader = useAsApiKey ? `${authValue || ''}` : `${testReqestConst.prefix} ${authValue || ''}`;
+		this.authHeader = useAsApiKey ? `${authValue ?? ''}` : `${testReqestConst.prefix} ${authValue ?? ''}`;
 		this.kindOfAuth = useAsApiKey ? 'X-API-KEY' : 'authorization';
 	}
 

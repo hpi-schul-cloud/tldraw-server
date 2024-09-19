@@ -1,9 +1,9 @@
-import { UnauthorizedException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { createMock } from '@golevelup/ts-jest';
-import { XApiKeyStrategy } from './x-api-key.strategy.js';
+import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 import { XApiKeyConfig } from '../config/x-api-key.config.js';
+import { XApiKeyStrategy } from './x-api-key.strategy.js';
 
 describe('XApiKeyStrategy', () => {
 	let module: TestingModule;
@@ -37,8 +37,7 @@ describe('XApiKeyStrategy', () => {
 	});
 
 	describe('validate', () => {
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const done = jest.fn((error: Error | null, data: boolean | null) => {});
+		const done = jest.fn(() => null);
 		describe('when a valid api key is provided', () => {
 			const setup = () => {
 				const CORRECT_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';

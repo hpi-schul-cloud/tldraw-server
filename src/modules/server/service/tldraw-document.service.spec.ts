@@ -1,17 +1,13 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { TemplatedApp } from 'uws';
 import { RedisService } from '../../../infra/redis/index.js';
-import { StorageService } from '../../../infra/storage/index.js';
 import { TldrawDocumentService } from './tldraw-document.service.js';
 
 describe('Tldraw-Document Service', () => {
-	let app: INestApplication;
 	let service: TldrawDocumentService;
 	let webSocketServer: TemplatedApp;
 	let redisService: DeepMocked<RedisService>;
-	let storageService: DeepMocked<StorageService>;
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -21,10 +17,6 @@ describe('Tldraw-Document Service', () => {
 					provide: RedisService,
 					useValue: createMock<RedisService>(),
 				},
-				{
-					provide: StorageService,
-					useValue: createMock<StorageService>(),
-				},
 				{ provide: 'UWS', useValue: createMock<TemplatedApp>() },
 			],
 		}).compile();
@@ -32,14 +24,13 @@ describe('Tldraw-Document Service', () => {
 		service = moduleFixture.get(TldrawDocumentService);
 		webSocketServer = moduleFixture.get('UWS');
 		redisService = moduleFixture.get(RedisService);
-		storageService = moduleFixture.get(StorageService);
 	});
 
 	describe('when redis and storage service returns successfully', () => {
 		const setup = () => {
 			const parentId = '123';
 			const docName = `y:room:${parentId}:index`;
-			const expectedMessage = 'deleted';
+			const expectedMessage = 'action:delete';
 
 			return { parentId, docName, expectedMessage };
 		};
@@ -51,20 +42,13 @@ describe('Tldraw-Document Service', () => {
 
 			expect(webSocketServer.publish).toHaveBeenCalledWith(docName, expectedMessage);
 		});
-	});
 
-	describe('when storage service throws error', () => {
-		const setup = () => {
-			const error = new Error('error');
-			const parentId = '123';
+		it('should call addDeleteDocument', async () => {
+			const { parentId, docName } = setup();
 
-			return { error, parentId };
-		};
+			await service.deleteByDocName(parentId);
 
-		it('should return error', () => {
-			const { error, parentId } = setup();
-
-			expect(service.deleteByDocName(parentId)).rejects.toThrow(error);
+			expect(redisService.addDeleteDocument).toHaveBeenCalledWith(docName);
 		});
 	});
 });
