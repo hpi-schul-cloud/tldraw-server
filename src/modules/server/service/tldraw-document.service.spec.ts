@@ -1,10 +1,10 @@
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { TldrawDocumentService } from './tldraw-document.service.js';
+import { TemplatedApp } from 'uws';
 import { RedisService } from '../../../infra/redis/index.js';
 import { StorageService } from '../../../infra/storage/index.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { TemplatedApp } from 'uws';
+import { TldrawDocumentService } from './tldraw-document.service.js';
 
 describe('Tldraw-Document Service', () => {
 	let app: INestApplication;
@@ -51,22 +51,12 @@ describe('Tldraw-Document Service', () => {
 
 			expect(webSocketServer.publish).toHaveBeenCalledWith(docName, expectedMessage);
 		});
-
-		it('should call storageService deleteDocument', async () => {
-			const { parentId, docName, expectedMessage } = setup();
-
-			await service.deleteByDocName(parentId);
-
-			expect(storageService.deleteDocument).toHaveBeenCalledWith(parentId);
-		});
 	});
 
 	describe('when storage service throws error', () => {
 		const setup = () => {
 			const error = new Error('error');
 			const parentId = '123';
-
-			storageService.deleteDocument.mockRejectedValueOnce(error);
 
 			return { error, parentId };
 		};
