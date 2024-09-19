@@ -20,6 +20,8 @@
       values:
         global:
           defaultStorageClass: "{{ SC_DEFAULT_STORAGE_CLASS_NAME }}"
+        replica:
+          replicaCount: "{{ TLDRAW_VALKEY_REPLICAS }}"
         auth:
           existingSecret: tldraw-valkey-password
           existingSecretPasswordKey: REDIS_SENTINEL_PASSWORD

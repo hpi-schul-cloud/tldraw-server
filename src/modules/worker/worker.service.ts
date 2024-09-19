@@ -7,16 +7,16 @@ import { StorageService } from '../../infra/storage/storage.service.js';
 
 @Injectable()
 export class WorkerService implements OnModuleInit {
-	constructor(
+	public constructor(
 		private storage: StorageService,
 		private redisService: RedisService,
 		private configService: ConfigService,
 	) {}
 
-	async onModuleInit() {
+	public async onModuleInit(): Promise<void> {
 		await createWorker(
 			await this.storage.get(),
-			this.configService.get<string>('REDIS_PREFIX') || 'y',
+			this.configService.get<string>('REDIS_PREFIX') ?? 'y',
 			{},
 			this.redisService.createRedisInstance.bind(this.redisService),
 		);

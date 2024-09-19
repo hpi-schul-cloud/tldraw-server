@@ -5,12 +5,12 @@ import { Gauge, Histogram, register } from 'prom-client';
 
 @Injectable()
 export class MetricsService {
-	static readonly openConnectionsGauge = new Gauge({
+	public static readonly openConnectionsGauge = new Gauge({
 		name: 'tldraw_open_connections',
 		help: 'Number of open WebSocket connections on tldraw-server.',
 	});
 
-	async getMetrics(): Promise<string> {
+	public async getMetrics(): Promise<string> {
 		const metrics = await register.metrics();
 
 		return metrics;
@@ -26,7 +26,7 @@ const methodDurationHistogram = new Histogram({
 
 const originalGetDoc = Api.prototype.getDoc;
 
-Api.prototype.getDoc = async function (room: string, docId: string) {
+Api.prototype.getDoc = async function (room: string, docId: string): Promise<unknown> {
 	const end = methodDurationHistogram.startTimer();
 
 	const result = await originalGetDoc.call(this, room, docId);

@@ -8,16 +8,16 @@ export class StorageService {
 	private s3Endpoint: string;
 	private bucketName: string;
 
-	constructor(
+	public constructor(
 		private configService: ConfigService,
 		private logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
 		this.s3Endpoint = this.configService.getOrThrow<string>('S3_ENDPOINT');
-		this.bucketName = this.configService.get<string>('S3_BUCKET') || 'ydocs';
+		this.bucketName = this.configService.get<string>('S3_BUCKET') ?? 'ydocs';
 	}
 
-	public async get() {
+	public async get(): Promise<unknown> {
 		let store;
 
 		if (this.s3Endpoint) {
@@ -53,6 +53,7 @@ export class StorageService {
 		await store.client.removeObjects(this.bucketName, objectsList);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private async getInternalStorageInstance(): Promise<any> {
 		if (!this.internalStorageInstance) {
 			this.internalStorageInstance = await this.get();
