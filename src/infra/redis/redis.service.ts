@@ -4,7 +4,6 @@ import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
 import { Logger } from '../logging/logger.js';
-import internal from 'stream';
 
 @Injectable()
 export class RedisService {
