@@ -4,20 +4,19 @@ import { Logger } from '../logging/logger.js';
 
 @Injectable()
 export class StorageService {
-	private internalStorageInstance?: any;
 	private s3Endpoint: string;
 	private bucketName: string;
 
-	constructor(
+	public constructor(
 		private configService: ConfigService,
 		private logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
 		this.s3Endpoint = this.configService.getOrThrow<string>('S3_ENDPOINT');
-		this.bucketName = this.configService.get<string>('S3_BUCKET') || 'ydocs';
+		this.bucketName = this.configService.get<string>('S3_BUCKET') ?? 'ydocs';
 	}
 
-	public async get() {
+	public async get(): Promise<unknown> {
 		let store;
 
 		if (this.s3Endpoint) {
@@ -38,26 +37,5 @@ export class StorageService {
 		}
 
 		return store;
-	}
-
-	public async deleteDocument(parentId: string): Promise<void> {
-		const store = await this.getInternalStorageInstance();
-
-		const objectsList = [];
-		const stream = store.client.listObjectsV2(this.bucketName, parentId, true);
-
-		for await (const obj of stream) {
-			objectsList.push(obj.name);
-		}
-
-		await store.client.removeObjects(this.bucketName, objectsList);
-	}
-
-	private async getInternalStorageInstance(): Promise<any> {
-		if (!this.internalStorageInstance) {
-			this.internalStorageInstance = await this.get();
-		}
-
-		return this.internalStorageInstance;
 	}
 }

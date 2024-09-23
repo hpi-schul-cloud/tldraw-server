@@ -1,26 +1,20 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { TemplatedApp } from 'uws';
 import { RedisService } from '../../../infra/redis/index.js';
-import { StorageService } from '../../../infra/storage/index.js';
-import { TemplatedApp, WebSocketBehavior } from 'uws';
-// @ts-expect-error - @y/redis is only having jsdoc types
-import { Api } from '@y/redis';
 const UWS = 'UWS';
 
 @Injectable()
 export class TldrawDocumentService {
-	constructor(
-		private readonly storageService: StorageService,
+	public constructor(
 		@Inject(UWS) private webSocketServer: TemplatedApp,
 		private readonly redisService: RedisService,
 	) {}
 
-	async deleteByDocName(parentId: string) {
+	public async deleteByDocName(parentId: string): Promise<void> {
 		const docName = `y:room:${parentId}:index`;
 
 		this.webSocketServer.publish(docName, 'action:delete');
 
 		await this.redisService.addDeleteDocument(docName);
-
-		await this.storageService.deleteDocument(parentId);
 	}
 }

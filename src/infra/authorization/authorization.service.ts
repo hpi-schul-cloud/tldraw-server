@@ -7,14 +7,14 @@ import { ResponsePayloadBuilder } from './response.builder.js';
 
 @Injectable()
 export class AuthorizationService {
-	constructor(
+	public constructor(
 		private configService: ConfigService,
 		private logger: Logger,
 	) {
 		logger.setContext(AuthorizationService.name);
 	}
 
-	async hasPermission(req: HttpRequest): Promise<ResponsePayload> {
+	public async hasPermission(req: HttpRequest): Promise<ResponsePayload> {
 		let response: ResponsePayload;
 		try {
 			const room = this.getRoom(req);
@@ -66,7 +66,7 @@ export class AuthorizationService {
 		return this.createResponsePayload(room, userId);
 	}
 
-	private createAuthzRequestOptions(room: string, token: string) {
+	private createAuthzRequestOptions(room: string, token: string): RequestInit {
 		const requestOptions = {
 			method: 'POST',
 			headers: {
@@ -99,7 +99,7 @@ export class AuthorizationService {
 		return response;
 	}
 
-	private getCookie(request: HttpRequest, cookieName: string) {
+	private getCookie(request: HttpRequest, cookieName: string): string | null {
 		const cookie = request.getHeader('cookie');
 		if (!cookie) {
 			return null;
@@ -108,6 +108,7 @@ export class AuthorizationService {
 		if (!cookieValue) {
 			return null;
 		}
+
 		return cookieValue.split('=')[1];
 	}
 }

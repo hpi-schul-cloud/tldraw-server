@@ -13,7 +13,7 @@ export const UWS = 'UWS';
 
 @Injectable()
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
-	constructor(
+	public constructor(
 		@Inject(UWS) private webSocketServer: TemplatedApp,
 		private storage: StorageService,
 		private authorizationService: AuthorizationService,
@@ -24,12 +24,12 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		this.logger.setContext(WebsocketGateway.name);
 	}
 
-	onModuleDestroy() {
+	public onModuleDestroy(): void {
 		this.webSocketServer.close();
 	}
 
-	async onModuleInit() {
-		const wsPathPrefix = this.configService.get<string>('WS_PATH_PREFIX') || '';
+	public async onModuleInit(): Promise<void> {
+		const wsPathPrefix = this.configService.get<string>('WS_PATH_PREFIX') ?? '';
 		const wsPort = Number(this.configService.get('WS_PORT', { infer: true })) || 3345;
 
 		await registerYWebsocketServer(
@@ -38,7 +38,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			await this.storage.get(),
 			this.authorizationService.hasPermission.bind(this.authorizationService),
 			{
-				redisPrefix: this.configService.get<string>('REDIS_PREFIX') || 'y',
+				redisPrefix: this.configService.get<string>('REDIS_PREFIX') ?? 'y',
 				openWsCallback: () => this.incOpenConnectionsGauge(),
 				closeWsCallback: () => this.decOpenConnectionsGauge(),
 			},
@@ -51,17 +51,17 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 		});
 
-		this.redisService.subscribeToDeleteChannel(async (message: string) => {
+		this.redisService.subscribeToDeleteChannel((message: string) => {
 			console.log('Received message in delete channel:', message);
 			this.webSocketServer.publish(message, 'action:delete');
 		});
 	}
 
-	private incOpenConnectionsGauge() {
+	private incOpenConnectionsGauge(): void {
 		MetricsService.openConnectionsGauge.inc();
 	}
 
-	private decOpenConnectionsGauge() {
+	private decOpenConnectionsGauge(): void {
 		MetricsService.openConnectionsGauge.dec();
 	}
 }
