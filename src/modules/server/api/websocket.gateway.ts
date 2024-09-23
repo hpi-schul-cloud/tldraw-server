@@ -50,6 +50,11 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 				this.logger.log(`Websocket Server is running on port ${wsPort}`);
 			}
 		});
+
+		this.redisService.subscribeToDeleteChannel((message: string) => {
+			console.log('Received message in delete channel:', message);
+			this.webSocketServer.publish(message, 'action:delete');
+		});
 	}
 
 	private incOpenConnectionsGauge(): void {

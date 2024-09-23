@@ -8,12 +8,19 @@ import { Logger } from '../logging/logger.js';
 @Injectable()
 export class RedisService {
 	private sentinelServiceName: string;
+	private internalRedisInstance?: Redis;
+	private redisDeletionKey: string;
+	private redisDeletionActionKey: string;
 
 	public constructor(
 		private configService: ConfigService,
 		private logger: Logger,
 	) {
 		this.sentinelServiceName = this.configService.get<string>('REDIS_SENTINEL_SERVICE_NAME') ?? '';
+		const redisPrefix = this.configService.get<string>('REDIS_PREFIX') ?? 'y';
+
+		this.redisDeletionKey = `${redisPrefix}:delete`;
+		this.redisDeletionActionKey = `${redisPrefix}:delete:action`;
 
 		this.logger.setContext(RedisService.name);
 	}
@@ -27,6 +34,29 @@ export class RedisService {
 		}
 
 		return redisInstance;
+	}
+
+	public async addDeleteDocument(docName: string): Promise<void> {
+		const redisInstance = await this.getInternalRedisInstance();
+
+		await redisInstance.xadd(this.redisDeletionKey, '*', 'docName', docName);
+		await redisInstance.publish(this.redisDeletionActionKey, docName);
+	}
+
+	public async subscribeToDeleteChannel(callback: (message: string) => void): Promise<void> {
+		const redisSubscriberInstance = await this.createRedisInstance();
+		redisSubscriberInstance.subscribe(this.redisDeletionActionKey);
+		redisSubscriberInstance.on('message', (chan, message) => {
+			callback(message);
+		});
+	}
+
+	private async getInternalRedisInstance(): Promise<Redis> {
+		if (!this.internalRedisInstance) {
+			this.internalRedisInstance = await this.createRedisInstance();
+		}
+
+		return this.internalRedisInstance;
 	}
 
 	private createNewRedisInstance(): Redis {
