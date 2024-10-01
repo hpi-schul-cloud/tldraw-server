@@ -8,5 +8,5 @@ export class ServerConfig extends RedisConfig {
 
 	@IsNumber()
 	@Transform(({ value }) => parseInt(value))
-	public WS_PORT!: number;
+	public WS_PORT = 3345;
 }
