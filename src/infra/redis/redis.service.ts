@@ -1,27 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
 import { Logger } from '../logging/logger.js';
+import { RedisConfig } from './redis.config.js';
 
 @Injectable()
 export class RedisService {
-	private sentinelServiceName: string;
+	private readonly sentinelServiceName: string;
+	private readonly redisDeletionKey: string;
+	private readonly redisDeletionActionKey: string;
 	private internalRedisInstance?: Redis;
-	private redisDeletionKey: string;
-	private redisDeletionActionKey: string;
 
 	public constructor(
-		private configService: ConfigService,
-		private logger: Logger,
+		private readonly config: RedisConfig,
+		private readonly logger: Logger,
 	) {
-		this.sentinelServiceName = this.configService.get<string>('REDIS_SENTINEL_SERVICE_NAME') ?? '';
-		const redisPrefix = this.configService.get<string>('REDIS_PREFIX') ?? 'y';
+		const redisPrefix = this.config.REDIS_PREFIX;
 
+		this.sentinelServiceName = this.config.REDIS_SENTINEL_SERVICE_NAME;
 		this.redisDeletionKey = `${redisPrefix}:delete`;
 		this.redisDeletionActionKey = `${redisPrefix}:delete:action`;
-
 		this.logger.setContext(RedisService.name);
 	}
 
@@ -60,15 +59,15 @@ export class RedisService {
 	}
 
 	private createNewRedisInstance(): Redis {
-		const redisUrl = this.configService.getOrThrow('REDIS');
+		const redisUrl = this.config.REDIS;
 		const redisInstance = new Redis(redisUrl);
 
 		return redisInstance;
 	}
 
 	private async createRedisSentinelInstance(): Promise<Redis> {
-		const sentinelName = this.configService.get<string>('REDIS_SENTINEL_NAME') ?? 'mymaster';
-		const sentinelPassword = this.configService.getOrThrow('REDIS_SENTINEL_PASSWORD');
+		const sentinelName = this.config.REDIS_SENTINEL_NAME;
+		const sentinelPassword = this.config.REDIS_SENTINEL_PASSWORD;
 		const sentinels = await this.discoverSentinelHosts();
 		this.logger.log('Discovered sentinels:', sentinels);
 

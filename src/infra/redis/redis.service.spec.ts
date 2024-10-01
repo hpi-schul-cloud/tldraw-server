@@ -1,33 +1,11 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { ConfigService } from '@nestjs/config';
-import { Test } from '@nestjs/testing';
+import { createMock } from '@golevelup/ts-jest';
+import { Redis } from 'ioredis';
 import * as util from 'util';
 import { Logger } from '../logging/logger.js';
+import { RedisConfig } from './redis.config.js';
 import { RedisService } from './redis.service.js';
 
 describe('Redis Service', () => {
-	let service: RedisService;
-	let configService: DeepMocked<ConfigService>;
-
-	beforeAll(async () => {
-		const moduleFixture = await Test.createTestingModule({
-			providers: [
-				RedisService,
-				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
-				},
-				{
-					provide: Logger,
-					useValue: createMock<Logger>(),
-				},
-			],
-		}).compile();
-
-		service = moduleFixture.get(RedisService);
-		configService = moduleFixture.get(ConfigService);
-	});
-
 	beforeEach(() => {
 		jest.resetAllMocks();
 	});
@@ -39,13 +17,15 @@ describe('Redis Service', () => {
 					const sentinelServiceName = 'serviceName';
 					const sentinelName = 'sentinelName';
 					const sentinelPassword = 'sentinelPassword';
-					const redisPrefix = 'y';
+					const redisPrefix = 'A';
 
-					configService.get.mockReturnValueOnce(sentinelServiceName);
-					configService.get.mockReturnValueOnce(redisPrefix);
-					configService.get.mockReturnValueOnce(sentinelName);
-					configService.get.mockReturnValueOnce(sentinelPassword);
-					configService.get.mockReturnValueOnce(sentinelPassword);
+					const config = new RedisConfig();
+
+					config.REDIS = sentinelServiceName;
+					config.REDIS_SENTINEL_SERVICE_NAME = sentinelServiceName;
+					config.REDIS_PREFIX = redisPrefix;
+					config.REDIS_SENTINEL_NAME = sentinelName;
+					config.REDIS_SENTINEL_PASSWORD = sentinelPassword;
 
 					const name1 = 'name1';
 					const name2 = 'name2';
@@ -60,16 +40,26 @@ describe('Redis Service', () => {
 
 					//const redisMock = createMock<Redis>();
 					//jest.spyOn(ioredisModule, 'Redis').mockReturnValueOnce(redisMock);
+					const logger = createMock<Logger>();
+					const service = new RedisService(config, logger);
 
-					return { resolveSrv, sentinelServiceName };
+					return { resolveSrv, sentinelServiceName, service };
 				};
 
-				it.only('calls resolveSrv', async () => {
-					const { resolveSrv, sentinelServiceName } = setup();
+				it('calls resolveSrv', async () => {
+					const { resolveSrv, sentinelServiceName, service } = setup();
 
 					await service.createRedisInstance();
 
 					expect(resolveSrv).toHaveBeenLastCalledWith(sentinelServiceName);
+				});
+
+				it('creates a new Redis instance', async () => {
+					const { service } = setup();
+
+					const redisInstance = await service.createRedisInstance();
+
+					expect(redisInstance).toBeInstanceOf(Redis);
 				});
 			});
 		});
