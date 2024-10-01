@@ -5,6 +5,12 @@ import { Logger } from '../logging/logger.js';
 import { RedisConfig } from './redis.config.js';
 import { RedisService } from './redis.service.js';
 
+jest.mock('ioredis', () => {
+	return {
+		Redis: jest.fn(),
+	};
+});
+
 describe('Redis Service', () => {
 	beforeEach(() => {
 		jest.resetAllMocks();

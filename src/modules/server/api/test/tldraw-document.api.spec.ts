@@ -1,4 +1,13 @@
-jest.mock('@y/redis');
+jest.mock('@y/redis', () => {
+	return {
+		registerYWebsocketServer: jest.fn(),
+		Api: jest.fn().mockImplementation(() => {
+			return {
+				prototype: jest.fn(),
+			};
+		}),
+	};
+});
 
 import { createMock } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
@@ -9,7 +18,7 @@ import { StorageService } from '../../../../infra/storage/storage.service.js';
 import { ServerModule } from '../../server.module.js';
 import { WebsocketGateway } from '../websocket.gateway.js';
 
-describe.skip('Tldraw-Document Api Test', () => {
+describe('Tldraw-Document Api Test', () => {
 	let app: INestApplication;
 
 	beforeAll(async () => {
@@ -35,7 +44,7 @@ describe.skip('Tldraw-Document Api Test', () => {
 	});
 
 	describe('deleteByDocName', () => {
-		it.skip('true to be true', () => {
+		it('true to be true', () => {
 			expect(true).toBe(true);
 		});
 	});
