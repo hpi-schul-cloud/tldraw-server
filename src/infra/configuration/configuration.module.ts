@@ -6,7 +6,7 @@ import { Configuration } from './configuration.service.js';
 export class ConfigurationModule {
 	public static register<T extends object>(Constructor: new () => T): DynamicModule {
 		return {
-			imports: [ConfigModule.forRoot({ isGlobal: true, cache: true })],
+			imports: [ConfigModule.forRoot({ cache: true })],
 			providers: [
 				Configuration,
 				{
