@@ -2,5 +2,5 @@ import { IsUrl } from 'class-validator';
 
 export class AuthorizationConfig {
 	@IsUrl({ require_tld: false })
-	public API_HOST = 'http://localhost:3030';
+	public API_HOST!: string;
 }

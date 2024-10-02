@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { XApiKeyConfig } from '../config/x-api-key.config.js';
+import { XApiKeyConfig } from '../x-api-key.config.js';
 import { XApiKeyStrategy } from './x-api-key.strategy.js';
 
 describe('XApiKeyStrategy', () => {
