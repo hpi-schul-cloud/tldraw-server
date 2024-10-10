@@ -26,7 +26,7 @@
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-		"generate-client:authorization": "node ./scripts/generate-client.js -u 'http://localhost:3030/api/v3/docs-json/' -p 'src/infra/authorization-client/authorization-api-client' -c 'openapitools-config.json' -f 'operationId:AuthorizationReferenceController_authorizeByReference'"
+		"generate-client:authorization": "node ./scripts/generate-client.js -u 'http://localhost:3030/api/v3/docs-json/' -p 'src/infra/authorization/authorization-api-client' -c 'openapitools-config.json' -f 'operationId:AuthorizationReferenceController_authorizeByReference'"
 	},
 	"dependencies": {
 		"@golevelup/ts-jest": "^0.5.4",
