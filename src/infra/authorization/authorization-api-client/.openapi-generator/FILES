@@ -6,6 +6,5 @@ models/api-validation-error.ts
 models/authorization-body-params.ts
 models/authorization-context-params.ts
 models/authorized-reponse.ts
-models/index.ts
 models/permission.ts
 runtime.ts
