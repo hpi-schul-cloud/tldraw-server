@@ -65,10 +65,16 @@ export class AuthorizationService {
 			},
 		};
 
-		// this.authorizationApi.configuration.accessToken = token;
+		const initOverrides: RequestInit = {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		};
 
-		const response =
-			await this.authorizationApi.authorizationReferenceControllerAuthorizeByReference(requestParameters);
+		const response = await this.authorizationApi.authorizationReferenceControllerAuthorizeByReference(
+			requestParameters,
+			initOverrides,
+		);
 
 		const { isAuthorized, userId } = response;
 		if (!isAuthorized) {
