@@ -12,8 +12,7 @@
  * Do not edit the class manually.
  */
 
-
-
+import { mapValues } from '../runtime.js';
 /**
  * 
  * @export
@@ -25,12 +24,52 @@ export interface AuthorizedReponse {
      * @type {string}
      * @memberof AuthorizedReponse
      */
-    'userId': string;
+    userId: string;
     /**
      * 
      * @type {boolean}
      * @memberof AuthorizedReponse
      */
-    'isAuthorized': boolean;
+    isAuthorized: boolean;
+}
+
+/**
+ * Check if a given object implements the AuthorizedReponse interface.
+ */
+export function instanceOfAuthorizedReponse(value: object): value is AuthorizedReponse {
+    if (!('userId' in value) || value['userId'] === undefined) return false;
+    if (!('isAuthorized' in value) || value['isAuthorized'] === undefined) return false;
+    return true;
+}
+
+export function AuthorizedReponseFromJSON(json: any): AuthorizedReponse {
+    return AuthorizedReponseFromJSONTyped(json, false);
+}
+
+export function AuthorizedReponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthorizedReponse {
+    if (json == null) {
+        return json;
+    }
+    return {
+        
+        'userId': json['userId'],
+        'isAuthorized': json['isAuthorized'],
+    };
+}
+
+  export function AuthorizedReponseToJSON(json: any): AuthorizedReponse {
+      return AuthorizedReponseToJSONTyped(json, false);
+  }
+
+  export function AuthorizedReponseToJSONTyped(value?: AuthorizedReponse | null, ignoreDiscriminator: boolean = false): any {
+    if (value == null) {
+        return value;
+    }
+
+    return {
+        
+        'userId': value['userId'],
+        'isAuthorized': value['isAuthorized'],
+    };
 }
 

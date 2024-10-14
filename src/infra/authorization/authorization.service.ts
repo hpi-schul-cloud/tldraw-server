@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { RawAxiosRequestConfig } from 'axios';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
-import { AuthorizationApi } from './authorization-api-client/api/authorization-api.js';
-import { Action } from './authorization-api-client/models/action.js';
 import {
-	AuthorizationBodyParams,
+	Action,
+	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
-} from './authorization-api-client/models/authorization-body-params.js';
+	AuthorizationReferenceControllerAuthorizeByReferenceRequest,
+} from './authorization-api-client/index.js';
 import { ResponsePayload } from './interfaces/response.payload.js';
 import { ResponsePayloadBuilder } from './response.builder.js';
 
@@ -55,20 +54,23 @@ export class AuthorizationService {
 	}
 
 	private async fetchAuthorization(room: string, token: string): Promise<ResponsePayload> {
-		const params: AuthorizationBodyParams = {
-			referenceType: AuthorizationBodyParamsReferenceType.BOARDNODES,
-			referenceId: room,
-			context: {
-				action: Action.READ,
-				requiredPermissions: ['COURSE_VIEW'],
+		const requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest = {
+			authorizationBodyParams: {
+				referenceType: AuthorizationBodyParamsReferenceType.BOARDNODES,
+				referenceId: room,
+				context: {
+					action: Action.READ,
+					requiredPermissions: [['COURSE_VIEW']],
+				},
 			},
 		};
 
-		const options: RawAxiosRequestConfig<any> = { headers: { authorization: `Bearer ${token}` } };
+		// this.authorizationApi.configuration.accessToken = token;
 
-		const response = await this.authorizationApi.authorizationReferenceControllerAuthorizeByReference(params, options);
+		const response =
+			await this.authorizationApi.authorizationReferenceControllerAuthorizeByReference(requestParameters);
 
-		const { isAuthorized, userId } = response.data;
+		const { isAuthorized, userId } = response;
 		if (!isAuthorized) {
 			return this.createErrorResponsePayload(4401, 'Unauthorized');
 		}

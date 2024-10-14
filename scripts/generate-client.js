@@ -56,7 +56,7 @@ const getOpenApiCommand = (params) => {
 	const { url, path, config, filter } = params;
 	const configFile = config ? `-c ${config}` : '';
 	const filterString = filter ? `--openapi-normalizer FILTER="${filter}"` : '';
-	const command = `openapi-generator-cli generate -i ${url} -g typescript-axios -o ${path} ${configFile} --skip-validate-spec ${filterString}`;
+	const command = `openapi-generator-cli generate -i ${url} -g typescript-fetch -o ${path} ${configFile} --skip-validate-spec ${filterString}`;
 
 	return command;
 };

@@ -12,10 +12,14 @@
  * Do not edit the class manually.
  */
 
-
-// May contain unused imports in some cases
-// @ts-ignore
-import type { AuthorizationContextParams } from './authorization-context-params';
+import { mapValues } from '../runtime.js';
+import type { AuthorizationContextParams } from './authorization-context-params.js';
+import {
+    AuthorizationContextParamsFromJSON,
+    AuthorizationContextParamsFromJSONTyped,
+    AuthorizationContextParamsToJSON,
+    AuthorizationContextParamsToJSONTyped,
+} from './authorization-context-params.js';
 
 /**
  * 
@@ -28,21 +32,25 @@ export interface AuthorizationBodyParams {
      * @type {AuthorizationContextParams}
      * @memberof AuthorizationBodyParams
      */
-    'context': AuthorizationContextParams;
+    context: AuthorizationContextParams;
     /**
      * The entity or domain object the operation should be performed on.
      * @type {string}
      * @memberof AuthorizationBodyParams
      */
-    'referenceType': AuthorizationBodyParamsReferenceType;
+    referenceType: AuthorizationBodyParamsReferenceType;
     /**
      * The id of the entity/domain object of the defined referenceType.
      * @type {string}
      * @memberof AuthorizationBodyParams
      */
-    'referenceId': string;
+    referenceId: string;
 }
 
+
+/**
+ * @export
+ */
 export const AuthorizationBodyParamsReferenceType = {
     USERS: 'users',
     SCHOOLS: 'schools',
@@ -58,7 +66,49 @@ export const AuthorizationBodyParamsReferenceType = {
     EXTERNAL_TOOLS: 'external-tools',
     INSTANCES: 'instances'
 } as const;
-
 export type AuthorizationBodyParamsReferenceType = typeof AuthorizationBodyParamsReferenceType[keyof typeof AuthorizationBodyParamsReferenceType];
 
+
+/**
+ * Check if a given object implements the AuthorizationBodyParams interface.
+ */
+export function instanceOfAuthorizationBodyParams(value: object): value is AuthorizationBodyParams {
+    if (!('context' in value) || value['context'] === undefined) return false;
+    if (!('referenceType' in value) || value['referenceType'] === undefined) return false;
+    if (!('referenceId' in value) || value['referenceId'] === undefined) return false;
+    return true;
+}
+
+export function AuthorizationBodyParamsFromJSON(json: any): AuthorizationBodyParams {
+    return AuthorizationBodyParamsFromJSONTyped(json, false);
+}
+
+export function AuthorizationBodyParamsFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthorizationBodyParams {
+    if (json == null) {
+        return json;
+    }
+    return {
+        
+        'context': AuthorizationContextParamsFromJSON(json['context']),
+        'referenceType': json['referenceType'],
+        'referenceId': json['referenceId'],
+    };
+}
+
+  export function AuthorizationBodyParamsToJSON(json: any): AuthorizationBodyParams {
+      return AuthorizationBodyParamsToJSONTyped(json, false);
+  }
+
+  export function AuthorizationBodyParamsToJSONTyped(value?: AuthorizationBodyParams | null, ignoreDiscriminator: boolean = false): any {
+    if (value == null) {
+        return value;
+    }
+
+    return {
+        
+        'context': AuthorizationContextParamsToJSON(value['context']),
+        'referenceType': value['referenceType'],
+        'referenceId': value['referenceId'],
+    };
+}
 

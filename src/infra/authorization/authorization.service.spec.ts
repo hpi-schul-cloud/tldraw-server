@@ -1,10 +1,8 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AxiosResponse } from 'axios';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
-import { AuthorizationApi } from './authorization-api-client/api/authorization-api.js';
-import { AuthorizedReponse } from './authorization-api-client/models/authorized-reponse.js';
+import { AuthorizationApi, AuthorizedReponse } from './authorization-api-client/index.js';
 import { AuthorizationService } from './authorization.service.js';
 
 describe(AuthorizationService.name, () => {
@@ -52,11 +50,9 @@ describe(AuthorizationService.name, () => {
 			const setup = () => {
 				const { req } = setupRequest();
 
-				const response = createMock<AxiosResponse<AuthorizedReponse>>({
-					data: {
-						isAuthorized: true,
-						userId: '123',
-					},
+				const response = createMock<AuthorizedReponse>({
+					isAuthorized: true,
+					userId: '123',
 				});
 				authorizationApi.authorizationReferenceControllerAuthorizeByReference.mockResolvedValueOnce(response);
 
@@ -78,11 +74,9 @@ describe(AuthorizationService.name, () => {
 			const setup = () => {
 				const { req } = setupRequest();
 
-				const response = createMock<AxiosResponse<AuthorizedReponse>>({
-					data: {
-						isAuthorized: false,
-						userId: '123',
-					},
+				const response = createMock<AuthorizedReponse>({
+					isAuthorized: false,
+					userId: '123',
 				});
 				authorizationApi.authorizationReferenceControllerAuthorizeByReference.mockResolvedValueOnce(response);
 
