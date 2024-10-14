@@ -4,11 +4,11 @@ import { StorageConfig } from './storage.config.js';
 
 @Injectable()
 export class StorageService {
-	private bucketName: string;
+	private readonly bucketName: string;
 
 	public constructor(
-		private config: StorageConfig,
-		private logger: Logger,
+		private readonly config: StorageConfig,
+		private readonly logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
 		this.bucketName = this.config.S3_BUCKET;

@@ -14,12 +14,12 @@ export const UWS = 'UWS';
 @Injectable()
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	public constructor(
-		@Inject(UWS) private webSocketServer: TemplatedApp,
-		private storage: StorageService,
-		private authorizationService: AuthorizationService,
-		private redisService: RedisService,
-		private config: ServerConfig,
-		private logger: Logger,
+		@Inject(UWS) private readonly webSocketServer: TemplatedApp,
+		private readonly storage: StorageService,
+		private readonly authorizationService: AuthorizationService,
+		private readonly redisService: RedisService,
+		private readonly config: ServerConfig,
+		private readonly logger: Logger,
 	) {
 		this.logger.setContext(WebsocketGateway.name);
 	}
