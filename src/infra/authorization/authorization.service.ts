@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
 import {
-	Action,
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
+	AuthorizationContextParamsAction,
+	AuthorizationContextParamsRequiredPermissions,
 	AuthorizationReferenceControllerAuthorizeByReferenceRequest,
 } from './authorization-api-client/index.js';
 import { ResponsePayload } from './interfaces/response.payload.js';
@@ -59,14 +60,15 @@ export class AuthorizationService {
 				referenceType: AuthorizationBodyParamsReferenceType.BOARDNODES,
 				referenceId: room,
 				context: {
-					action: Action.READ,
-					requiredPermissions: [['COURSE_VIEW']],
+					action: AuthorizationContextParamsAction.READ,
+					requiredPermissions: [AuthorizationContextParamsRequiredPermissions.COURSE_VIEW],
 				},
 			},
 		};
 
 		const initOverrides: RequestInit = {
 			headers: {
+				'Content-Type': 'application/json',
 				Authorization: `Bearer ${token}`,
 			},
 		};
