@@ -1,10 +1,8 @@
 apis/authorization-api.ts
 apis/index.ts
 index.ts
-models/action.ts
 models/api-validation-error.ts
 models/authorization-body-params.ts
 models/authorization-context-params.ts
 models/authorized-reponse.ts
-models/permission.ts
 runtime.ts

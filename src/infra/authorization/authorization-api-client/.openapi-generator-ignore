@@ -31,9 +31,7 @@ git_push.sh
 models/*
 
 # list of allowed files in the "models" folder
-!models/action.ts
 !models/api-validation-error.ts
 !models/authorization-body-params.ts
 !models/authorization-context-params.ts
 !models/authorized-reponse.ts
-!models/permission.ts
