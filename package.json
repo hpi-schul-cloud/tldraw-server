@@ -34,6 +34,7 @@
 		"@nestjs/core": "^10.4.1",
 		"@nestjs/passport": "^10.0.3",
 		"@nestjs/platform-express": "^10.4.1",
+		"@nestjs/swagger": "^7.4.2",
 		"@y/redis": "github:hpi-schul-cloud/y-redis#7d48e08d18ec78c9ab90063a7d867ec7f191319c",
 		"ioredis": "^5.4.1",
 		"passport": "^0.7.0",

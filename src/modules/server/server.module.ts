@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { App } from 'uws';
+import { AuthGuardModule } from '../../infra/auth-guard/auth-guard.module.js';
 import { AuthorizationModule } from '../../infra/authorization/authorization.module.js';
 import { LoggerModule } from '../../infra/logging/logger.module.js';
 import { RedisModule } from '../../infra/redis/index.js';
 import { StorageModule } from '../../infra/storage/storage.module.js';
-import { UWS, WebsocketGateway } from './api/websocket.gateway.js';
-import { AuthGuardModule } from '../../infra/auth-guard/auth-guard.module.js';
+import { TldrawConfigController } from './api/tldraw-confg.controller.js';
 import { TldrawDocumentController } from './api/tldraw-document.controller.js';
+import { UWS, WebsocketGateway } from './api/websocket.gateway.js';
 import { TldrawDocumentService } from './service/tldraw-document.service.js';
 
 @Module({
@@ -27,6 +28,6 @@ import { TldrawDocumentService } from './service/tldraw-document.service.js';
 			useValue: App({}),
 		},
 	],
-	controllers: [TldrawDocumentController],
+	controllers: [TldrawDocumentController, TldrawConfigController],
 })
 export class ServerModule {}
