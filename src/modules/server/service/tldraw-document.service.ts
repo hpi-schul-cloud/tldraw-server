@@ -6,7 +6,7 @@ const UWS = 'UWS';
 @Injectable()
 export class TldrawDocumentService {
 	public constructor(
-		@Inject(UWS) private webSocketServer: TemplatedApp,
+		@Inject(UWS) private readonly webSocketServer: TemplatedApp,
 		private readonly redisService: RedisService,
 	) {}
 
