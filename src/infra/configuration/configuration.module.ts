@@ -4,6 +4,7 @@ import { Configuration } from './configuration.service.js';
 
 const getEnvConfig = (): ConfigModuleOptions => {
 	const envConfig = {
+		cache: true,
 		envFilePath: '.env',
 		ignoreEnvFile: false,
 	};
@@ -23,7 +24,7 @@ const getEnvConfig = (): ConfigModuleOptions => {
 export class ConfigurationModule {
 	public static register<T extends object>(Constructor: new () => T): DynamicModule {
 		return {
-			imports: [ConfigModule.forRoot({ cache: true, ...getEnvConfig() })],
+			imports: [ConfigModule.forRoot(getEnvConfig())],
 			providers: [
 				Configuration,
 				{

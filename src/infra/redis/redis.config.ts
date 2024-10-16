@@ -2,11 +2,11 @@ import { IsString, IsUrl, ValidateIf } from 'class-validator';
 
 export class RedisConfig {
 	@IsUrl({ protocols: ['redis'], require_tld: false })
-	@ValidateIf((o) => o.REDIS_SENTINEL_SERVICE_NAME === undefined)
+	@ValidateIf((o: RedisConfig) => o.REDIS_SENTINEL_SERVICE_NAME === undefined)
 	public REDIS!: string;
 
 	@IsString()
-	@ValidateIf((o) => o.REDIS === undefined)
+	@ValidateIf((o: RedisConfig) => o.REDIS === undefined)
 	public REDIS_SENTINEL_SERVICE_NAME!: string;
 
 	@IsString()
@@ -16,6 +16,6 @@ export class RedisConfig {
 	public REDIS_SENTINEL_NAME = 'mymaster';
 
 	@IsString()
-	@ValidateIf((o) => o.REDIS_SENTINEL_SERVICE_NAME !== undefined)
+	@ValidateIf((o: RedisConfig) => o.REDIS_SENTINEL_SERVICE_NAME !== undefined)
 	public REDIS_SENTINEL_PASSWORD!: string;
 }
