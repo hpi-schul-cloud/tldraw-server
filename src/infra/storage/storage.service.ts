@@ -24,7 +24,7 @@ export class StorageService {
 			// make sure the bucket exists
 			await store.client.makeBucket(this.bucketName);
 		} catch (e) {
-			this.logger.error(`Failed to create bucket ${this.bucketName}`, e);
+			this.logger.log(e);
 		}
 
 		return store;
