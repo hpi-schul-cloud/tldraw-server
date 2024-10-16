@@ -1,12 +1,24 @@
-import { IsString, IsUrl, ValidateIf } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString, IsUrl, ValidateIf } from 'class-validator';
 
 export class RedisConfig {
+	@IsBoolean()
+	@IsOptional()
+	@Transform(({ value }: { value: string }) => {
+		if (value.toLowerCase() === 'true') {
+			return true;
+		} else {
+			return false;
+		}
+	})
+	public REDIS_CLUSTER_ENABLED!: boolean;
+
 	@IsUrl({ protocols: ['redis'], require_tld: false })
-	@ValidateIf((o: RedisConfig) => o.REDIS_SENTINEL_SERVICE_NAME === undefined)
+	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED === false)
 	public REDIS!: string;
 
 	@IsString()
-	@ValidateIf((o: RedisConfig) => o.REDIS === undefined)
+	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED === true)
 	public REDIS_SENTINEL_SERVICE_NAME!: string;
 
 	@IsString()
@@ -16,6 +28,6 @@ export class RedisConfig {
 	public REDIS_SENTINEL_NAME = 'mymaster';
 
 	@IsString()
-	@ValidateIf((o: RedisConfig) => o.REDIS_SENTINEL_SERVICE_NAME !== undefined)
+	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED === true)
 	public REDIS_SENTINEL_PASSWORD!: string;
 }

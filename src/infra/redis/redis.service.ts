@@ -7,7 +7,6 @@ import { RedisConfig } from './redis.config.js';
 
 @Injectable()
 export class RedisService {
-	private readonly sentinelServiceName: string;
 	private readonly redisDeletionKey: string;
 	private readonly redisDeletionActionKey: string;
 	private internalRedisInstance?: Redis;
@@ -18,7 +17,6 @@ export class RedisService {
 	) {
 		const redisPrefix = this.config.REDIS_PREFIX;
 
-		this.sentinelServiceName = this.config.REDIS_SENTINEL_SERVICE_NAME;
 		this.redisDeletionKey = `${redisPrefix}:delete`;
 		this.redisDeletionActionKey = `${redisPrefix}:delete:action`;
 		this.logger.setContext(RedisService.name);
@@ -26,7 +24,7 @@ export class RedisService {
 
 	public async createRedisInstance(): Promise<Redis> {
 		let redisInstance: Redis;
-		if (this.sentinelServiceName) {
+		if (this.config.REDIS_CLUSTER_ENABLED) {
 			redisInstance = await this.createRedisSentinelInstance();
 		} else {
 			redisInstance = this.createNewRedisInstance();
@@ -84,7 +82,7 @@ export class RedisService {
 	private async discoverSentinelHosts(): Promise<{ host: string; port: number }[]> {
 		const resolveSrv = util.promisify(dns.resolveSrv);
 		try {
-			const records = await resolveSrv(this.sentinelServiceName);
+			const records = await resolveSrv(this.config.REDIS_SENTINEL_SERVICE_NAME);
 
 			const hosts = records.map((record) => ({
 				host: record.name,
