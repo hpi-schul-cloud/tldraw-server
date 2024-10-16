@@ -4,4 +4,4 @@
 # ignore database dumps, keep format from export
 ansible
 .github
-**/authorization-api-client/*.*
+src/infra/authorization/authorization-api-client
