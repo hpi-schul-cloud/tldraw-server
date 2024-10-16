@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
+import { AuthorizationConfig } from './authorization.config.js';
 import { ResponsePayload } from './interfaces/response.payload.js';
 import { ResponsePayloadBuilder } from './response.builder.js';
 
 @Injectable()
 export class AuthorizationService {
 	public constructor(
-		private configService: ConfigService,
-		private logger: Logger,
+		private readonly config: AuthorizationConfig,
+		private readonly logger: Logger,
 	) {
 		logger.setContext(AuthorizationService.name);
 	}
@@ -49,7 +49,7 @@ export class AuthorizationService {
 	}
 
 	private async fetchAuthorization(room: string, token: string): Promise<ResponsePayload> {
-		const apiHost = this.configService.getOrThrow<string>('API_HOST');
+		const apiHost = this.config.API_HOST;
 		const requestOptions = this.createAuthzRequestOptions(room, token);
 
 		const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);

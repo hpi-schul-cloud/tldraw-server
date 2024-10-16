@@ -1,22 +1,23 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
+import { AuthorizationConfig } from './authorization.config.js';
 import { AuthorizationService } from './authorization.service.js';
 
 describe(AuthorizationService.name, () => {
 	let module: TestingModule;
 	let service: AuthorizationService;
-	let configService: DeepMocked<ConfigService>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			providers: [
 				AuthorizationService,
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
+					provide: AuthorizationConfig,
+					useValue: createMock<AuthorizationConfig>({
+						API_HOST: 'http://localhost:3000',
+					}),
 				},
 				{
 					provide: Logger,
@@ -26,7 +27,6 @@ describe(AuthorizationService.name, () => {
 		}).compile();
 
 		service = module.get<AuthorizationService>(AuthorizationService);
-		configService = module.get(ConfigService);
 	});
 
 	afterAll(async () => {
@@ -41,7 +41,6 @@ describe(AuthorizationService.name, () => {
 		const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
 		jest.spyOn(req, 'getParameter').mockReturnValue(roomId);
 		jest.spyOn(req, 'getHeader').mockReturnValue(cookies);
-		configService.getOrThrow.mockReturnValue('API_HOST');
 		const fetchSpy = jest.spyOn(global, 'fetch');
 
 		return { req, fetchSpy };

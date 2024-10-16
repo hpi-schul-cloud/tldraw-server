@@ -1,11 +1,20 @@
-jest.mock('@y/redis');
+jest.mock('@y/redis', () => {
+	return {
+		registerYWebsocketServer: jest.fn(),
+		Api: jest.fn().mockImplementation(() => {
+			return {
+				prototype: jest.fn(),
+			};
+		}),
+	};
+});
 
+import { createMock } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { StorageService } from '../../../../infra/storage/storage.service.js';
-import { RedisService } from '../../../../infra/redis/redis.service.js';
 import { App } from 'uws';
-import { createMock } from '@golevelup/ts-jest';
+import { RedisService } from '../../../../infra/redis/redis.service.js';
+import { StorageService } from '../../../../infra/storage/storage.service.js';
 import { ServerModule } from '../../server.module.js';
 import { WebsocketGateway } from '../websocket.gateway.js';
 
