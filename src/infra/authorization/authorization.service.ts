@@ -15,7 +15,7 @@ import { ResponsePayloadBuilder } from './response.builder.js';
 export class AuthorizationService {
 	public constructor(
 		private readonly authorizationApi: AuthorizationApi,
-		private logger: Logger,
+		private readonly logger: Logger,
 	) {
 		logger.setContext(AuthorizationService.name);
 	}

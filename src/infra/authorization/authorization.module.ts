@@ -1,22 +1,23 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigurationModule } from '../configuration/configuration.module.js';
 import { LoggerModule } from '../logging/logger.module.js';
 import { AuthorizationApi, Configuration } from './authorization-api-client/index.js';
+import { AuthorizationConfig } from './authorization.config.js';
 import { AuthorizationService } from './authorization.service.js';
 
 @Module({
-	imports: [LoggerModule],
+	imports: [LoggerModule, ConfigurationModule.register(AuthorizationConfig)],
 	providers: [
 		{
 			provide: AuthorizationApi,
-			useFactory: (configService: ConfigService): AuthorizationApi => {
-				const apiHost = configService.getOrThrow<string>('API_HOST');
+			useFactory: (config: AuthorizationConfig): AuthorizationApi => {
+				const apiHost = config.API_HOST;
 				const configuration = new Configuration({ basePath: `${apiHost}/api/v3` });
 				const authorizationApi = new AuthorizationApi(configuration);
 
 				return authorizationApi;
 			},
-			inject: [ConfigService],
+			inject: [AuthorizationConfig],
 		},
 		AuthorizationService,
 	],
