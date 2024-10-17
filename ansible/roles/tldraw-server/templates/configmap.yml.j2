@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tldraw-server-configmap
-  namespace: {{ NAMESPACE }}
+  namespace: "{{ NAMESPACE }}"
   labels:
     app: tldraw-server
 data:
@@ -12,7 +12,7 @@ data:
   LOG: "@y/redis"
   FEATURE_PROMETHEUS_METRICS_ENABLED: "true"
   REDIS_CLUSTER_ENABLED: "true"
-  REDIS_SENTINEL_SERVICE_NAME: valkey-headless.{{ NAMESPACE }}.svc.cluster.local
+  REDIS_SENTINEL_SERVICE_NAME: "valkey-headless.{{ NAMESPACE }}.svc.cluster.local"
   TLDRAW__WEBSOCKET_URL: "ws://localhost:3345"
   TLDRAW__ASSETS_ENABLED: "true"
   TLDRAW__ASSETS_MAX_SIZE_BYTES: "10485760"
