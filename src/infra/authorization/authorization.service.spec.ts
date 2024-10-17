@@ -2,22 +2,21 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
-import { AuthorizationConfig } from './authorization.config.js';
+import { AuthorizationApi, AuthorizedReponse } from './authorization-api-client/index.js';
 import { AuthorizationService } from './authorization.service.js';
 
 describe(AuthorizationService.name, () => {
 	let module: TestingModule;
 	let service: AuthorizationService;
+	let authorizationApi: DeepMocked<AuthorizationApi>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			providers: [
 				AuthorizationService,
 				{
-					provide: AuthorizationConfig,
-					useValue: createMock<AuthorizationConfig>({
-						API_HOST: 'http://localhost:3000',
-					}),
+					provide: AuthorizationApi,
+					useValue: createMock<AuthorizationApi>(),
 				},
 				{
 					provide: Logger,
@@ -27,6 +26,7 @@ describe(AuthorizationService.name, () => {
 		}).compile();
 
 		service = module.get<AuthorizationService>(AuthorizationService);
+		authorizationApi = module.get(AuthorizationApi);
 	});
 
 	afterAll(async () => {
@@ -41,20 +41,20 @@ describe(AuthorizationService.name, () => {
 		const req: DeepMocked<HttpRequest> = createMock<HttpRequest>();
 		jest.spyOn(req, 'getParameter').mockReturnValue(roomId);
 		jest.spyOn(req, 'getHeader').mockReturnValue(cookies);
-		const fetchSpy = jest.spyOn(global, 'fetch');
 
-		return { req, fetchSpy };
+		return { req };
 	};
 
 	describe('hasPermission', () => {
 		describe('when the user request has permission', () => {
 			const setup = () => {
-				const { req, fetchSpy } = setupRequest();
+				const { req } = setupRequest();
 
-				fetchSpy.mockResolvedValue({
-					ok: true,
-					json: () => Promise.resolve({ isAuthorized: true, userId: '123' }),
-				} as unknown as Promise<Response>);
+				const response = createMock<AuthorizedReponse>({
+					isAuthorized: true,
+					userId: '123',
+				});
+				authorizationApi.authorizationReferenceControllerAuthorizeByReference.mockResolvedValueOnce(response);
 
 				const expectedResult = { error: null, hasWriteAccess: true, room: 'roomId', userid: '123' };
 
@@ -72,12 +72,13 @@ describe(AuthorizationService.name, () => {
 
 		describe('when the user has no permission', () => {
 			const setup = () => {
-				const { req, fetchSpy } = setupRequest();
+				const { req } = setupRequest();
 
-				fetchSpy.mockResolvedValue({
-					ok: true,
-					json: () => Promise.resolve({ isAuthorized: false, userId: '123' }),
-				} as unknown as Promise<Response>);
+				const response = createMock<AuthorizedReponse>({
+					isAuthorized: false,
+					userId: '123',
+				});
+				authorizationApi.authorizationReferenceControllerAuthorizeByReference.mockResolvedValueOnce(response);
 
 				const expectedResult = {
 					error: {
@@ -154,19 +155,15 @@ describe(AuthorizationService.name, () => {
 
 		describe('when the roomId not found on server', () => {
 			const setup = () => {
-				const { req, fetchSpy } = setupRequest();
+				const { req } = setupRequest();
 
-				fetchSpy.mockResolvedValue({
-					ok: false,
-					status: 404,
-					statusText: 'Not Found',
-					json: () => Promise.resolve({}),
-				} as unknown as Promise<Response>);
+				const error = new Error('testError');
+				authorizationApi.authorizationReferenceControllerAuthorizeByReference.mockRejectedValueOnce(error);
 
 				const expectedResult = {
 					error: {
-						code: 4404,
-						reason: 'Not Found',
+						code: 4500,
+						reason: 'testError',
 					},
 					hasWriteAccess: false,
 					room: null,
