@@ -41,3 +41,10 @@ spec:
             port:
               number: 3345
         pathType: Prefix
+      - path: /tldraw
+        backend:
+          service:
+            name: tldraw-server-svc
+            port:
+              number: 3349
+        pathType: Prefix
