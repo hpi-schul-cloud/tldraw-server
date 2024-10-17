@@ -1,14 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { HttpRequest } from 'uws';
 import { Logger } from '../logging/logger.js';
-import { AuthorizationConfig } from './authorization.config.js';
+import {
+	AuthorizationApi,
+	AuthorizationBodyParamsReferenceType,
+	AuthorizationContextParamsAction,
+	AuthorizationContextParamsRequiredPermissions,
+	AuthorizationReferenceControllerAuthorizeByReferenceRequest,
+} from './authorization-api-client/index.js';
 import { ResponsePayload } from './interfaces/response.payload.js';
 import { ResponsePayloadBuilder } from './response.builder.js';
 
 @Injectable()
 export class AuthorizationService {
 	public constructor(
-		private readonly config: AuthorizationConfig,
+		private readonly authorizationApi: AuthorizationApi,
 		private readonly logger: Logger,
 	) {
 		logger.setContext(AuthorizationService.name);
@@ -49,41 +55,35 @@ export class AuthorizationService {
 	}
 
 	private async fetchAuthorization(room: string, token: string): Promise<ResponsePayload> {
-		const apiHost = this.config.API_HOST;
-		const requestOptions = this.createAuthzRequestOptions(room, token);
+		const requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest = {
+			authorizationBodyParams: {
+				referenceType: AuthorizationBodyParamsReferenceType.BOARDNODES,
+				referenceId: room,
+				context: {
+					action: AuthorizationContextParamsAction.READ,
+					requiredPermissions: [AuthorizationContextParamsRequiredPermissions.COURSE_VIEW],
+				},
+			},
+		};
 
-		const response = await fetch(`${apiHost}/api/v3/authorization/by-reference`, requestOptions);
+		const initOverrides: RequestInit = {
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+		};
 
-		if (!response.ok) {
-			return this.createErrorResponsePayload(4000 + response.status, response.statusText);
-		}
+		const response = await this.authorizationApi.authorizationReferenceControllerAuthorizeByReference(
+			requestParameters,
+			initOverrides,
+		);
 
-		const { isAuthorized, userId } = await response.json();
+		const { isAuthorized, userId } = response;
 		if (!isAuthorized) {
 			return this.createErrorResponsePayload(4401, 'Unauthorized');
 		}
 
 		return this.createResponsePayload(room, userId);
-	}
-
-	private createAuthzRequestOptions(room: string, token: string): RequestInit {
-		const requestOptions = {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: 'Bearer ' + token,
-			},
-			body: JSON.stringify({
-				context: {
-					action: 'read',
-					requiredPermissions: ['COURSE_VIEW'],
-				},
-				referenceType: 'boardnodes',
-				referenceId: room,
-			}),
-		};
-
-		return requestOptions;
 	}
 
 	private createResponsePayload(room: string, userId: string): ResponsePayload {

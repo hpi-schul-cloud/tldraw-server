@@ -1,0 +1,12 @@
+{
+	"apiPackage": "api",
+	"enumNameSuffix": "",
+	"enumPropertyNaming": "UPPERCASE",
+	"fileNaming": "kebab-case",
+	"generateAliasAsModel": true,
+	"importFileExtension": ".js",
+	"modelPackage": "models",
+	"supportsES6": true,
+	"withInterfaces": true,
+	"withSeparateModelsAndApi": true
+}
