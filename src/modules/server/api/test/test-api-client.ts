@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import supertest from 'supertest';
+import * as supertest from 'supertest';
 
 const headerConst = {
 	accept: 'accept',
