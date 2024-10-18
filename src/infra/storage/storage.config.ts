@@ -13,13 +13,7 @@ export class StorageConfig {
 	public S3_PORT!: number;
 
 	@IsBoolean()
-	@Transform(({ value }: { value: string }) => {
-		if (value.toLowerCase() === 'true') {
-			return true;
-		} else {
-			return false;
-		}
-	})
+	@Transform(({ value }) => value === 'true')
 	public S3_SSL!: boolean;
 
 	@IsString()
