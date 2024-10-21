@@ -1,6 +1,7 @@
 import { RedisService } from 'infra/redis/redis.service.js';
 import { Redis } from 'ioredis';
 import { array, decoding, map, math, number, promise } from 'lib0';
+import * as random from 'lib0/random';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness.js';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { computeRedisRoomStreamName, decodeRedisRoomStreamName } from './helper.js';
@@ -9,10 +10,10 @@ import { StreamsMessagesReply } from './redis/interfaces/stream-message-replay.j
 import { StreamMessage } from './redis/interfaces/stream-message.js';
 import { StreamNameClockPair } from './redis/interfaces/stream-name-clock-pair.js';
 import { IoRedisAdapter } from './redis/io-redis.js';
-import { AbstractStorage } from './storage.js';
+import { DocumentStorage } from './storage.js';
 
 export const createApiClient = async (
-	store: AbstractStorage,
+	store: DocumentStorage,
 	redisPrefix: string,
 	createRedisInstance: RedisService,
 ): Promise<Api> => {
@@ -59,13 +60,13 @@ export class Api {
 	public readonly redis;
 
 	public constructor(
-		private readonly store: AbstractStorage,
+		private readonly store: DocumentStorage,
 		private readonly prefix: string,
 		private readonly redisInstance: Redis,
 	) {
 		this.store = store;
 		this.prefix = prefix;
-		this.consumername = Date.now().toString(); //uuidv4();
+		this.consumername = random.uuidv4();
 		/**
 		 * After this timeout, a worker will pick up a task and clean up a stream.
 		 */

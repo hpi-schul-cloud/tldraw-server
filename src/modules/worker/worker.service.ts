@@ -7,13 +7,13 @@ import { WorkerConfig } from './worker.config.js';
 @Injectable()
 export class WorkerService implements OnModuleInit {
 	public constructor(
-		private readonly storage: StorageService,
+		private readonly storageService: StorageService,
 		private readonly redisService: RedisService,
 		private readonly config: WorkerConfig,
 	) {}
 
 	public async onModuleInit(): Promise<void> {
-		const worker = await createWorker(await this.storage.get(), this.config.REDIS_PREFIX, this.redisService);
+		const worker = await createWorker(this.storageService, this.config.REDIS_PREFIX, this.redisService);
 		await worker.run();
 	}
 }

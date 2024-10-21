@@ -14,7 +14,7 @@ export const UWS = 'UWS';
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	public constructor(
 		@Inject(UWS) private readonly webSocketServer: TemplatedApp,
-		private readonly storage: StorageService,
+		private readonly storageService: StorageService,
 		private readonly authorizationService: AuthorizationService,
 		private readonly redisService: RedisService,
 		private readonly config: ServerConfig,
@@ -34,7 +34,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		await registerYWebsocketServer(
 			this.webSocketServer,
 			`${wsPathPrefix}/:room`,
-			await this.storage.get(),
+			this.storageService,
 			this.authorizationService.hasPermission.bind(this.authorizationService),
 			{
 				redisPrefix: this.config.REDIS_PREFIX,

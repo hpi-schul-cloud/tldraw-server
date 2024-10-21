@@ -1,32 +1,87 @@
 import { Injectable } from '@nestjs/common';
-import { createS3Storage } from '../../infra/y-redis/s3.js';
-import { AbstractStorage } from '../../infra/y-redis/storage.js';
+import * as random from 'lib0/random';
+import { Client } from 'minio';
+import { Stream } from 'stream';
+import * as Y from 'yjs';
 import { Logger } from '../logging/logger.js';
+import { DocumentStorage } from '../y-redis/storage.js';
 import { StorageConfig } from './storage.config.js';
 
+export const encodeS3ObjectName = (room: string, docid: string, r = random.uuidv4()): string =>
+	`${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
+
+export const decodeS3ObjectName = (objectName: string): { room: string; docid: string; r: string } => {
+	const match = objectName.match(/(.*)\/(.*)\/(.*)$/);
+	if (match == null) {
+		throw new Error('Malformed y:room stream name!');
+	}
+
+	return { room: decodeURIComponent(match[1]), docid: decodeURIComponent(match[2]), r: match[3] };
+};
+
+const readStream = (stream: Stream): Promise<Buffer> =>
+	new Promise((resolve, reject) => {
+		const chunks: Buffer[] = [];
+		stream.on('data', (chunk: Uint8Array) => chunks.push(Buffer.from(chunk)));
+		stream.on('error', reject);
+		stream.on('end', () => resolve(Buffer.concat(chunks)));
+	});
+
 @Injectable()
-export class StorageService {
+export class StorageService implements DocumentStorage {
 	public constructor(
+		private readonly client: Client,
 		private readonly config: StorageConfig,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
 	}
 
-	public get(): AbstractStorage {
-		this.logger.log('using s3 store');
+	public async persistDoc(room: string, docname: string, ydoc: Y.Doc): Promise<void> {
+		const objectName = encodeS3ObjectName(room, docname);
+		await this.client.putObject(this.config.S3_BUCKET, objectName, Buffer.from(Y.encodeStateAsUpdateV2(ydoc)));
+	}
 
-		const config = {
-			bucketName: this.config.S3_BUCKET,
-			endPoint: this.config.S3_ENDPOINT,
-			port: this.config.S3_PORT,
-			useSSL: this.config.S3_SSL,
-			accessKey: this.config.S3_ACCESS_KEY,
-			secretKey: this.config.S3_SECRET_KEY,
-		};
+	public async retrieveDoc(room: string, docname: string): Promise<{ doc: Uint8Array; references: string[] } | null> {
+		this.logger.log('retrieving doc room=' + room + ' docname=' + docname);
+		const objNames = await this.client
+			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname, ''), true)
+			.toArray();
+		const references: string[] = objNames.map((obj) => obj.name);
+		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' refs=' + JSON.stringify(references));
 
-		const store = createS3Storage(config);
+		if (references.length === 0) {
+			return null;
+		}
+		let updates: Uint8Array[] = await Promise.all(
+			references.map((ref) => this.client.getObject(this.config.S3_BUCKET, ref).then(readStream)),
+		);
+		updates = updates.filter((update) => update != null);
+		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' updatesLen=' + updates.length);
 
-		return store;
+		return { doc: Y.mergeUpdatesV2(updates), references };
+	}
+
+	public async retrieveStateVector(room: string, docname: string): Promise<Uint8Array | null> {
+		const r = await this.retrieveDoc(room, docname);
+
+		return r ? Y.encodeStateVectorFromUpdateV2(r.doc) : null;
+	}
+
+	public async deleteReferences(_room: string, _docname: string, storeReferences: string[]): Promise<void> {
+		await this.client.removeObjects(this.config.S3_BUCKET, storeReferences);
+	}
+
+	public async deleteDocument(room: string, docname: string): Promise<void> {
+		const objNames = await this.client
+			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname, ''), true)
+			.toArray();
+		const objectsList = objNames.map((obj) => obj.name);
+
+		await this.client.removeObjects(this.config.S3_BUCKET, objectsList);
+	}
+
+	public destroy(): Promise<void> {
+		throw new Error('Method not implemented.');
 	}
 }

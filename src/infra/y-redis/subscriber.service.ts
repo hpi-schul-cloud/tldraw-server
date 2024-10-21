@@ -1,7 +1,7 @@
 import { RedisService } from 'infra/redis/redis.service.js';
 import { Api, createApiClient } from './api.service.js';
 import { isSmallerRedisId } from './helper.js';
-import { AbstractStorage } from './storage.js';
+import { DocumentStorage } from './storage.js';
 
 type SubscriptionHandler = (stream: string, message: Uint8Array[]) => void;
 interface Subscriptions {
@@ -10,7 +10,7 @@ interface Subscriptions {
 	nextId?: string | null;
 }
 export const createSubscriber = async (
-	store: AbstractStorage,
+	store: DocumentStorage,
 	redisPrefix: string,
 	createRedisInstance: RedisService,
 ): Promise<Subscriber> => {

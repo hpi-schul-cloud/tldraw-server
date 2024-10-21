@@ -6,10 +6,10 @@ import * as encoding from 'lib0/encoding';
 import * as promise from 'lib0/promise';
 import * as uws from 'uws';
 import * as Y from 'yjs';
-import * as api from './api.service.js';
+import { Api, createApiClient } from './api.service.js';
 import { computeRedisRoomStreamName, isSmallerRedisId } from './helper.js';
 import * as protocol from './protocol.js';
-import { AbstractStorage } from './storage.js';
+import { DocumentStorage } from './storage.js';
 import { createSubscriber, Subscriber } from './subscriber.service.js';
 
 /**
@@ -25,14 +25,9 @@ import { createSubscriber, Subscriber } from './subscriber.service.js';
  */
 
 class YWebsocketServer {
-	/**
-	 * @param {uws.TemplatedApp} app
-	 * @param {api.Api} client
-	 * @param {import('./subscriber.js').Subscriber} subscriber
-	 */
 	public constructor(
 		public readonly app: uws.TemplatedApp,
-		public readonly client: api.Api,
+		public readonly client: Api,
 		public readonly subscriber: Subscriber,
 	) {}
 
@@ -92,11 +87,11 @@ class User {
 export const registerYWebsocketServer = async (
 	app: uws.TemplatedApp,
 	pattern: string,
-	store: AbstractStorage,
+	store: DocumentStorage,
 	checkAuth: any,
 	options: {
 		redisPrefix?: string;
-		initDocCallback?: (room: string, docname: string, client: api.Api) => void;
+		initDocCallback?: (room: string, docname: string, client: Api) => void;
 		openWsCallback?: (ws: uws.WebSocket<User>) => void;
 		closeWsCallback?: (ws: uws.WebSocket<User>, code: number, message: ArrayBuffer) => void;
 	},
@@ -104,7 +99,7 @@ export const registerYWebsocketServer = async (
 ) => {
 	const { redisPrefix = 'yjs', initDocCallback, openWsCallback, closeWsCallback } = options;
 	const [client, subscriber] = await promise.all([
-		api.createApiClient(store, redisPrefix, createRedisInstance),
+		createApiClient(store, redisPrefix, createRedisInstance),
 		createSubscriber(store, redisPrefix, createRedisInstance),
 	]);
 	/**

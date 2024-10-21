@@ -1,9 +1,9 @@
 import { RedisService } from '../../infra/redis/redis.service.js';
 import { Api, createApiClient } from './api.service.js';
-import { AbstractStorage } from './storage.js';
+import { DocumentStorage } from './storage.js';
 
 export const createWorker = async (
-	store: AbstractStorage,
+	store: DocumentStorage,
 	redisPrefix: string,
 	createRedisInstance: RedisService,
 	tryClaimCount?: number,
