@@ -1,12 +1,11 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-// @ts-expect-error - @y/redis is only having jsdoc types
-import { registerYWebsocketServer } from '@y/redis';
 import { TemplatedApp } from 'uws';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
 import { Logger } from '../../../infra/logging/logger.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
+import { registerYWebsocketServer } from '../../../infra/y-redis/ws.service.js';
 import { ServerConfig } from '../server.config.js';
 
 export const UWS = 'UWS';
@@ -42,7 +41,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 				openWsCallback: () => this.incOpenConnectionsGauge(),
 				closeWsCallback: () => this.decOpenConnectionsGauge(),
 			},
-			this.redisService.createRedisInstance.bind(this.redisService),
+			this.redisService,
 		);
 
 		this.webSocketServer.listen(wsPort, (t) => {

@@ -1,31 +1,31 @@
 import { Injectable } from '@nestjs/common';
+import { createS3Storage } from '../../infra/y-redis/s3.js';
+import { AbstractStorage } from '../../infra/y-redis/storage.js';
 import { Logger } from '../logging/logger.js';
 import { StorageConfig } from './storage.config.js';
 
 @Injectable()
 export class StorageService {
-	private readonly bucketName: string;
-
 	public constructor(
 		private readonly config: StorageConfig,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
-		this.bucketName = this.config.S3_BUCKET;
 	}
 
-	public async get(): Promise<unknown> {
+	public get(): AbstractStorage {
 		this.logger.log('using s3 store');
-		// @ts-expect-error - @y/redis is only having jsdoc types
-		const { createS3Storage } = await import('@y/redis/storage/s3');
 
-		const store = createS3Storage(this.bucketName);
-		try {
-			// make sure the bucket exists
-			await store.client.makeBucket(this.bucketName);
-		} catch (e) {
-			this.logger.log(e);
-		}
+		const config = {
+			bucketName: this.config.S3_BUCKET,
+			endPoint: this.config.S3_ENDPOINT,
+			port: this.config.S3_PORT,
+			useSSL: this.config.S3_SSL,
+			accessKey: this.config.S3_ACCESS_KEY,
+			secretKey: this.config.S3_SECRET_KEY,
+		};
+
+		const store = createS3Storage(config);
 
 		return store;
 	}
