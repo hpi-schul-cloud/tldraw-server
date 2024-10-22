@@ -4,13 +4,7 @@ import { IsBoolean, IsOptional, IsString, IsUrl, ValidateIf } from 'class-valida
 export class RedisConfig {
 	@IsBoolean()
 	@IsOptional()
-	@Transform(({ value }: { value: string }) => {
-		if (value.toLowerCase() === 'true') {
-			return true;
-		} else {
-			return false;
-		}
-	})
+	@Transform(({ value }) => value === 'true')
 	public REDIS_CLUSTER_ENABLED!: boolean;
 
 	@IsUrl({ protocols: ['redis'], require_tld: false })
