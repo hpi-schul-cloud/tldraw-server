@@ -48,7 +48,7 @@ describe('Tldraw-Document Service', () => {
 
 			await service.deleteByDocName(parentId);
 
-			expect(redisService.addDeleteDocument).toHaveBeenCalledWith(docName);
+			expect(redisService.createRedisInstance).toHaveBeenCalledWith(docName);
 		});
 	});
 });

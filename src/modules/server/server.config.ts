@@ -1,8 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
-import { RedisConfig } from '../../infra/redis/redis.config.js';
 
-export class ServerConfig extends RedisConfig {
+export class ServerConfig {
 	@IsString()
 	public WS_PATH_PREFIX = '';
 

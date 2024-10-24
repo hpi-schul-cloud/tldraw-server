@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-// @ts-expect-error - @y/redis is only having jsdoc types
-import { Api } from '@y/redis';
 import { Gauge, Histogram, register } from 'prom-client';
+import { Api } from '../y-redis/api.service.js';
 
 @Injectable()
 export class MetricsService {
