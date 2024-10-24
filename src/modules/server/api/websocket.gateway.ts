@@ -37,7 +37,6 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			this.storageService,
 			this.authorizationService.hasPermission.bind(this.authorizationService),
 			{
-				redisPrefix: this.config.REDIS_PREFIX,
 				openWsCallback: () => this.incOpenConnectionsGauge(),
 				closeWsCallback: () => this.decOpenConnectionsGauge(),
 			},
@@ -50,7 +49,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 		});
 
-		this.redisService.subscribeToDeleteChannel((message: string) => {
+		const redisAdapter = await this.redisService.createRedisInstance();
+		redisAdapter.subscribeToDeleteChannel((message: string) => {
 			this.webSocketServer.publish(message, 'action:delete');
 		});
 	}

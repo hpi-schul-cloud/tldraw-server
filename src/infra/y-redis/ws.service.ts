@@ -1,11 +1,18 @@
+/* This file contains the implementation of the functions,
+    which was copied from the y-redis repository.
+	Adopting this code allows us to integrate proven and
+	optimized logic into the current project.
+	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
+	By adhering to the license terms, we ensure that the use of the code from the `y-redis` repository is legally compliant.
+*/
 /* eslint-disable max-classes-per-file */
-import { RedisService } from 'infra/redis/redis.service.js';
 import * as array from 'lib0/array';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import * as promise from 'lib0/promise';
 import * as uws from 'uws';
 import * as Y from 'yjs';
+import { RedisService } from '../redis/redis.service.js';
 import { Api, createApiClient } from './api.service.js';
 import { computeRedisRoomStreamName, isSmallerRedisId } from './helper.js';
 import * as protocol from './protocol.js';
@@ -90,17 +97,16 @@ export const registerYWebsocketServer = async (
 	store: DocumentStorage,
 	checkAuth: any,
 	options: {
-		redisPrefix?: string;
 		initDocCallback?: (room: string, docname: string, client: Api) => void;
 		openWsCallback?: (ws: uws.WebSocket<User>) => void;
 		closeWsCallback?: (ws: uws.WebSocket<User>, code: number, message: ArrayBuffer) => void;
 	},
 	createRedisInstance: RedisService,
 ) => {
-	const { redisPrefix = 'yjs', initDocCallback, openWsCallback, closeWsCallback } = options;
+	const { initDocCallback, openWsCallback, closeWsCallback } = options;
 	const [client, subscriber] = await promise.all([
-		createApiClient(store, redisPrefix, createRedisInstance),
-		createSubscriber(store, redisPrefix, createRedisInstance),
+		createApiClient(store, createRedisInstance),
+		createSubscriber(store, createRedisInstance),
 	]);
 	/**
 	 * @param {string} stream
@@ -179,7 +185,7 @@ export const registerYWebsocketServer = async (
 				if (openWsCallback) {
 					openWsCallback(ws);
 				}
-				const stream = computeRedisRoomStreamName(user.room, 'index', redisPrefix);
+				const stream = computeRedisRoomStreamName(user.room, 'index', client.redisPrefix);
 				user.subs.add(stream);
 				ws.subscribe(stream);
 				user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId;

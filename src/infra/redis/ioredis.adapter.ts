@@ -1,83 +1,99 @@
-import { Redis, RedisKey } from 'ioredis';
+import { Redis } from 'ioredis';
+import { Logger } from '../logging/logger.js';
 import { addMessageCommand, xDelIfEmptyCommand } from './commands.js';
+import { transformStreamMessagesReply, transformXAutoClaimReply } from './helper.js';
+import { Task, XAutoClaimRawReply, XAutoClaimResponse, XReadBufferReply } from './interfaces/redis.interface.js';
 import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-replay.js';
 import { StreamNameClockPair } from './interfaces/stream-name-clock-pair.js';
+import { RedisAdapter } from './redis.adapter.js';
+import { RedisConfig } from './redis.config.js';
 
-type XItem = [id: Buffer, fields: Buffer[]];
-type XItems = XItem[];
-type XReadBufferReply = [key: Buffer, items: XItems][] | null;
-
-type XAutoClaimRawReply = [RedisKey, XItem[]];
-type XRangeResponse = [id: string, fields: string[]][];
-
-interface XAutoClaimResponse {
-	nextId: RedisKey;
-	messages: StreamMessageReply[] | null;
-}
-
-interface Task {
-	stream: RedisKey;
-	id: string;
-}
-
-export class IoRedisAdapter {
+export class IoRedisAdapter implements RedisAdapter {
+	public readonly redisPrefix: string;
 	private readonly redisDeleteStreamName: string;
 	private readonly redisWorkerStreamName: string;
 	private readonly redisWorkerGroupName: string;
-	private readonly redis: Redis;
+	private readonly redisDeletionActionKey: string;
 
-	public constructor(redis: Redis, prefix: string) {
-		this.redisDeleteStreamName = prefix + ':delete';
-		this.redisWorkerStreamName = prefix + ':worker';
-		this.redisWorkerGroupName = prefix + ':worker';
-		this.redis = redis;
+	public constructor(
+		private readonly internalRedisInstance: Redis,
+		private readonly config: RedisConfig,
+		private readonly logger: Logger,
+	) {
+		this.logger.setContext(IoRedisAdapter.name);
 
-		this.redis.defineCommand('addMessage', {
+		this.redisPrefix = this.config.REDIS_PREFIX;
+		this.redisDeleteStreamName = `${this.redisPrefix}:delete`;
+		this.redisWorkerStreamName = `${this.redisPrefix}:worker`;
+		this.redisWorkerGroupName = `${this.redisPrefix}:worker`;
+		this.redisDeletionActionKey = `${this.redisPrefix}:delete:action`;
+
+		internalRedisInstance.defineCommand('addMessage', {
 			numberOfKeys: 1,
 			lua: addMessageCommand(this.redisWorkerStreamName, this.redisWorkerGroupName),
 		});
 
-		this.redis.defineCommand('xDelIfEmpty', {
+		internalRedisInstance.defineCommand('xDelIfEmpty', {
 			numberOfKeys: 1,
 			lua: xDelIfEmptyCommand(),
 		});
 	}
 
-	public addMessage(key: string, message: unknown): Promise<unknown> {
+	public subscribeToDeleteChannel(callback: (message: string) => void): void {
+		this.internalRedisInstance.subscribe(this.redisDeletionActionKey);
+		this.internalRedisInstance.on('message', (chan, message) => {
+			callback(message);
+		});
+	}
+
+	public async markToDeleteByDocName(docName: string): Promise<void> {
+		await this.internalRedisInstance.xadd(this.redisDeleteStreamName, '*', 'docName', docName);
+		await this.internalRedisInstance.publish(this.redisDeletionActionKey, docName);
+	}
+
+	public addMessage(key: string, message: unknown): Promise<null> {
 		// @ts-ignore
-		const result = this.redis.addMessage(key, message);
+		const result = this.internalRedisInstance.addMessage(key, message);
 
 		return result;
 	}
 
 	public getEntriesLen(streamName: string): Promise<number> {
-		const result = this.redis.xlen(streamName);
+		const result = this.internalRedisInstance.xlen(streamName);
 
 		return result;
 	}
 
 	public exists(stream: string): Promise<number> {
-		const result = this.redis.exists(stream);
+		const result = this.internalRedisInstance.exists(stream);
 
 		return result;
 	}
 
 	public async createGroup(): Promise<void> {
 		try {
-			await this.redis.xgroup('CREATE', this.redisWorkerStreamName, this.redisWorkerGroupName, '0', 'MKSTREAM');
-		} catch (error) {
-			console.log(error);
+			await this.internalRedisInstance.xgroup(
+				'CREATE',
+				this.redisWorkerStreamName,
+				this.redisWorkerGroupName,
+				'0',
+				'MKSTREAM',
+			);
+		} catch (e) {
+			this.logger.log(e);
+			// It is okay when the group already exists, so we can ignore this error.
+			if (e.message !== 'BUSYGROUP Consumer Group name already exists') {
+				throw e;
+			}
 		}
 	}
 
-	public quit(): Promise<string> {
-		const result = this.redis.quit();
-
-		return result;
+	public async quit(): Promise<void> {
+		await this.internalRedisInstance.quit();
 	}
 
 	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamsMessagesReply> {
-		const reads = await this.redis.xreadBuffer(
+		const reads = await this.internalRedisInstance.xreadBuffer(
 			'COUNT',
 			1000,
 			'BLOCK',
@@ -92,14 +108,14 @@ export class IoRedisAdapter {
 		return streamReplyRes;
 	}
 
-	public async readMessagesFromStream(computeRedisRoomStreamName: string): Promise<StreamsMessagesReply> {
-		const reads = await this.redis.xreadBuffer(
+	public async readMessagesFromStream(streamName: string): Promise<StreamsMessagesReply> {
+		const reads = await this.internalRedisInstance.xreadBuffer(
 			'COUNT',
 			1000, // Adjust the count as needed
 			'BLOCK',
 			1000, // Adjust the block time as needed
 			'STREAMS',
-			computeRedisRoomStreamName,
+			streamName,
 			'0',
 		);
 
@@ -113,7 +129,7 @@ export class IoRedisAdapter {
 		redisTaskDebounce: number,
 		tryClaimCount = 5,
 	): Promise<XAutoClaimResponse> {
-		const reclaimedTasks = (await this.redis.xautoclaim(
+		const reclaimedTasks = (await this.internalRedisInstance.xautoclaim(
 			this.redisWorkerStreamName,
 			this.redisWorkerGroupName,
 			consumerName,
@@ -128,12 +144,8 @@ export class IoRedisAdapter {
 		return reclaimedTasksRes;
 	}
 
-	public async markToDeleteByDocName(docName: string): Promise<void> {
-		await this.redis.xadd(this.redisDeleteStreamName, '*', 'docName', docName);
-	}
-
 	public async getDeletedDocEntries(): Promise<StreamMessageReply[]> {
-		const deletedDocEntries = await this.redis.xrangeBuffer(this.redisDeleteStreamName, '-', '+');
+		const deletedDocEntries = await this.internalRedisInstance.xrangeBuffer(this.redisDeleteStreamName, '-', '+');
 
 		const transformedDeletedTasks = transformStreamMessagesReply(deletedDocEntries);
 
@@ -141,16 +153,16 @@ export class IoRedisAdapter {
 	}
 
 	public deleteDeleteDocEntry(id: string): Promise<number> {
-		const result = this.redis.xdel(this.redisDeleteStreamName, id);
+		const result = this.internalRedisInstance.xdel(this.redisDeleteStreamName, id);
 
 		return result;
 	}
 
 	public async tryClearTask(task: Task): Promise<number> {
-		const streamlen = await this.redis.xlen(task.stream);
+		const streamlen = await this.internalRedisInstance.xlen(task.stream);
 
 		if (streamlen === 0) {
-			await this.redis
+			await this.internalRedisInstance
 				.multi()
 				// @ts-ignore
 				.xDelIfEmpty(task.stream)
@@ -161,13 +173,13 @@ export class IoRedisAdapter {
 		return streamlen;
 	}
 
-	public tryDeduplicateTask(task: Task, lastId: number, redisMinMessageLifetime: number): Promise<unknown> {
+	public async tryDeduplicateTask(task: Task, lastId: number, redisMinMessageLifetime: number): Promise<void> {
 		// if `redisTaskDebounce` is small, or if updateCallback taskes too long, then we might
 		// add a task twice to this list.
 		// @todo either use a different datastructure or make sure that task doesn't exist yet
 		// before adding it to the worker queue
 		// This issue is not critical, as no data will be lost if this happens.
-		return this.redis
+		await this.internalRedisInstance
 			.multi()
 			.xtrim(task.stream, 'MINID', lastId - redisMinMessageLifetime)
 			.xadd(this.redisWorkerStreamName, '*', 'compact', task.stream)
@@ -199,43 +211,4 @@ export class IoRedisAdapter {
 
 		return result;
 	}
-}
-
-function transformXAutoClaimReply(reply: XAutoClaimRawReply): XAutoClaimResponse {
-	if (reply === null) {
-		return { nextId: '', messages: null };
-	}
-
-	return {
-		nextId: reply[0],
-		messages: transformStreamMessagesReply(reply[1]),
-	};
-}
-
-function transformStreamMessagesReply(messages: XItems): StreamMessageReply[] {
-	if (messages === null) {
-		return [];
-	}
-
-	const result = messages.map((value) => {
-		return transformStreamMessageReply(value);
-	});
-
-	return result;
-}
-
-function transformStreamMessageReply(value: XItem): StreamMessageReply {
-	const [id, fields] = value;
-
-	return { id: id.toString(), message: transformTuplesReply(fields) };
-}
-
-function transformTuplesReply(reply: RedisKey[]): Record<string, RedisKey> {
-	const message: Record<string, RedisKey> = Object.create(null);
-
-	for (let i = 0; i < reply.length; i += 2) {
-		message[reply[i].toString()] = reply[i + 1];
-	}
-
-	return message;
 }

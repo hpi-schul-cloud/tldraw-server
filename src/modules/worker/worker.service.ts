@@ -17,12 +17,16 @@ export class WorkerService implements OnModuleInit {
 	}
 
 	public async onModuleInit(): Promise<void> {
-		const client = await createApiClient(this.storageService, this.config.REDIS_PREFIX, this.redisService);
+		const client = await createApiClient(this.storageService, this.redisService);
 
 		this.logger.log('WORKER: Created worker process ');
 		while (!client._destroyed) {
 			try {
-				await client.consumeWorkerQueue(this.config.WORKER_TRY_CLAIM_COUNT);
+				await client.consumeWorkerQueue(
+					this.config.WORKER_TRY_CLAIM_COUNT,
+					this.config.WORKER_TASK_DEBOUNCE,
+					this.config.WORKER_MIN_MESSAGE_LIFETIME,
+				);
 			} catch (e) {
 				this.logger.error(e);
 			}

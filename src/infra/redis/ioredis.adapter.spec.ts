@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { IoRedisAdapter } from './io-redis.js';
+import { IoRedisAdapter } from './ioredis.adapter.js';
 
 describe(IoRedisAdapter.name, () => {
 	let redis: Redis;
@@ -9,7 +9,7 @@ describe(IoRedisAdapter.name, () => {
 	beforeAll(async () => {
 		redis = new Redis();
 		prefix = 'prefix';
-		redisAdapter = new IoRedisAdapter(redis, prefix);
+		redisAdapter = new IoRedisAdapter(redis, {} as any, {} as any);
 		await redisAdapter.createGroup();
 	});
 

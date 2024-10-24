@@ -1,32 +1,20 @@
-import { RedisService } from 'infra/redis/redis.service.js';
-import { Redis } from 'ioredis';
 import { array, decoding, map, math, number, promise } from 'lib0';
 import * as random from 'lib0/random';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness.js';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
-import { computeRedisRoomStreamName, decodeRedisRoomStreamName } from './helper.js';
+import { StreamsMessagesReply } from '../redis/interfaces/stream-message-replay.js';
+import { StreamMessage } from '../redis/interfaces/stream-message.js';
+import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
+import { RedisAdapter } from '../redis/redis.adapter.js';
+import { RedisService } from '../redis/redis.service.js';
+import { decodeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
-import { StreamsMessagesReply } from './redis/interfaces/stream-message-replay.js';
-import { StreamMessage } from './redis/interfaces/stream-message.js';
-import { StreamNameClockPair } from './redis/interfaces/stream-name-clock-pair.js';
-import { IoRedisAdapter } from './redis/io-redis.js';
 import { DocumentStorage } from './storage.js';
 
-export const createApiClient = async (
-	store: DocumentStorage,
-	redisPrefix: string,
-	createRedisInstance: RedisService,
-): Promise<Api> => {
-	const a = new Api(store, redisPrefix, await createRedisInstance.createRedisInstance());
-	try {
-		await a.redis.createGroup();
-	} catch (e) {
-		// It is okay when the group already exists, so we can ignore this error.
-		// @ts-ignore
-		if (e.message !== 'BUSYGROUP Consumer Group name already exists') {
-			throw e;
-		}
-	}
+export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
+	const a = new Api(store, await createRedisInstance.createRedisInstance());
+
+	await a.redis.createGroup();
 
 	return a;
 };
@@ -53,31 +41,21 @@ const extractMessagesFromStreamReply = (streamReply: StreamsMessagesReply, prefi
 };
 
 export class Api {
+	public readonly redisPrefix: string;
 	private readonly consumername: string;
-	private readonly redisTaskDebounce;
-	private readonly redisMinMessageLifetime;
 	public _destroyed;
 	public readonly redis;
 
 	public constructor(
 		private readonly store: DocumentStorage,
-		private readonly prefix: string,
-		private readonly redisInstance: Redis,
+		private readonly redisInstance: RedisAdapter,
 	) {
 		this.store = store;
-		this.prefix = prefix;
+		this.redisPrefix = redisInstance.redisPrefix;
 		this.consumername = random.uuidv4();
-		/**
-		 * After this timeout, a worker will pick up a task and clean up a stream.
-		 */
-		this.redisTaskDebounce = parseInt('10000'); // default: 10 seconds env.getConf('redis-task-debounce') ||
-		/**
-		 * Minimum lifetime of y* update messages in redis streams.
-		 */
-		this.redisMinMessageLifetime = parseInt('60000'); // default: 1 minute env.getConf('redis-min-message-lifetime') ||
 		this._destroyed = false;
 
-		this.redis = new IoRedisAdapter(this.redisInstance, this.prefix);
+		this.redis = this.redisInstance;
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<StreamMessage[]> {
@@ -118,7 +96,7 @@ export class Api {
 			m[1] = protocol.messageSyncUpdate;
 		}
 
-		return this.redis.addMessage(computeRedisRoomStreamName(room, docid, this.prefix), m);
+		return this.redis.addMessage(room, m);
 	}
 
 	public getStateVector(room: string, docid = '/'): Promise<Uint8Array | null> {
@@ -127,12 +105,9 @@ export class Api {
 
 	public async getDoc(room: string, docid: string): Promise<any> {
 		console.log(`getDoc(${room}, ${docid})`);
-		const ms = extractMessagesFromStreamReply(
-			await this.redis.readMessagesFromStream(computeRedisRoomStreamName(room, docid, this.prefix)),
-			this.prefix,
-		);
+		const ms = extractMessagesFromStreamReply(await this.redis.readMessagesFromStream(room), this.redisPrefix);
 		console.log(`getDoc(${room}, ${docid}) - retrieved messages`);
-		const docMessages = ms.get(room)?.get(docid) || null;
+		const docMessages = ms.get(room)?.get(docid) ?? null;
 		const docstate = await this.store.retrieveDoc(room, docid);
 		console.log(`getDoc(${room}, ${docid}) - retrieved doc`);
 		const ydoc = new Doc();
@@ -175,9 +150,13 @@ export class Api {
 		};
 	}
 
-	public async consumeWorkerQueue(tryClaimCount = 5): Promise<{ stream: string; id: string }[]> {
+	public async consumeWorkerQueue(
+		tryClaimCount = 5,
+		taskDebounce = 1000,
+		minMessageLifetime = 60000,
+	): Promise<{ stream: string; id: string }[]> {
 		const tasks: { stream: string; id: string }[] = [];
-		const reclaimedTasks = await this.redis.reclaimTasks(this.consumername, this.redisTaskDebounce, tryClaimCount);
+		const reclaimedTasks = await this.redis.reclaimTasks(this.consumername, taskDebounce, tryClaimCount);
 		const deletedDocEntries = await this.redis.getDeletedDocEntries();
 		const deletedDocNames = deletedDocEntries?.map((entry) => {
 			return entry.message.docName;
@@ -197,7 +176,7 @@ export class Api {
 		await promise.all(
 			tasks.map(async (task) => {
 				const streamlen = await this.redis.tryClearTask(task);
-				const { room, docid } = decodeRedisRoomStreamName(task.stream, this.prefix);
+				const { room, docid } = decodeRedisRoomStreamName(task.stream, this.redisPrefix);
 				if (streamlen === 0) {
 					console.log('WORKER: Stream still empty, removing recurring task from queue ', { stream: task.stream });
 
@@ -230,12 +209,12 @@ export class Api {
 						storeReferences && docChanged
 							? this.store.deleteReferences(room, docid, storeReferences)
 							: promise.resolve(),
-						this.redis.tryDeduplicateTask(task, lastId, this.redisMinMessageLifetime),
+						this.redis.tryDeduplicateTask(task, lastId, minMessageLifetime),
 					]);
 					console.log('WORKER: Compacted stream ', {
 						stream: task.stream,
 						taskId: task.id,
-						newLastId: lastId - this.redisMinMessageLifetime,
+						newLastId: lastId - minMessageLifetime,
 					});
 				}
 			}),
