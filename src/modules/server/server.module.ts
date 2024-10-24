@@ -6,6 +6,7 @@ import { ConfigurationModule } from '../../infra/configuration/configuration.mod
 import { LoggerModule } from '../../infra/logging/logger.module.js';
 import { RedisModule } from '../../infra/redis/index.js';
 import { StorageModule } from '../../infra/storage/storage.module.js';
+import { TldrawConfigController } from './api/tldraw-confg.controller.js';
 import { TldrawDocumentController } from './api/tldraw-document.controller.js';
 import { UWS, WebsocketGateway } from './api/websocket.gateway.js';
 import { ServerConfig } from './server.config.js';
@@ -28,6 +29,6 @@ import { TldrawDocumentService } from './service/tldraw-document.service.js';
 			useValue: App({}),
 		},
 	],
-	controllers: [TldrawDocumentController],
+	controllers: [TldrawDocumentController, TldrawConfigController],
 })
 export class ServerModule {}

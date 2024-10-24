@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import supertest from 'supertest';
+import * as supertest from 'supertest';
 
 const headerConst = {
 	accept: 'accept',
@@ -34,6 +34,7 @@ export class TestApiClient {
 
 	public get(subPath?: string): supertest.Test {
 		const path = this.getPath(subPath);
+		//@ts-ignore
 		const testRequestInstance = supertest(this.app.getHttpServer())
 			.get(path)
 			.set(this.kindOfAuth, this.authHeader)
@@ -44,6 +45,7 @@ export class TestApiClient {
 
 	public delete(subPath?: string): supertest.Test {
 		const path = this.getPath(subPath);
+		//@ts-ignore
 		const testRequestInstance = supertest(this.app.getHttpServer())
 			.delete(path)
 			.set(this.kindOfAuth, this.authHeader)
@@ -54,6 +56,7 @@ export class TestApiClient {
 
 	public put<T extends object | string>(subPath?: string, data?: T): supertest.Test {
 		const path = this.getPath(subPath);
+		//@ts-ignore
 		const testRequestInstance = supertest(this.app.getHttpServer())
 			.put(path)
 			.set(this.kindOfAuth, this.authHeader)
@@ -64,6 +67,7 @@ export class TestApiClient {
 
 	public patch<T extends object | string>(subPath?: string, data?: T): supertest.Test {
 		const path = this.getPath(subPath);
+		//@ts-ignore
 		const testRequestInstance = supertest(this.app.getHttpServer())
 			.patch(path)
 			.set(this.kindOfAuth, this.authHeader)
@@ -74,6 +78,7 @@ export class TestApiClient {
 
 	public post<T extends object | string>(subPath?: string, data?: T): supertest.Test {
 		const path = this.getPath(subPath);
+		//@ts-ignore
 		const testRequestInstance = supertest(this.app.getHttpServer())
 			.post(path)
 			.set(this.kindOfAuth, this.authHeader)
@@ -90,6 +95,7 @@ export class TestApiClient {
 		fileName: string,
 	): supertest.Test {
 		const path = this.getPath(subPath);
+		//@ts-ignore
 		const testRequestInstance = supertest(this.app.getHttpServer())
 			.post(path)
 			.set(this.kindOfAuth, this.authHeader)
