@@ -1,10 +1,10 @@
 import { Redis } from 'ioredis';
 import { Logger } from '../logging/logger.js';
 import { addMessageCommand, xDelIfEmptyCommand } from './commands.js';
-import { transformStreamMessagesReply, transformXAutoClaimReply } from './helper.js';
-import { Task, XAutoClaimRawReply, XAutoClaimResponse, XReadBufferReply } from './interfaces/redis.interface.js';
+import { Task, XAutoClaimResponse } from './interfaces/redis.interface.js';
 import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-replay.js';
 import { StreamNameClockPair } from './interfaces/stream-name-clock-pair.js';
+import { mapToStreamMessagesReplies, mapToStreamsMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
 import { RedisAdapter } from './redis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 
@@ -103,7 +103,7 @@ export class IoRedisAdapter implements RedisAdapter {
 			...streams.map((stream) => stream.id),
 		);
 
-		const streamReplyRes = this.normalizeStreamMessagesReply(reads);
+		const streamReplyRes = mapToStreamsMessagesReply(reads);
 
 		return streamReplyRes;
 	}
@@ -119,7 +119,7 @@ export class IoRedisAdapter implements RedisAdapter {
 			'0',
 		);
 
-		const streamReplyRes = this.normalizeStreamMessagesReply(reads);
+		const streamReplyRes = mapToStreamsMessagesReply(reads);
 
 		return streamReplyRes;
 	}
@@ -129,7 +129,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		redisTaskDebounce: number,
 		tryClaimCount = 5,
 	): Promise<XAutoClaimResponse> {
-		const reclaimedTasks = (await this.internalRedisInstance.xautoclaim(
+		const reclaimedTasks = await this.internalRedisInstance.xautoclaim(
 			this.redisWorkerStreamName,
 			this.redisWorkerGroupName,
 			consumerName,
@@ -137,9 +137,9 @@ export class IoRedisAdapter implements RedisAdapter {
 			'0',
 			'COUNT',
 			tryClaimCount,
-		)) as XAutoClaimRawReply;
+		);
 
-		const reclaimedTasksRes = transformXAutoClaimReply(reclaimedTasks);
+		const reclaimedTasksRes = mapToXAutoClaimResponse(reclaimedTasks);
 
 		return reclaimedTasksRes;
 	}
@@ -147,7 +147,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	public async getDeletedDocEntries(): Promise<StreamMessageReply[]> {
 		const deletedDocEntries = await this.internalRedisInstance.xrangeBuffer(this.redisDeleteStreamName, '-', '+');
 
-		const transformedDeletedTasks = transformStreamMessagesReply(deletedDocEntries);
+		const transformedDeletedTasks = mapToStreamMessagesReplies(deletedDocEntries);
 
 		return transformedDeletedTasks;
 	}
@@ -195,20 +195,5 @@ export class IoRedisAdapter implements RedisAdapter {
 			) // immediately claim this entry, will be picked up by worker after timeout
 			.xdel(this.redisWorkerStreamName, task.id)
 			.exec();
-	}
-
-	private normalizeStreamMessagesReply(streamReply: XReadBufferReply): StreamsMessagesReply {
-		if (streamReply === null) {
-			return [];
-		}
-
-		const result = streamReply.map(([name, messages]) => {
-			return {
-				name: name.toString(),
-				messages: transformStreamMessagesReply(messages),
-			};
-		});
-
-		return result;
 	}
 }
