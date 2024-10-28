@@ -1,6 +1,6 @@
 import { RedisKey } from 'ioredis';
-import { TypeGuard } from './guards/index.js';
-import { checkXItems, XAutoClaimResponse, XItem, XItems, XReadBufferReply } from './interfaces/redis.interface.js';
+import { RedisGuard, TypeGuard } from './guards/index.js';
+import { XAutoClaimResponse, XItem, XItems, XReadBufferReply } from './interfaces/redis.interface.js';
 import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-replay.js';
 
 export function mapToXAutoClaimResponse(value: unknown): XAutoClaimResponse {
@@ -10,7 +10,7 @@ export function mapToXAutoClaimResponse(value: unknown): XAutoClaimResponse {
 	}
 
 	const unknownArray = TypeGuard.checkUnknownArrayWithElements(value);
-	const xItems = checkXItems(unknownArray[1]);
+	const xItems = RedisGuard.checkXItems(unknownArray[1]);
 	const redisKey = TypeGuard.isString(unknownArray[0])
 		? TypeGuard.checkString(unknownArray[0])
 		: TypeGuard.checkBuffer(unknownArray[0]);
