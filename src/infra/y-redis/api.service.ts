@@ -7,7 +7,7 @@ import { StreamMessage } from '../redis/interfaces/stream-message.js';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
 import { RedisAdapter } from '../redis/redis.adapter.js';
 import { RedisService } from '../redis/redis.service.js';
-import { decodeRedisRoomStreamName } from './helper.js';
+import { computeRedisRoomStreamName, decodeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
@@ -96,7 +96,7 @@ export class Api {
 			m[1] = protocol.messageSyncUpdate;
 		}
 
-		return this.redis.addMessage(room, m);
+		return this.redis.addMessage(computeRedisRoomStreamName(room, docid, this.redisPrefix), m);
 	}
 
 	public getStateVector(room: string, docid = '/'): Promise<Uint8Array | null> {
