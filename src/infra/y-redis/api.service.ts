@@ -2,6 +2,7 @@ import { array, decoding, map, math, number, promise } from 'lib0';
 import * as random from 'lib0/random';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness.js';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
+import { Task } from '../redis/interfaces/redis.interface.js';
 import { StreamsMessagesReply } from '../redis/interfaces/stream-message-replay.js';
 import { StreamMessage } from '../redis/interfaces/stream-message.js';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
@@ -19,8 +20,11 @@ export const createApiClient = async (store: DocumentStorage, createRedisInstanc
 	return a;
 };
 
-const extractMessagesFromStreamReply = (streamReply: StreamsMessagesReply, prefix: string) => {
-	const messages = new Map<string, Map<string, { lastId: string; messages: Uint8Array[] }>>();
+const extractMessagesFromStreamReply = (
+	streamReply: StreamsMessagesReply,
+	prefix: string,
+): Map<string, Map<string, StreamMessage>> => {
+	const messages = new Map<string, Map<string, StreamMessage>>();
 
 	streamReply?.forEach((docStreamReply) => {
 		const { room, docid } = decodeRedisRoomStreamName(docStreamReply.name.toString(), prefix);
@@ -103,7 +107,16 @@ export class Api {
 		return this.store.retrieveStateVector(room, docid);
 	}
 
-	public async getDoc(room: string, docid: string): Promise<any> {
+	public async getDoc(
+		room: string,
+		docid: string,
+	): Promise<{
+		ydoc: Doc;
+		awareness: Awareness;
+		redisLastId: string;
+		storeReferences: string[] | null;
+		docChanged: boolean;
+	}> {
 		console.log(`getDoc(${room}, ${docid})`);
 		const ms = extractMessagesFromStreamReply(await this.redis.readMessagesFromStream(room), this.redisPrefix);
 		console.log(`getDoc(${room}, ${docid}) - retrieved messages`);
@@ -150,12 +163,8 @@ export class Api {
 		};
 	}
 
-	public async consumeWorkerQueue(
-		tryClaimCount = 5,
-		taskDebounce = 1000,
-		minMessageLifetime = 60000,
-	): Promise<{ stream: string; id: string }[]> {
-		const tasks: { stream: string; id: string }[] = [];
+	public async consumeWorkerQueue(tryClaimCount = 5, taskDebounce = 1000, minMessageLifetime = 60000): Promise<Task[]> {
+		const tasks: Task[] = [];
 		const reclaimedTasks = await this.redis.reclaimTasks(this.consumername, taskDebounce, tryClaimCount);
 		const deletedDocEntries = await this.redis.getDeletedDocEntries();
 		const deletedDocNames = deletedDocEntries?.map((entry) => {
@@ -176,7 +185,7 @@ export class Api {
 		await promise.all(
 			tasks.map(async (task) => {
 				const streamlen = await this.redis.tryClearTask(task);
-				const { room, docid } = decodeRedisRoomStreamName(task.stream, this.redisPrefix);
+				const { room, docid } = decodeRedisRoomStreamName(task.stream.toString(), this.redisPrefix);
 				if (streamlen === 0) {
 					console.log('WORKER: Stream still empty, removing recurring task from queue ', { stream: task.stream });
 
