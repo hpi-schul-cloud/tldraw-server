@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Gauge, Histogram, register } from 'prom-client';
+import { Awareness } from 'y-protocols/awareness.js';
+import { Doc } from 'yjs';
 import { Api } from '../y-redis/api.service.js';
 
 @Injectable()
@@ -25,7 +27,16 @@ const methodDurationHistogram = new Histogram({
 
 const originalGetDoc = Api.prototype.getDoc;
 
-Api.prototype.getDoc = async function (room: string, docId: string): Promise<unknown> {
+Api.prototype.getDoc = async function (
+	room: string,
+	docId: string,
+): Promise<{
+	ydoc: Doc;
+	awareness: Awareness;
+	redisLastId: string;
+	storeReferences: string[] | null;
+	docChanged: boolean;
+}> {
 	const end = methodDurationHistogram.startTimer();
 
 	const result = await originalGetDoc.call(this, room, docId);

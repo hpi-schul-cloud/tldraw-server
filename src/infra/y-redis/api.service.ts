@@ -92,8 +92,9 @@ export class Api {
 		storeReferences: string[] | null;
 		docChanged: boolean;
 	}> {
+		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
 		console.log(`getDoc(${room}, ${docid})`);
-		const ms = extractMessagesFromStreamReply(await this.redis.readMessagesFromStream(room), this.redisPrefix);
+		const ms = extractMessagesFromStreamReply(await this.redis.readMessagesFromStream(roomComputed), this.redisPrefix);
 		console.log(`getDoc(${room}, ${docid}) - retrieved messages`);
 		const docMessages = ms.get(room)?.get(docid) ?? null;
 		const docstate = await this.store.retrieveDoc(room, docid);

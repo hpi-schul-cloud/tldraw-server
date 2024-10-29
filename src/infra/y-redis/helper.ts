@@ -1,4 +1,4 @@
-import { map } from 'lib0';
+import { array, map } from 'lib0';
 import { StreamsMessagesReply } from '../redis/interfaces/stream-message-replay.js';
 import { StreamMessage } from '../redis/interfaces/stream-message.js';
 
