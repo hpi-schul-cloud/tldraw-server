@@ -1,3 +1,7 @@
+import { map } from 'lib0';
+import { StreamsMessagesReply } from '../redis/interfaces/stream-message-replay.js';
+import { StreamMessage } from '../redis/interfaces/stream-message.js';
+
 /* This file contains the implementation of the functions,
     which was copied from the y-redis repository.
 	Adopting this code allows us to integrate proven and
@@ -26,4 +30,28 @@ export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: stri
 	}
 
 	return { room: decodeURIComponent(match[2]), docid: decodeURIComponent(match[3]) };
+};
+
+export const extractMessagesFromStreamReply = (
+	streamReply: StreamsMessagesReply,
+	prefix: string,
+): Map<string, Map<string, StreamMessage>> => {
+	const messages = new Map<string, Map<string, StreamMessage>>();
+
+	streamReply?.forEach((docStreamReply) => {
+		const { room, docid } = decodeRedisRoomStreamName(docStreamReply.name.toString(), prefix);
+		const docMessages = map.setIfUndefined(map.setIfUndefined(messages, room, map.create), docid, () => ({
+			// @ts-ignore
+			lastId: array.last(docStreamReply.messages).id,
+			messages: [] as Uint8Array[],
+		}));
+		docStreamReply.messages?.forEach((m) => {
+			if (m.message.m != null) {
+				// @ts-ignore
+				docMessages.messages.push(m.message.m);
+			}
+		});
+	});
+
+	return messages;
 };

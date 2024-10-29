@@ -1,14 +1,13 @@
-import { array, decoding, map, math, number, promise } from 'lib0';
+import { Task } from 'infra/redis/interfaces/redis.interface.js';
+import { array, decoding, math, number, promise } from 'lib0';
 import * as random from 'lib0/random';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness.js';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
-import { Task } from '../redis/interfaces/redis.interface.js';
-import { StreamsMessagesReply } from '../redis/interfaces/stream-message-replay.js';
 import { StreamMessage } from '../redis/interfaces/stream-message.js';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
 import { RedisAdapter } from '../redis/redis.adapter.js';
 import { RedisService } from '../redis/redis.service.js';
-import { computeRedisRoomStreamName, decodeRedisRoomStreamName } from './helper.js';
+import { computeRedisRoomStreamName, decodeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
@@ -18,30 +17,6 @@ export const createApiClient = async (store: DocumentStorage, createRedisInstanc
 	await a.redis.createGroup();
 
 	return a;
-};
-
-const extractMessagesFromStreamReply = (
-	streamReply: StreamsMessagesReply,
-	prefix: string,
-): Map<string, Map<string, StreamMessage>> => {
-	const messages = new Map<string, Map<string, StreamMessage>>();
-
-	streamReply?.forEach((docStreamReply) => {
-		const { room, docid } = decodeRedisRoomStreamName(docStreamReply.name.toString(), prefix);
-		const docMessages = map.setIfUndefined(map.setIfUndefined(messages, room, map.create), docid, () => ({
-			// @ts-ignore
-			lastId: array.last(docStreamReply.messages).id,
-			messages: [] as Uint8Array[],
-		}));
-		docStreamReply.messages?.forEach((m) => {
-			if (m.message.m != null) {
-				// @ts-ignore
-				docMessages.messages.push(m.message.m);
-			}
-		});
-	});
-
-	return messages;
 };
 
 export class Api {
