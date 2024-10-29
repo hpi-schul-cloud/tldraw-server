@@ -67,7 +67,7 @@ export class RedisService {
 		const sentinelName = this.config.REDIS_SENTINEL_NAME;
 		const sentinelPassword = this.config.REDIS_SENTINEL_PASSWORD;
 		const sentinels = await this.discoverSentinelHosts();
-		this.logger.log('Discovered sentinels:', sentinels);
+		this.logger.log(`Discovered sentinels: ${JSON.stringify(sentinels)}`);
 
 		const redisInstance = new Redis({
 			sentinels,
