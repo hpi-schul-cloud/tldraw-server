@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { utilities, WinstonModule } from 'nest-winston';
-import winston from 'winston';
+import * as winston from 'winston';
 import { ConfigurationModule } from '../configuration/configuration.module.js';
 import { LoggerConfig } from './logger.config.js';
 import { Logger } from './logger.js';
