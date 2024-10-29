@@ -1,4 +1,4 @@
-import util from 'util';
+import { inspect } from 'util';
 import { Loggable } from './interfaces/index.js';
 import { LogMessageWithContext } from './types/index.js';
 
@@ -12,7 +12,7 @@ export class LoggingUtils {
 	}
 
 	private static stringifyMessage(message: unknown): string {
-		const stringifiedMessage = util.inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
+		const stringifiedMessage = inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
 
 		return stringifiedMessage;
 	}

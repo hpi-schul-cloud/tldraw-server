@@ -1,6 +1,6 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import util from 'util';
+import { inspect } from 'util';
 import { Logger as WinstonLogger } from 'winston';
 import { RequestLoggingBody } from './interfaces/index.js';
 import { ILegacyLogger } from './interfaces/legacy-logger.interface.js';
@@ -62,7 +62,7 @@ export class LegacyLogger implements ILegacyLogger {
 	}
 
 	private stringifiedMessage(message: unknown): string {
-		const stringifiedMessage = util.inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
+		const stringifiedMessage = inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
 
 		return stringifiedMessage;
 	}
