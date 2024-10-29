@@ -1,7 +1,7 @@
 import { RedisKey } from 'ioredis';
 import { StreamMessageReply } from './stream-message-replay.js';
 
-export type XItem = [id: Buffer, fields: Buffer[]];
+export type XItem = [id: Buffer | string, fields: Buffer[] | string[]];
 
 export type XItems = XItem[];
 

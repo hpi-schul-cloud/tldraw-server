@@ -1,14 +1,20 @@
 import { XItem, XItems } from '../interfaces/redis.interface.js';
+import { TypeGuard } from './type.guard.js';
 
 export class RedisGuard {
 	static isXItem(value: unknown): value is XItem {
-		if (!Array.isArray(value) || value.length !== 2) {
+		console.log('neues log', value);
+
+		if (!Array.isArray(value)) {
 			return false;
 		}
 
 		const [id, fields] = value;
 
-		const isBuffer = Buffer.isBuffer(id) && Array.isArray(fields) && fields.every(Buffer.isBuffer);
+		const isBuffer =
+			(Buffer.isBuffer(id) || TypeGuard.isString(id)) &&
+			Array.isArray(fields) &&
+			(fields.every(Buffer.isBuffer) || fields.every(TypeGuard.isString));
 
 		return isBuffer;
 	}
