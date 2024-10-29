@@ -8,8 +8,16 @@ import { LegacyLogger } from './legacy-logger.service.js';
 
 describe('LegacyLogger', () => {
 	let service: LegacyLogger;
-	let processStdoutWriteSpy;
-	let processStderrWriteSpy;
+	let processStdoutWriteSpy: jest.SpyInstance<
+		boolean,
+		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
+		any
+	>;
+	let processStderrWriteSpy: jest.SpyInstance<
+		boolean,
+		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
+		any
+	>;
 	let winstonLogger: DeepMocked<WinstonLogger>;
 
 	beforeAll(async () => {

@@ -1,7 +1,7 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpRequest } from 'uws';
-import { Logger } from '../logger/logger.js';
+import { LegacyLogger } from '../logger/index.js';
 import { AuthorizationApi, AuthorizedReponse } from './authorization-api-client/index.js';
 import { AuthorizationService } from './authorization.service.js';
 
@@ -19,8 +19,8 @@ describe(AuthorizationService.name, () => {
 					useValue: createMock<AuthorizationApi>(),
 				},
 				{
-					provide: Logger,
-					useValue: createMock<Logger>(),
+					provide: LegacyLogger,
+					useValue: createMock<LegacyLogger>(),
 				},
 			],
 		}).compile();

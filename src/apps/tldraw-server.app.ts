@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
-import { Logger } from '../infra/logger/logger.js';
+import { LegacyLogger } from '../infra/logger/index.js';
 import { MetricsModule } from '../infra/metrics/metrics.module.js';
 import { ServerModule } from '../modules/server/server.module.js';
 
@@ -27,13 +27,13 @@ async function bootstrap(): Promise<void> {
 	const metricsApp = await NestFactory.create(MetricsModule);
 
 	await metricsApp.listen(metricsPort, async () => {
-		const logger = await metricsApp.resolve(Logger);
+		const logger = await metricsApp.resolve(LegacyLogger);
 		logger.setContext('METRICS');
 		logger.log(`Metrics server is running on port ${metricsPort}`);
 	});
 
 	await nestApp.listen(httpPort, async () => {
-		const logger = await nestApp.resolve(Logger);
+		const logger = await nestApp.resolve(LegacyLogger);
 		logger.setContext('TLDRAW');
 		logger.log(`Server is running on port ${httpPort}`);
 	});

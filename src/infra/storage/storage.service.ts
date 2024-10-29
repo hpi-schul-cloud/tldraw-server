@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Logger } from '../logger/logger.js';
+import { LegacyLogger } from '../logger/index.js';
 import { StorageConfig } from './storage.config.js';
 
 @Injectable()
@@ -8,7 +8,7 @@ export class StorageService {
 
 	public constructor(
 		private readonly config: StorageConfig,
-		private readonly logger: Logger,
+		private readonly logger: LegacyLogger,
 	) {
 		this.logger.setContext(StorageService.name);
 		this.bucketName = this.config.S3_BUCKET;
