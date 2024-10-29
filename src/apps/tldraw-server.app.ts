@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
-import { Logger } from '../infra/logging/logger.js';
+import { Logger } from '../infra/logger/logger.js';
 import { MetricsModule } from '../infra/metrics/metrics.module.js';
 import { ServerModule } from '../modules/server/server.module.js';
 

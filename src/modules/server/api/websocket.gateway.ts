@@ -3,7 +3,7 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { registerYWebsocketServer } from '@y/redis';
 import { TemplatedApp } from 'uws';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
-import { Logger } from '../../../infra/logging/logger.js';
+import { Logger } from '../../../infra/logger/logger.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';

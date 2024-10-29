@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/logger.js';
 import { StorageConfig } from './storage.config.js';
 
 @Injectable()

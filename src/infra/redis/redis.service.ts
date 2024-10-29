@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/logger.js';
 import { RedisConfig } from './redis.config.js';
 
 @Injectable()

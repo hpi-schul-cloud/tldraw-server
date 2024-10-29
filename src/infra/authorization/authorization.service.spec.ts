@@ -1,7 +1,7 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpRequest } from 'uws';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/logger.js';
 import { AuthorizationApi, AuthorizedReponse } from './authorization-api-client/index.js';
 import { AuthorizationService } from './authorization.service.js';
 

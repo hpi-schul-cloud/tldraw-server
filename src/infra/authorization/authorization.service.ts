@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpRequest } from 'uws';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/logger.js';
 import {
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,

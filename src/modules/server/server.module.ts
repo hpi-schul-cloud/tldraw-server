@@ -3,7 +3,7 @@ import { App } from 'uws';
 import { AuthGuardModule } from '../../infra/auth-guard/auth-guard.module.js';
 import { AuthorizationModule } from '../../infra/authorization/authorization.module.js';
 import { ConfigurationModule } from '../../infra/configuration/configuration.module.js';
-import { LoggerModule } from '../../infra/logging/logger.module.js';
+import { LoggerModule } from '../../infra/logger/logger.module.js';
 import { RedisModule } from '../../infra/redis/index.js';
 import { StorageModule } from '../../infra/storage/storage.module.js';
 import { TldrawConfigController } from './api/tldraw-confg.controller.js';
