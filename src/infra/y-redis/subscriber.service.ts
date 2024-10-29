@@ -68,23 +68,19 @@ export class Subscriber {
 
 	private async run(): Promise<void> {
 		while (true) {
-			try {
-				const messages = await this.client.getMessages(
-					Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id })),
-				);
+			const messages = await this.client.getMessages(
+				Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id })),
+			);
 
-				for (const message of messages) {
-					const sub = this.subscribers.get(message.stream);
-					if (sub == null) continue;
-					sub.id = message.lastId;
-					if (sub.nextId != null) {
-						sub.id = sub.nextId;
-						sub.nextId = null;
-					}
-					sub.fs.forEach((f) => f(message.stream, message.messages));
+			for (const message of messages) {
+				const sub = this.subscribers.get(message.stream);
+				if (sub == null) continue;
+				sub.id = message.lastId;
+				if (sub.nextId != null) {
+					sub.id = sub.nextId;
+					sub.nextId = null;
 				}
-			} catch (e) {
-				console.error(e);
+				sub.fs.forEach((f) => f(message.stream, message.messages));
 			}
 		}
 	}

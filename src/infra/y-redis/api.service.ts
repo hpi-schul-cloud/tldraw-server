@@ -1,13 +1,11 @@
-import { Task } from 'infra/redis/interfaces/redis.interface.js';
-import { array, decoding, math, number, promise } from 'lib0';
-import * as random from 'lib0/random';
+import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness.js';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { StreamMessage } from '../redis/interfaces/stream-message.js';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
 import { RedisAdapter } from '../redis/redis.adapter.js';
 import { RedisService } from '../redis/redis.service.js';
-import { computeRedisRoomStreamName, decodeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
+import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
@@ -21,20 +19,15 @@ export const createApiClient = async (store: DocumentStorage, createRedisInstanc
 
 export class Api {
 	public readonly redisPrefix: string;
-	private readonly consumername: string;
 	public _destroyed;
-	public readonly redis;
 
 	public constructor(
 		private readonly store: DocumentStorage,
-		private readonly redisInstance: RedisAdapter,
+		public readonly redis: RedisAdapter,
 	) {
 		this.store = store;
-		this.redisPrefix = redisInstance.redisPrefix;
-		this.consumername = random.uuidv4();
+		this.redisPrefix = redis.redisPrefix;
 		this._destroyed = false;
-
-		this.redis = this.redisInstance;
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<StreamMessage[]> {
@@ -93,12 +86,11 @@ export class Api {
 		docChanged: boolean;
 	}> {
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
-		console.log(`getDoc(${room}, ${docid})`);
 		const ms = extractMessagesFromStreamReply(await this.redis.readMessagesFromStream(roomComputed), this.redisPrefix);
-		console.log(`getDoc(${room}, ${docid}) - retrieved messages`);
+
 		const docMessages = ms.get(room)?.get(docid) ?? null;
 		const docstate = await this.store.retrieveDoc(room, docid);
-		console.log(`getDoc(${room}, ${docid}) - retrieved doc`);
+
 		const ydoc = new Doc();
 		const awareness = new Awareness(ydoc);
 		awareness.setLocalState(null); // we don't want to propagate awareness state
@@ -139,81 +131,8 @@ export class Api {
 		};
 	}
 
-	public async consumeWorkerQueue(tryClaimCount = 5, taskDebounce = 1000, minMessageLifetime = 60000): Promise<Task[]> {
-		const tasks: Task[] = [];
-		const reclaimedTasks = await this.redis.reclaimTasks(this.consumername, taskDebounce, tryClaimCount);
-		const deletedDocEntries = await this.redis.getDeletedDocEntries();
-		const deletedDocNames = deletedDocEntries?.map((entry) => {
-			return entry.message.docName;
-		});
-
-		reclaimedTasks?.messages?.forEach((m) => {
-			const stream = m?.message.compact;
-			stream && tasks.push({ stream: stream.toString(), id: m?.id.toString() });
-		});
-		if (tasks.length === 0) {
-			console.log('WORKER: No tasks available, pausing..', { tasks });
-			await promise.wait(1000);
-
-			return [];
-		}
-		console.log('WORKER: Accepted tasks ', { tasks });
-		await promise.all(
-			tasks.map(async (task) => {
-				const streamlen = await this.redis.tryClearTask(task);
-				const { room, docid } = decodeRedisRoomStreamName(task.stream.toString(), this.redisPrefix);
-				if (streamlen === 0) {
-					console.log('WORKER: Stream still empty, removing recurring task from queue ', { stream: task.stream });
-
-					const deleteEntryId = deletedDocEntries.find((entry) => entry.message.docName === task.stream)?.id.toString();
-
-					if (deleteEntryId) {
-						this.redis.deleteDeleteDocEntry(deleteEntryId);
-						this.store.deleteDocument(room, docid);
-					}
-				} else {
-					// @todo, make sure that awareness by this.getDoc is eventually destroyed, or doesn't
-					// register a timeout anymore
-					console.log('WORKER: requesting doc from store');
-					const { ydoc, storeReferences, redisLastId, docChanged, awareness } = await this.getDoc(room, docid);
-
-					// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
-					awareness.destroy();
-					console.log(
-						'WORKER: retrieved doc from store. redisLastId=' + redisLastId,
-						' storeRefs=' + JSON.stringify(storeReferences),
-					);
-					const lastId = math.max(number.parseInt(redisLastId.split('-')[0]), parseInt(task.id.split('-')[0]));
-					if (docChanged) {
-						console.log('WORKER: persisting doc');
-						if (!deletedDocNames.includes(task.stream)) {
-							await this.store.persistDoc(room, docid, ydoc);
-						}
-					}
-					await promise.all([
-						storeReferences && docChanged
-							? this.store.deleteReferences(room, docid, storeReferences)
-							: promise.resolve(),
-						this.redis.tryDeduplicateTask(task, lastId, minMessageLifetime),
-					]);
-					console.log('WORKER: Compacted stream ', {
-						stream: task.stream,
-						taskId: task.id,
-						newLastId: lastId - minMessageLifetime,
-					});
-				}
-			}),
-		);
-
-		return tasks;
-	}
-
 	public async destroy(): Promise<void> {
 		this._destroyed = true;
-		try {
-			await this.redis.quit();
-		} catch (e) {
-			console.error(e);
-		}
+		await this.redis.quit();
 	}
 }

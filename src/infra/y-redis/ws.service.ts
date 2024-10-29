@@ -131,13 +131,11 @@ export const registerYWebsocketServer = async (
 		sendPingsAutomatically: true,
 		upgrade: async (res, req, context) => {
 			try {
-				const url = req.getUrl();
 				const headerWsKey = req.getHeader('sec-websocket-key');
 				const headerWsProtocol = req.getHeader('sec-websocket-protocol');
 				const headerWsExtensions = req.getHeader('sec-websocket-extensions');
 				let aborted = false;
 				res.onAborted(() => {
-					console.log('Upgrading client aborted', { url });
 					aborted = true;
 				});
 
@@ -162,11 +160,7 @@ export const registerYWebsocketServer = async (
 		open: async (ws: uws.WebSocket<User>) => {
 			try {
 				const user = ws.getUserData();
-
-				console.log(`client connected (uid='${user.id}', ip='${Buffer.from(ws.getRemoteAddressAsText()).toString()}'`);
-
 				if (user.error != null) {
-					console.log('Closing connection because of error', user.error);
 					const { code, reason } = user.error;
 					ws.end(code, reason);
 
@@ -174,7 +168,6 @@ export const registerYWebsocketServer = async (
 				}
 
 				if (user.room === null || user.userid === null) {
-					console.log('Closing connection because of missing room or userid');
 					ws.end(1008);
 
 					return;
@@ -270,9 +263,6 @@ export const registerYWebsocketServer = async (
 						Buffer.from(protocol.encodeAwarenessUserDisconnected(user.awarenessId, user.awarenessLastClock)),
 					);
 				user.isClosed = true;
-				console.log(
-					`client connection closed (uid='${user.id}', code='${code}', message='${Buffer.from(message).toString()}`,
-				);
 
 				if (closeWsCallback) {
 					closeWsCallback(ws, code, message);

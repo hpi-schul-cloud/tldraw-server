@@ -6,7 +6,6 @@
 	By adhering to the license terms, we ensure that the use of the code from the `y-redis` repository is legally compliant.
 */
 import * as array from 'lib0/array';
-import * as buffer from 'lib0/buffer';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import * as error from 'lib0/error';
@@ -41,28 +40,25 @@ export const mergeMessages = (messages: Uint8Array[]): Uint8Array[] => {
 	const updates: Uint8Array[] = [];
 	messages.forEach((m) => {
 		const decoder = decoding.createDecoder(m);
-		try {
-			const messageType = decoding.readUint8(decoder);
-			switch (messageType) {
-				case messageSync: {
-					const syncType = decoding.readUint8(decoder);
-					if (syncType === messageSyncUpdate) {
-						updates.push(decoding.readVarUint8Array(decoder));
-					} else {
-						error.unexpectedCase();
-					}
-					break;
-				}
-				case messageAwareness: {
-					awarenessProtocol.applyAwarenessUpdate(aw, decoding.readVarUint8Array(decoder), null);
-					break;
-				}
-				default: {
+
+		const messageType = decoding.readUint8(decoder);
+		switch (messageType) {
+			case messageSync: {
+				const syncType = decoding.readUint8(decoder);
+				if (syncType === messageSyncUpdate) {
+					updates.push(decoding.readVarUint8Array(decoder));
+				} else {
 					error.unexpectedCase();
 				}
+				break;
 			}
-		} catch (e) {
-			console.log('PROTOCOL: Error parsing message', buffer.toBase64(m), e);
+			case messageAwareness: {
+				awarenessProtocol.applyAwarenessUpdate(aw, decoding.readVarUint8Array(decoder), null);
+				break;
+			}
+			default: {
+				error.unexpectedCase();
+			}
 		}
 	});
 

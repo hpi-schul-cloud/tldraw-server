@@ -1,13 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import * as random from 'lib0/random';
 import { Client } from 'minio';
+import { randomUUID } from 'node:crypto';
 import { Stream } from 'stream';
 import * as Y from 'yjs';
 import { Logger } from '../logging/logger.js';
 import { DocumentStorage } from '../y-redis/storage.js';
 import { StorageConfig } from './storage.config.js';
 
-export const encodeS3ObjectName = (room: string, docid: string, r = random.uuidv4()): string =>
+export const encodeS3ObjectName = (room: string, docid: string, r = ''): string =>
 	`${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
 
 export const decodeS3ObjectName = (objectName: string): { room: string; docid: string; r: string } => {
@@ -45,14 +45,14 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 	}
 
 	public async persistDoc(room: string, docname: string, ydoc: Y.Doc): Promise<void> {
-		const objectName = encodeS3ObjectName(room, docname);
+		const objectName = encodeS3ObjectName(room, docname, randomUUID());
 		await this.client.putObject(this.config.S3_BUCKET, objectName, Buffer.from(Y.encodeStateAsUpdateV2(ydoc)));
 	}
 
 	public async retrieveDoc(room: string, docname: string): Promise<{ doc: Uint8Array; references: string[] } | null> {
 		this.logger.log('retrieving doc room=' + room + ' docname=' + docname);
 		const objNames = await this.client
-			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname, ''), true)
+			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname), true)
 			.toArray();
 		const references: string[] = objNames.map((obj) => obj.name);
 		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' refs=' + JSON.stringify(references));
@@ -81,7 +81,7 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 
 	public async deleteDocument(room: string, docname: string): Promise<void> {
 		const objNames = await this.client
-			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname, ''), true)
+			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname), true)
 			.toArray();
 		const objectsList = objNames.map((obj) => obj.name);
 
