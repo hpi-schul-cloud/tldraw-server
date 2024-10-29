@@ -1,6 +1,8 @@
 import { RedisKey } from 'ioredis';
 import { StreamMessageReply } from './stream-message-replay.js';
 
+export type XAutoClaimRawReply = [RedisKey, XItem[]];
+
 export type XItem = [id: Buffer | string, fields: Buffer[] | string[]];
 
 export type XItems = XItem[];
