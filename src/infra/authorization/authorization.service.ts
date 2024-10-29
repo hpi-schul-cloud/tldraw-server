@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpRequest } from 'uws';
-import { LegacyLogger } from '../logger/index.js';
+import { Logger } from '../logger/index.js';
 import {
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
@@ -15,7 +15,7 @@ import { ResponsePayloadBuilder } from './response.builder.js';
 export class AuthorizationService {
 	public constructor(
 		private readonly authorizationApi: AuthorizationApi,
-		private readonly logger: LegacyLogger,
+		private readonly logger: Logger,
 	) {
 		logger.setContext(AuthorizationService.name);
 	}

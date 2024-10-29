@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
-import { LegacyLogger } from '../logger/index.js';
+import { Logger } from '../logger/index.js';
 import { RedisConfig } from './redis.config.js';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class RedisService {
 
 	public constructor(
 		private readonly config: RedisConfig,
-		private readonly logger: LegacyLogger,
+		private readonly logger: Logger,
 	) {
 		const redisPrefix = this.config.REDIS_PREFIX;
 

@@ -4,10 +4,7 @@ export type RequestLoggingBody = {
 	error: unknown | undefined;
 };
 
-/**
- * @deprecated The new logger for loggables should be used.
- */
-export interface ILegacyLogger {
+export interface ILogger {
 	http(message: RequestLoggingBody, context?: string): void;
 	log(message: unknown, context?: string): void;
 	error(message: unknown, trace?: string, context?: string): void;

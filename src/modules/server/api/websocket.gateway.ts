@@ -3,7 +3,7 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { registerYWebsocketServer } from '@y/redis';
 import { TemplatedApp } from 'uws';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
-import { LegacyLogger } from '../../../infra/logger/index.js';
+import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
@@ -19,7 +19,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		private readonly authorizationService: AuthorizationService,
 		private readonly redisService: RedisService,
 		private readonly config: ServerConfig,
-		private readonly logger: LegacyLogger,
+		private readonly logger: Logger,
 	) {
 		this.logger.setContext(WebsocketGateway.name);
 	}

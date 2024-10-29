@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Redis } from 'ioredis';
 import * as util from 'util';
-import { LegacyLogger } from '../logger/index.js';
+import { Logger } from '../logger/index.js';
 import { RedisConfig } from './redis.config.js';
 import { RedisService } from './redis.service.js';
 
@@ -46,7 +46,7 @@ describe('Redis Service', () => {
 				// @ts-ignore
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
-				const logger = createMock<LegacyLogger>();
+				const logger = createMock<Logger>();
 				const service = new RedisService(config, logger);
 
 				return { resolveSrv, sentinelServiceName, service, constructorSpy };
@@ -98,7 +98,7 @@ describe('Redis Service', () => {
 				// @ts-ignore
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
-				const logger = createMock<LegacyLogger>();
+				const logger = createMock<Logger>();
 				const service = new RedisService(config, logger);
 
 				return { resolveSrv, service, redisMock, constructorSpy };
