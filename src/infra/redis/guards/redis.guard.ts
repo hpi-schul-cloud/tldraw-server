@@ -3,8 +3,6 @@ import { TypeGuard } from './type.guard.js';
 
 export class RedisGuard {
 	static isXItem(value: unknown): value is XItem {
-		console.log('neues log', value);
-
 		if (!Array.isArray(value)) {
 			return false;
 		}
