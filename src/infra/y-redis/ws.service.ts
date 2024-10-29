@@ -12,6 +12,7 @@ import * as encoding from 'lib0/encoding';
 import * as promise from 'lib0/promise';
 import * as uws from 'uws';
 import * as Y from 'yjs';
+import { ResponsePayload } from '../authorization/interfaces/response.payload.js';
 import { RedisService } from '../redis/redis.service.js';
 import { Api, createApiClient } from './api.service.js';
 import { computeRedisRoomStreamName, isSmallerRedisId } from './helper.js';
@@ -55,14 +56,14 @@ class User {
 	public initialRedisSubId: string;
 
 	public constructor(
-		public readonly room: string,
+		public readonly room: string | null,
 		public readonly hasWriteAccess: boolean,
 		/**
 		 * Identifies the User globally.
 		 * Note that several clients can have the same userid (e.g. if a user opened several browser
 		 * windows)
 		 */
-		public readonly userid: string,
+		public readonly userid: string | null,
 		public readonly error: Partial<CloseEvent> | null = null,
 	) {
 		this.initialRedisSubId = '0';
@@ -81,7 +82,7 @@ class User {
  * @param {uws.TemplatedApp} app
  * @param {uws.RecognizedString} pattern
  * @param {import('./storage.js').AbstractStorage} store
- * @param {function(uws.HttpRequest): Promise<{ hasWriteAccess: boolean, room: string, userid: string, error: Partial<CloseEvent> | null }>} checkAuth
+ * @param {function(uws.HttpRequest): Promise<ResponsePayload>} checkAuth
  * @param {Object} conf
  * @param {string} [conf.redisPrefix]
  * @param {(room:string,docname:string,client:api.Api)=>void} [conf.initDocCallback] - this is called when a doc is
@@ -95,24 +96,21 @@ export const registerYWebsocketServer = async (
 	app: uws.TemplatedApp,
 	pattern: string,
 	store: DocumentStorage,
-	checkAuth: any,
+	checkAuth: (req: uws.HttpRequest) => Promise<ResponsePayload>,
 	options: {
 		initDocCallback?: (room: string, docname: string, client: Api) => void;
 		openWsCallback?: (ws: uws.WebSocket<User>) => void;
 		closeWsCallback?: (ws: uws.WebSocket<User>, code: number, message: ArrayBuffer) => void;
 	},
 	createRedisInstance: RedisService,
-) => {
+): Promise<YWebsocketServer> => {
 	const { initDocCallback, openWsCallback, closeWsCallback } = options;
 	const [client, subscriber] = await promise.all([
 		createApiClient(store, createRedisInstance),
 		createSubscriber(store, createRedisInstance),
 	]);
-	/**
-	 * @param {string} stream
-	 * @param {Array<Uint8Array>} messages
-	 */
-	const redisMessageSubscriber = (stream: string, messages: any[]): void => {
+
+	const redisMessageSubscriber = (stream: string, messages: Uint8Array[]): void => {
 		if (app.numSubscribers(stream) === 0) {
 			subscriber.unsubscribe(stream, redisMessageSubscriber);
 		}
@@ -142,25 +140,18 @@ export const registerYWebsocketServer = async (
 					console.log('Upgrading client aborted', { url });
 					aborted = true;
 				});
-				try {
-					const { hasWriteAccess, room, userid, error } = await checkAuth(req);
-					if (aborted) return;
-					res.cork(() => {
-						res.upgrade(
-							new User(room, hasWriteAccess, userid, error),
-							headerWsKey,
-							headerWsProtocol,
-							headerWsExtensions,
-							context,
-						);
-					});
-				} catch (err) {
-					console.log(`Failed to auth to endpoint ${url}`, err);
-					if (aborted) return;
-					res.cork(() => {
-						res.writeStatus('401 Unauthorized').end('Unauthorized');
-					});
-				}
+
+				const { hasWriteAccess, room, userid, error } = await checkAuth(req);
+				if (aborted) return;
+				res.cork(() => {
+					res.upgrade(
+						new User(room, hasWriteAccess, userid, error),
+						headerWsKey,
+						headerWsProtocol,
+						headerWsExtensions,
+						context,
+					);
+				});
 			} catch (error) {
 				res.cork(() => {
 					res.writeStatus('500 Internal Server Error').end('Internal Server Error');
@@ -170,7 +161,7 @@ export const registerYWebsocketServer = async (
 		},
 		open: async (ws: uws.WebSocket<User>) => {
 			try {
-				const user = ws.getUserData() as User;
+				const user = ws.getUserData();
 
 				console.log(`client connected (uid='${user.id}', ip='${Buffer.from(ws.getRemoteAddressAsText()).toString()}'`);
 
@@ -178,6 +169,13 @@ export const registerYWebsocketServer = async (
 					console.log('Closing connection because of error', user.error);
 					const { code, reason } = user.error;
 					ws.end(code, reason);
+
+					return;
+				}
+
+				if (user.room === null || user.userid === null) {
+					console.log('Closing connection because of missing room or userid');
+					ws.end(1008);
 
 					return;
 				}
@@ -223,9 +221,9 @@ export const registerYWebsocketServer = async (
 		},
 		message: (ws, messageBuffer) => {
 			try {
-				const user = ws.getUserData() as User;
+				const user = ws.getUserData();
 				// don't read any messages from users without write access
-				if (!user.hasWriteAccess) return;
+				if (!user.hasWriteAccess || !user.room) return;
 				// It is important to copy the data here
 				const message = Buffer.from(messageBuffer.slice(0, messageBuffer.byteLength));
 				if (
@@ -262,7 +260,9 @@ export const registerYWebsocketServer = async (
 		},
 		close: (ws, code, message) => {
 			try {
-				const user = ws.getUserData() as User;
+				const user = ws.getUserData();
+				if (!user.room) return;
+
 				user.awarenessId &&
 					client.addMessage(
 						user.room,

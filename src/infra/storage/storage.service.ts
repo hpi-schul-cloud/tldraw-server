@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as random from 'lib0/random';
 import { Client } from 'minio';
 import { Stream } from 'stream';
@@ -28,13 +28,20 @@ const readStream = (stream: Stream): Promise<Buffer> =>
 	});
 
 @Injectable()
-export class StorageService implements DocumentStorage {
+export class StorageService implements DocumentStorage, OnModuleInit {
 	public constructor(
 		private readonly client: Client,
 		private readonly config: StorageConfig,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
+	}
+
+	public async onModuleInit(): Promise<void> {
+		const bucketExists = await this.client.bucketExists(this.config.S3_BUCKET);
+		if (!bucketExists) {
+			await this.client.makeBucket(this.config.S3_BUCKET);
+		}
 	}
 
 	public async persistDoc(room: string, docname: string, ydoc: Y.Doc): Promise<void> {
