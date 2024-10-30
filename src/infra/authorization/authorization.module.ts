@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigurationModule } from '../configuration/configuration.module.js';
-import { LoggerModule } from '../logging/logger.module.js';
+import { LoggerModule } from '../logger/logger.module.js';
 import { AuthorizationApi, Configuration } from './authorization-api-client/index.js';
 import { AuthorizationConfig } from './authorization.config.js';
 import { AuthorizationService } from './authorization.service.js';
