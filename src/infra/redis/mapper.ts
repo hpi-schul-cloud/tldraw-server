@@ -21,26 +21,35 @@ export function mapToXAutoClaimResponse(value: unknown): XAutoClaimResponse {
 	};
 }
 
-export function mapToStreamMessagesReplies(messages: XItems): StreamMessageReply[] {
+export function mapToStreamMessagesReplies(messages: XItems | unknown): StreamMessageReply[] {
 	if (messages === null) {
 		return [];
 	}
 
-	const result = messages.map((value) => {
+	const unknownArray = TypeGuard.checkArray(messages);
+	const xItems = RedisGuard.checkXItems(unknownArray);
+
+	const result = xItems.map((value) => {
 		return mapToStreamMessageReply(value);
 	});
 
 	return result;
 }
 
-export function mapToStreamsMessagesReply(streamReply: XReadBufferReply): StreamsMessagesReply {
+export function mapToStreamsMessagesReply(streamReply: XReadBufferReply | unknown): StreamsMessagesReply {
 	if (streamReply === null) {
 		return [];
 	}
 
-	const result = streamReply.map(([name, messages]) => {
+	const unknownArray = TypeGuard.checkUnknownArrayWithElements(streamReply);
+
+	const result = unknownArray.map((entry) => {
+		const entryArray = TypeGuard.checkUnknownArrayWithElements(entry);
+		const key = TypeGuard.checkBuffer(entryArray[0]);
+		const messages = RedisGuard.checkXItems(entryArray[1]);
+
 		return {
-			name: name.toString(),
+			name: key.toString(),
 			messages: mapToStreamMessagesReplies(messages),
 		};
 	});
@@ -48,13 +57,13 @@ export function mapToStreamsMessagesReply(streamReply: XReadBufferReply): Stream
 	return result;
 }
 
-export function mapToStreamMessageReply(value: XItem): StreamMessageReply {
+function mapToStreamMessageReply(value: XItem): StreamMessageReply {
 	const [id, fields] = value;
 
 	return { id: id.toString(), message: transformTuplesReply(fields) };
 }
 
-export function transformTuplesReply(reply: RedisKey[]): Record<string, RedisKey> {
+function transformTuplesReply(reply: RedisKey[]): Record<string, RedisKey> {
 	const message: Record<string, RedisKey> = Object.create(null);
 
 	for (let i = 0; i < reply.length; i += 2) {
