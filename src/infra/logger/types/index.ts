@@ -1,1 +1,1 @@
-export * from './logging.types.js';
+export * from './logger.types.js';
