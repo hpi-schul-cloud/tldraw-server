@@ -1,11 +1,11 @@
 export class TypeGuard {
-	static isString(value: unknown): value is string {
+	public static isString(value: unknown): value is string {
 		const isString = typeof value === 'string';
 
 		return isString;
 	}
 
-	static checkString(value: unknown): string {
+	public static checkString(value: unknown): string {
 		if (!TypeGuard.isString(value)) {
 			throw new Error('Type is not a string');
 		}
@@ -13,13 +13,13 @@ export class TypeGuard {
 		return value;
 	}
 
-	static isArray(value: unknown): value is [] {
+	public static isArray(value: unknown): value is [] {
 		const isArray = Array.isArray(value);
 
 		return isArray;
 	}
 
-	static checkArray(value: unknown): [] {
+	public static checkArray(value: unknown): [] {
 		if (!TypeGuard.isArray(value)) {
 			throw new Error('Type is not an array.');
 		}
@@ -27,13 +27,13 @@ export class TypeGuard {
 		return value;
 	}
 
-	static isArrayWithElements(value: unknown): value is [] {
+	public static isArrayWithElements(value: unknown): value is [] {
 		const isArrayWithElements = TypeGuard.isArray(value) && value.length > 0;
 
 		return isArrayWithElements;
 	}
 
-	static checkUnknownArrayWithElements(value: unknown): unknown[] {
+	public static checkUnknownArrayWithElements(value: unknown): unknown[] {
 		if (!TypeGuard.isArrayWithElements(value)) {
 			throw new Error('Type is not an array with elements.');
 		}
@@ -41,13 +41,13 @@ export class TypeGuard {
 		return value;
 	}
 
-	static isBuffer(value: unknown): value is Buffer {
+	public static isBuffer(value: unknown): value is Buffer {
 		const isBuffer = Buffer.isBuffer(value);
 
 		return isBuffer;
 	}
 
-	static checkBuffer(value: unknown): Buffer {
+	public static checkBuffer(value: unknown): Buffer {
 		if (!TypeGuard.isBuffer(value)) {
 			throw new Error('Type is not a buffer.');
 		}
