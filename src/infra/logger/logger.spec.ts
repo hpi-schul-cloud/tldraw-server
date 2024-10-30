@@ -12,12 +12,12 @@ describe('Logger', () => {
 	let processStdoutWriteSpy: jest.SpyInstance<
 		boolean,
 		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
-		any
+		unknown
 	>;
 	let processStderrWriteSpy: jest.SpyInstance<
 		boolean,
 		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
-		any
+		unknown
 	>;
 	let winstonLogger: DeepMocked<WinstonLogger>;
 

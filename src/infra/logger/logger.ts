@@ -3,10 +3,9 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import * as util from 'util';
 import * as winston from 'winston';
 import { RequestLoggingBody } from './interfaces/index.js';
-import { ILogger } from './interfaces/logger.interface.js';
 
 @Injectable({ scope: Scope.TRANSIENT })
-export class Logger implements ILogger {
+export class Logger {
 	/**
 	 * This Logger Service can be injected into every Class,
 	 * use setContext() with CustomProviderClass.name that will be added to every log.
