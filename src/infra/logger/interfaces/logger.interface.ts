@@ -7,7 +7,6 @@ export type RequestLoggingBody = {
 export interface ILogger {
 	http(message: RequestLoggingBody, context?: string): void;
 	log(message: unknown, context?: string): void;
-	error(message: unknown, trace?: string, context?: string): void;
 	warn(message: unknown, context?: string): void;
 	debug(message: unknown, context?: string): void;
 }

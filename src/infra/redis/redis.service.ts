@@ -91,7 +91,7 @@ export class RedisService {
 
 			return hosts;
 		} catch (err) {
-			this.logger.error('Error during service discovery:', err);
+			this.logger.log('Error during service discovery:', err);
 			throw err;
 		}
 	}

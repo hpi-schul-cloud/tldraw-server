@@ -4,6 +4,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger as WinstonLogger } from 'winston';
+import { RequestLoggingBody } from './interfaces/logger.interface.js';
 import { Logger } from './logger.js';
 
 describe('Logger', () => {
@@ -45,23 +46,11 @@ describe('Logger', () => {
 		processStderrWriteSpy.mockRestore();
 	});
 
-	describe('WHEN error logging', () => {
-		it('should call winstonLogger.error', () => {
+	describe('WHEN log logging', () => {
+		it('should call winstonLogger.info', () => {
 			const error = new Error('custom error');
-			service.error(error.message, error.stack);
-			expect(winstonLogger.error).toBeCalled();
-		});
-
-		it('should work also when providing circular references', () => {
-			const a: { name: string; b?: object | undefined } = { name: 'great' };
-			const b = { a };
-			a.b = b;
-			service.error(a);
-			expect(winstonLogger.error).toBeCalledWith(
-				expect.objectContaining({
-					message: expect.stringMatching(/name.*great/) as string,
-				}),
-			);
+			service.log(error.message, error.stack);
+			expect(winstonLogger.info).toHaveBeenCalled();
 		});
 	});
 
@@ -69,7 +58,7 @@ describe('Logger', () => {
 		it('should call winstonLogger.warning', () => {
 			const error = new Error('custom error');
 			service.warn(error.message, error.stack);
-			expect(winstonLogger.warning).toBeCalled();
+			expect(winstonLogger.warning).toHaveBeenCalled();
 		});
 	});
 
@@ -77,7 +66,25 @@ describe('Logger', () => {
 		it('should call winstonLogger.debug', () => {
 			const error = new Error('custom error');
 			service.debug(error.message, error.stack);
-			expect(winstonLogger.debug).toBeCalled();
+			expect(winstonLogger.debug).toHaveBeenCalled();
+		});
+	});
+
+	describe('WHEN http logging', () => {
+		it('should call winstonLogger.notice', () => {
+			const error = new Error('custom error');
+			const message: RequestLoggingBody = {
+				userId: '123',
+				request: {
+					url: 'http://localhost',
+					method: 'GET',
+					params: { id: '1' },
+					query: { page: '1' },
+				},
+				error,
+			};
+			service.http(message, error.stack);
+			expect(winstonLogger.notice).toHaveBeenCalled();
 		});
 	});
 });

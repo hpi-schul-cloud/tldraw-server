@@ -1,6 +1,6 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { inspect } from 'util';
+import * as util from 'util';
 import * as winston from 'winston';
 import { RequestLoggingBody } from './interfaces/index.js';
 import { ILogger } from './interfaces/logger.interface.js';
@@ -33,14 +33,6 @@ export class Logger implements ILogger {
 		this.logger.notice(this.createMessage(message, context));
 	}
 
-	public error(message: unknown, trace?: unknown, context?: string): void {
-		const result = {
-			message,
-			trace,
-		};
-		this.logger.error(this.createMessage(result, context));
-	}
-
 	public setContext(name: string): void {
 		this.context = name;
 	}
@@ -56,7 +48,7 @@ export class Logger implements ILogger {
 	}
 
 	private stringifiedMessage(message: unknown): string {
-		const stringifiedMessage = inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
+		const stringifiedMessage = util.inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
 
 		return stringifiedMessage;
 	}
