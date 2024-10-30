@@ -10,10 +10,10 @@ import { RedisConfig } from './redis.config.js';
 
 export class IoRedisAdapter implements RedisAdapter {
 	public readonly redisPrefix: string;
-	private readonly redisDeleteStreamName: string;
-	private readonly redisWorkerStreamName: string;
-	private readonly redisWorkerGroupName: string;
-	private readonly redisDeletionActionKey: string;
+	public readonly redisDeleteStreamName: string;
+	public readonly redisWorkerStreamName: string;
+	public readonly redisWorkerGroupName: string;
+	public readonly redisDeletionActionKey: string;
 
 	public constructor(
 		private readonly internalRedisInstance: Redis,
@@ -51,11 +51,9 @@ export class IoRedisAdapter implements RedisAdapter {
 		await this.internalRedisInstance.publish(this.redisDeletionActionKey, docName);
 	}
 
-	public addMessage(key: string, message: unknown): Promise<null> {
+	public async addMessage(key: string, message: unknown): Promise<void> {
 		// @ts-ignore
-		const result = this.internalRedisInstance.addMessage(key, message);
-
-		return result;
+		await this.internalRedisInstance.addMessage(key, message);
 	}
 
 	public getEntriesLen(streamName: string): Promise<number> {
