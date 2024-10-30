@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Redis } from 'ioredis';
 import * as util from 'util';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 import { RedisService } from './redis.service.js';

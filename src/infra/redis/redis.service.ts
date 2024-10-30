@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisAdapter } from './redis.adapter.js';
 import { RedisConfig } from './redis.config.js';
@@ -39,7 +39,7 @@ export class RedisService {
 		const sentinelName = this.config.REDIS_SENTINEL_NAME;
 		const sentinelPassword = this.config.REDIS_SENTINEL_PASSWORD;
 		const sentinels = await this.discoverSentinelHosts();
-		this.logger.log('Discovered sentinels:', sentinels);
+		this.logger.log(`Discovered sentinels: ${JSON.stringify(sentinels)}`);
 
 		const redisInstance = new Redis({
 			sentinels,
@@ -63,7 +63,7 @@ export class RedisService {
 
 			return hosts;
 		} catch (err) {
-			this.logger.error('Error during service discovery:', err);
+			this.logger.log('Error during service discovery:', err);
 			throw err;
 		}
 	}
