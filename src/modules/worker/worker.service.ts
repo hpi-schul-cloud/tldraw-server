@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { Logger } from '../../infra/logging/logger.js';
+import { Logger } from '../../infra/logger/index.js';
 import { Task } from '../../infra/redis/interfaces/redis.interface.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
@@ -24,7 +24,7 @@ export class WorkerService implements OnModuleInit {
 
 	public async onModuleInit(): Promise<void> {
 		this.client = await createApiClient(this.storageService, this.redisService);
-
+		console.log(this.logger);
 		this.logger.log(`Created worker process ${this.consumerId}`);
 		while (!this.client._destroyed) {
 			await this.consumeWorkerQueue();
@@ -49,20 +49,22 @@ export class WorkerService implements OnModuleInit {
 			stream && tasks.push({ stream: stream.toString(), id: m?.id.toString() });
 		});
 		if (tasks.length === 0) {
-			this.logger.log('No tasks available, pausing..', { tasks });
+			this.logger.log(`No tasks available, pausing... ${JSON.stringify({ tasks })}`);
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 
 			return [];
 		}
 
-		this.logger.log('Accepted tasks ', { tasks });
+		this.logger.log(`Accepted tasks ${JSON.stringify({ tasks })}`);
 
 		await Promise.all(
 			tasks.map(async (task) => {
 				const streamlen = await this.client.redis.tryClearTask(task);
 				const { room, docid } = decodeRedisRoomStreamName(task.stream.toString(), this.client.redisPrefix);
 				if (streamlen === 0) {
-					this.logger.log('Stream still empty, removing recurring task from queue ', { stream: task.stream });
+					this.logger.log(
+						`Stream still empty, removing recurring task from queue ${JSON.stringify({ stream: task.stream })}`,
+					);
 
 					const deleteEntryId = deletedDocEntries.find((entry) => entry.message.docName === task.stream)?.id.toString();
 
@@ -79,8 +81,7 @@ export class WorkerService implements OnModuleInit {
 					// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
 					awareness.destroy();
 					this.logger.log(
-						'retrieved doc from store. redisLastId=' + redisLastId,
-						' storeRefs=' + JSON.stringify(storeReferences),
+						'retrieved doc from store. redisLastId=' + redisLastId + ' storeRefs=' + JSON.stringify(storeReferences),
 					);
 					const lastId = Math.max(parseInt(redisLastId.split('-')[0]), parseInt(task.id.split('-')[0]));
 					if (docChanged) {
@@ -95,11 +96,14 @@ export class WorkerService implements OnModuleInit {
 							: Promise.resolve(),
 						this.client.redis.tryDeduplicateTask(task, lastId, minMessageLifetime),
 					]);
-					this.logger.log('Compacted stream ', {
-						stream: task.stream,
-						taskId: task.id,
-						newLastId: lastId - minMessageLifetime,
-					});
+					this.logger.log(
+						`Compacted stream 
+						${JSON.stringify({
+							stream: task.stream,
+							taskId: task.id,
+							newLastId: lastId - minMessageLifetime,
+						})}`,
+					);
 				}
 			}),
 		);

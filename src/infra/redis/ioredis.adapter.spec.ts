@@ -1,6 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Logger } from 'infra/logging/logger.js';
 import { Redis } from 'ioredis';
+import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 import { xAutoClaimRawReply } from './testing/x-auto-claim-raw-reply.factory.js';

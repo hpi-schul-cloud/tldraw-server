@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/index.js';
 import { addMessageCommand, xDelIfEmptyCommand } from './commands.js';
 import { Task, XAutoClaimResponse } from './interfaces/redis.interface.js';
 import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-replay.js';
