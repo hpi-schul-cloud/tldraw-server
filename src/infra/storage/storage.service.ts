@@ -39,6 +39,7 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 
 	public async onModuleInit(): Promise<void> {
 		const bucketExists = await this.client.bucketExists(this.config.S3_BUCKET);
+
 		if (!bucketExists) {
 			await this.client.makeBucket(this.config.S3_BUCKET);
 		}
@@ -51,17 +52,28 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 
 	public async retrieveDoc(room: string, docname: string): Promise<{ doc: Uint8Array; references: string[] } | null> {
 		this.logger.log('retrieving doc room=' + room + ' docname=' + docname);
+
 		const objNames = await this.client
 			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname), true)
 			.toArray();
 		const references: string[] = objNames.map((obj) => obj.name);
+
 		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' refs=' + JSON.stringify(references));
 
 		if (references.length === 0) {
 			return null;
 		}
+
 		let updates: Uint8Array[] = await Promise.all(
-			references.map((ref) => this.client.getObject(this.config.S3_BUCKET, ref).then(readStream)),
+			references.map(async (ref) => {
+				const stream = await this.client.getObject(this.config.S3_BUCKET, ref);
+
+				const readStreamPomise = readStream(stream).catch(() => {
+					throw new Error('Error on storage stream read');
+				});
+
+				return readStreamPomise;
+			}),
 		);
 		updates = updates.filter((update) => update != null);
 		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' updatesLen=' + updates.length);
