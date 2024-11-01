@@ -21,16 +21,16 @@ export const createSubscriber = async (
 	createRedisInstance: RedisService,
 ): Promise<Subscriber> => {
 	const client = await createApiClient(store, createRedisInstance);
+	const subscriber = new Subscriber(client);
+	await subscriber.run();
 
-	return new Subscriber(client);
+	return subscriber;
 };
 
 export class Subscriber {
-	private readonly subscribers = new Map<string, Subscriptions>();
+	public readonly subscribers = new Map<string, Subscriptions>();
 
-	public constructor(private readonly client: Api) {
-		this.run();
-	}
+	public constructor(private readonly client: Api) {}
 
 	public ensureSubId(stream: string, id: string): void {
 		const sub = this.subscribers.get(stream);
@@ -66,7 +66,7 @@ export class Subscriber {
 		await this.client.destroy();
 	}
 
-	private async run(): Promise<void> {
+	public async run(): Promise<void> {
 		while (true) {
 			const messages = await this.client.getMessages(
 				Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id })),

@@ -1,6 +1,5 @@
-jest.mock('@y/redis', () => {
+jest.mock('../../../../infra/y-redis/api.service.js', () => {
 	return {
-		registerYWebsocketServer: jest.fn(),
 		Api: jest.fn().mockImplementation(() => {
 			return {
 				prototype: jest.fn(),
