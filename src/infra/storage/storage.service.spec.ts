@@ -4,7 +4,7 @@ import { Client } from 'minio';
 import { Readable } from 'stream';
 import * as Y from 'yjs';
 import { BucketItem, BucketStream, UploadedObjectInfo } from '../../../node_modules/minio/dist/esm/internal/type.mjs';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/index.js';
 import { StorageConfig } from './storage.config.js';
 import { StorageService } from './storage.service.js';
 
