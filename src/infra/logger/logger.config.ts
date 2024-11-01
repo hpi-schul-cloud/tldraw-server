@@ -1,9 +1,20 @@
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsEnum } from 'class-validator';
+
+export enum LoggerLogLevel {
+	emerg = 'emerg',
+	alert = 'alert',
+	crit = 'crit',
+	error = 'error',
+	warning = 'warning',
+	notice = 'notice',
+	info = 'info',
+	debug = 'debug',
+}
 
 export class LoggerConfig {
-	@IsString()
-	public NEST_LOG_LEVEL!: string;
+	@IsEnum(LoggerLogLevel)
+	public NEST_LOG_LEVEL!: LoggerLogLevel;
 
 	@IsBoolean()
 	@Transform(({ value }) => value === 'true')
