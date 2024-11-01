@@ -10,15 +10,6 @@ import { StorageConfig } from './storage.config.js';
 export const encodeS3ObjectName = (room: string, docid: string, r = ''): string =>
 	`${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
 
-export const decodeS3ObjectName = (objectName: string): { room: string; docid: string; r: string } => {
-	const match = objectName.match(/(.*)\/(.*)\/(.*)$/);
-	if (match == null) {
-		throw new Error('Malformed y:room stream name!');
-	}
-
-	return { room: decodeURIComponent(match[1]), docid: decodeURIComponent(match[2]), r: match[3] };
-};
-
 const readStream = (stream: Stream): Promise<Buffer> =>
 	new Promise((resolve, reject) => {
 		const chunks: Buffer[] = [];
