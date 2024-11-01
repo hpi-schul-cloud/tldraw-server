@@ -5,5 +5,5 @@ export const xItemStringFactory = Factory.define<XItem>(({ sequence }) => [seque
 
 export const xItemBufferFactory = Factory.define<XItem>(({ sequence }) => [
 	Buffer.from(sequence.toString()),
-	[Buffer.from('message1')],
+	[Buffer.from('message'), Buffer.from('value')],
 ]);

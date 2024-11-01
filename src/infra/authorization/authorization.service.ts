@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpRequest } from 'uws';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/index.js';
 import {
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
@@ -94,7 +94,7 @@ export class AuthorizationService {
 
 	private createErrorResponsePayload(code: number, reason: string): ResponsePayload {
 		const response = ResponsePayloadBuilder.buildWithError(code, reason);
-		this.logger.error(`Error: ${code} - ${reason}`);
+		this.logger.log(`Error: ${code} - ${reason}`);
 
 		return response;
 	}

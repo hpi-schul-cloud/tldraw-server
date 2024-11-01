@@ -6,7 +6,7 @@ export interface RedisAdapter {
 	readonly redisPrefix: string;
 	subscribeToDeleteChannel(callback: (message: string) => void): void;
 	markToDeleteByDocName(docName: string): Promise<void>;
-	addMessage(key: string, message: unknown): Promise<null>;
+	addMessage(key: string, message: unknown): Promise<void>;
 	getEntriesLen(streamName: string): Promise<number>;
 	exists(stream: string): Promise<number>;
 	createGroup(): Promise<void>;

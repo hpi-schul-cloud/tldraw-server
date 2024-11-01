@@ -3,7 +3,7 @@ import { Client } from 'minio';
 import { randomUUID } from 'node:crypto';
 import { Stream } from 'stream';
 import * as Y from 'yjs';
-import { Logger } from '../logging/logger.js';
+import { Logger } from '../logger/index.js';
 import { DocumentStorage } from '../y-redis/storage.js';
 import { StorageConfig } from './storage.config.js';
 
