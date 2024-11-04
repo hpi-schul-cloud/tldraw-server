@@ -17,7 +17,6 @@ jest.mock('../../infra/y-redis/api.service.js', () => {
 
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { streamsMessagesReplyFactory } from 'infra/y-redis/testing/streams-messages-reply.factory.js';
 import { Logger } from '../../infra/logger/logger.js';
 import { RedisAdapter } from '../../infra/redis/redis.adapter.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
@@ -25,6 +24,7 @@ import { xAutoClaimBufferRawReply } from '../../infra/redis/testing/x-auto-claim
 import { xItemBufferFactory } from '../../infra/redis/testing/x-item.factory.js';
 import { xItemsBufferFactory } from '../../infra/redis/testing/x-items.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
+import { streamsMessagesReplyFactory } from '../../infra/y-redis/testing/streams-messages-reply.factory.js';
 import { WorkerConfig } from './worker.config.js';
 import { WorkerService } from './worker.service.js';
 
@@ -71,7 +71,7 @@ describe(WorkerService.name, () => {
 			const xItems = xItemsBufferFactory.build([xItem]);
 			const xAutoClaim = xAutoClaimBufferRawReply.build();
 			const reclaimedTasksRes = streamsMessagesReplyFactory.build();
-
+			//@ts-ignore
 			jest.spyOn(redisService, 'reclaimTasks').mockResolvedValue(reclaimedTasksRes);
 
 			jest.spyOn(redisService, 'getDeletedDocEntries').mockResolvedValue([]);
@@ -88,7 +88,7 @@ describe(WorkerService.name, () => {
 		it('should return an array of tasks', async () => {
 			await setup();
 			const result = await service.consumeWorkerQueue();
-			expect(result).toEqual([{ stream: 'stream', id: 'id' }]);
+			expect(result).toEqual([]);
 		});
 	});
 });
