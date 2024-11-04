@@ -1,5 +1,5 @@
 import { Task, XAutoClaimResponse } from './interfaces/redis.interface.js';
-import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-replay.js';
+import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-reply.js';
 import { StreamNameClockPair } from './interfaces/stream-name-clock-pair.js';
 
 export interface RedisAdapter {

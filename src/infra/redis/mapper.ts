@@ -1,7 +1,7 @@
 import { RedisKey } from 'ioredis';
 import { RedisGuard, TypeGuard } from './guards/index.js';
 import { XAutoClaimResponse, XItem, XItems, XReadBufferReply } from './interfaces/redis.interface.js';
-import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-replay.js';
+import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-reply.js';
 
 export function mapToXAutoClaimResponse(value: unknown): XAutoClaimResponse {
 	if (value === null || value === undefined) {

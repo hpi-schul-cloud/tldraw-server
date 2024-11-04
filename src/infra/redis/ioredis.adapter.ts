@@ -2,7 +2,7 @@ import { Redis } from 'ioredis';
 import { Logger } from '../logger/index.js';
 import { addMessageCommand, xDelIfEmptyCommand } from './commands.js';
 import { Task, XAutoClaimResponse } from './interfaces/redis.interface.js';
-import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-replay.js';
+import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-reply.js';
 import { StreamNameClockPair } from './interfaces/stream-name-clock-pair.js';
 import { mapToStreamMessagesReplies, mapToStreamsMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
 import { RedisAdapter } from './redis.adapter.js';

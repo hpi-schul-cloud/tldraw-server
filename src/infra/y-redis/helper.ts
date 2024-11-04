@@ -1,5 +1,5 @@
 import { array, map } from 'lib0';
-import { StreamsMessagesReply } from '../redis/interfaces/stream-message-replay.js';
+import { StreamsMessagesReply } from '../redis/interfaces/stream-message-reply.js';
 import { StreamMessage } from '../redis/interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,
