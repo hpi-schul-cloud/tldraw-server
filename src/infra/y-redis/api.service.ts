@@ -1,11 +1,11 @@
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness.js';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
-import { StreamMessage } from '../redis/interfaces/stream-message.js';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
 import { RedisAdapter } from '../redis/redis.adapter.js';
 import { RedisService } from '../redis/redis.service.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
+import { YRedisMessage } from './interfaces/stream-message.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
@@ -30,7 +30,7 @@ export class Api {
 		this._destroyed = false;
 	}
 
-	public async getMessages(streams: StreamNameClockPair[]): Promise<StreamMessage[]> {
+	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
 		if (streams.length === 0) {
 			await promise.wait(50);
 
@@ -39,7 +39,7 @@ export class Api {
 
 		const streamReplyRes = await this.redis.readStreams(streams);
 
-		const res: StreamMessage[] = [];
+		const res: YRedisMessage[] = [];
 
 		streamReplyRes?.forEach((stream) => {
 			res.push({

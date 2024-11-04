@@ -1,6 +1,6 @@
 import { array, map } from 'lib0';
 import { StreamsMessagesReply } from '../redis/interfaces/stream-message-reply.js';
-import { StreamMessage } from '../redis/interfaces/stream-message.js';
+import { YRedisMessage } from './interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,
     which was copied from the y-redis repository.
@@ -35,8 +35,8 @@ export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: stri
 export const extractMessagesFromStreamReply = (
 	streamReply: StreamsMessagesReply,
 	prefix: string,
-): Map<string, Map<string, StreamMessage>> => {
-	const messages = new Map<string, Map<string, StreamMessage>>();
+): Map<string, Map<string, YRedisMessage>> => {
+	const messages = new Map<string, Map<string, YRedisMessage>>();
 
 	streamReply?.forEach((docStreamReply) => {
 		const { room, docid } = decodeRedisRoomStreamName(docStreamReply.name.toString(), prefix);
