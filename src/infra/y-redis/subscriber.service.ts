@@ -10,6 +10,12 @@ import { Api, createApiClient } from './api.service.js';
 import { isSmallerRedisId } from './helper.js';
 import { DocumentStorage } from './storage.js';
 
+const run = async (subscriber: Subscriber): Promise<void> => {
+	while (true) {
+		await subscriber.run();
+	}
+};
+
 type SubscriptionHandler = (stream: string, message: Uint8Array[]) => void;
 interface Subscriptions {
 	fs: Set<SubscriptionHandler>;
@@ -22,7 +28,7 @@ export const createSubscriber = async (
 ): Promise<Subscriber> => {
 	const client = await createApiClient(store, createRedisInstance);
 	const subscriber = new Subscriber(client);
-	subscriber.run();
+	run(subscriber);
 
 	return subscriber;
 };
@@ -67,21 +73,19 @@ export class Subscriber {
 	}
 
 	public async run(): Promise<void> {
-		while (true) {
-			const messages = await this.client.getMessages(
-				Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id })),
-			);
+		const messages = await this.client.getMessages(
+			Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id })),
+		);
 
-			for (const message of messages) {
-				const sub = this.subscribers.get(message.stream);
-				if (sub == null) continue;
-				sub.id = message.lastId;
-				if (sub.nextId != null) {
-					sub.id = sub.nextId;
-					sub.nextId = null;
-				}
-				sub.fs.forEach((f) => f(message.stream, message.messages));
+		for (const message of messages) {
+			const sub = this.subscribers.get(message.stream);
+			if (sub == null) continue;
+			sub.id = message.lastId;
+			if (sub.nextId != null) {
+				sub.id = sub.nextId;
+				sub.nextId = null;
 			}
+			sub.fs.forEach((f) => f(message.stream, message.messages));
 		}
 	}
 }

@@ -9,8 +9,9 @@ jest.mock('./api.service.js', () => {
 });
 
 import { createMock } from '@golevelup/ts-jest';
-import type { Api } from './api.service.js';
+import { Api } from './api.service.js';
 import { Subscriber } from './subscriber.service.js';
+import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
 
 describe(Subscriber.name, () => {
 	const setup = () => {
@@ -70,6 +71,17 @@ describe(Subscriber.name, () => {
 				subscriber.subscribe('test', subscriptionHandler);
 
 				expect(subscriber.subscribers.get('test')?.fs.size).toEqual(1);
+			});
+
+			it('should have many subscriber', () => {
+				const { subscriber } = setup();
+				const subscriptionHandler = jest.fn();
+
+				subscriber.subscribe('test', subscriptionHandler);
+
+				expect(subscriber.subscribers.size).toEqual(1);
+				subscriber.subscribe('test1', subscriptionHandler);
+				expect(subscriber.subscribers.size).toEqual(2);
 			});
 
 			it('should add stream to subscribers with next id as null', () => {
@@ -136,14 +148,62 @@ describe(Subscriber.name, () => {
 		});
 	});
 
-	it('should subscribe', () => {
-		const { subscriber } = setup();
-		const subscriptionHandler = jest.fn();
+	describe('destroy', () => {
+		it('should call client destroy', async () => {
+			const { subscriber, api } = setup();
 
-		subscriber.subscribe('test', () => subscriptionHandler);
+			await subscriber.destroy();
 
-		expect(subscriber.subscribers.size).toEqual(1);
-		subscriber.subscribe('test1', () => subscriptionHandler);
-		expect(subscriber.subscribers.size).toEqual(2);
+			expect(api.destroy).toHaveBeenCalled();
+		});
+	});
+
+	describe('run', () => {
+		const setupRun = () => {
+			const { api, subscriber } = setup();
+			const subscriptionHandler = jest.fn();
+
+			subscriber.subscribe('test', subscriptionHandler);
+
+			return { api, subscriber, subscriptionHandler };
+		};
+
+		it('should call client getMessages', async () => {
+			const { api, subscriber } = setupRun();
+
+			await subscriber.run();
+
+			expect(api.getMessages).toHaveBeenCalledWith(
+				expect.arrayContaining([
+					{
+						key: expect.any(String),
+						id: expect.any(String),
+					},
+				]),
+			);
+		});
+
+		it('should call subscription handler', async () => {
+			const { api, subscriber } = setupRun();
+			const messages = yRedisMessageFactory.buildList(3, { stream: 'test' });
+			const spyGetSubscribers = jest.spyOn(subscriber.subscribers, 'get');
+			api.getMessages.mockResolvedValueOnce(messages);
+
+			await subscriber.run();
+
+			expect(spyGetSubscribers).toHaveBeenCalledTimes(3);
+		});
+
+		it('should call subscription handler', async () => {
+			const { api, subscriber, subscriptionHandler } = setupRun();
+			const messages = yRedisMessageFactory.buildList(3, { stream: 'test' });
+			api.getMessages.mockResolvedValue(messages);
+
+			await subscriber.run();
+
+			expect(subscriptionHandler).toHaveBeenCalledWith(messages[0].stream, messages[0].messages);
+			expect(subscriptionHandler).toHaveBeenCalledWith(messages[1].stream, messages[1].messages);
+			expect(subscriptionHandler).toHaveBeenCalledWith(messages[2].stream, messages[2].messages);
+		});
 	});
 });
