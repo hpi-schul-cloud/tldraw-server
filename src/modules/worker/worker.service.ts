@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { RedisAdapter } from 'infra/redis/redis.adapter.js';
 import { randomUUID } from 'node:crypto';
 import { Logger } from '../../infra/logger/index.js';
 import { Task } from '../../infra/redis/interfaces/redis.interface.js';
@@ -11,7 +12,8 @@ import { WorkerConfig } from './worker.config.js';
 @Injectable()
 export class WorkerService implements OnModuleInit {
 	private client!: Api;
-	private consumerId = randomUUID();
+	private readonly consumerId = randomUUID();
+	private redis!: RedisAdapter;
 
 	public constructor(
 		private readonly storageService: StorageService,
@@ -24,7 +26,8 @@ export class WorkerService implements OnModuleInit {
 
 	public async onModuleInit(): Promise<void> {
 		this.client = await createApiClient(this.storageService, this.redisService);
-		console.log(this.logger);
+		this.redis = await this.redisService.createRedisInstance();
+
 		this.logger.log(`Created worker process ${this.consumerId}`);
 		while (!this.client._destroyed) {
 			await this.consumeWorkerQueue();
@@ -32,14 +35,15 @@ export class WorkerService implements OnModuleInit {
 		this.logger.log(`Ended worker process ${this.consumerId}`);
 	}
 
-	private async consumeWorkerQueue(): Promise<Task[]> {
+	public async consumeWorkerQueue(): Promise<Task[]> {
 		const tryClaimCount = this.config.WORKER_TRY_CLAIM_COUNT;
 		const taskDebounce = this.config.WORKER_TASK_DEBOUNCE;
 		const minMessageLifetime = this.config.WORKER_MIN_MESSAGE_LIFETIME;
 		const tasks: Task[] = [];
 
-		const reclaimedTasks = await this.client.redis.reclaimTasks(this.consumerId, taskDebounce, tryClaimCount);
-		const deletedDocEntries = await this.client.redis.getDeletedDocEntries();
+		const reclaimedTasks = await this.redis.reclaimTasks(this.consumerId, taskDebounce, tryClaimCount);
+
+		const deletedDocEntries = await this.redis.getDeletedDocEntries();
 		const deletedDocNames = deletedDocEntries?.map((entry) => {
 			return entry.message.docName;
 		});
@@ -59,8 +63,9 @@ export class WorkerService implements OnModuleInit {
 
 		await Promise.all(
 			tasks.map(async (task) => {
-				const streamlen = await this.client.redis.tryClearTask(task);
-				const { room, docid } = decodeRedisRoomStreamName(task.stream.toString(), this.client.redisPrefix);
+				const streamlen = await this.redis.tryClearTask(task);
+				const { room, docid } = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
+
 				if (streamlen === 0) {
 					this.logger.log(
 						`Stream still empty, removing recurring task from queue ${JSON.stringify({ stream: task.stream })}`,
@@ -69,7 +74,7 @@ export class WorkerService implements OnModuleInit {
 					const deleteEntryId = deletedDocEntries.find((entry) => entry.message.docName === task.stream)?.id.toString();
 
 					if (deleteEntryId) {
-						this.client.redis.deleteDeleteDocEntry(deleteEntryId);
+						this.redis.deleteDeleteDocEntry(deleteEntryId);
 						this.storageService.deleteDocument(room, docid);
 					}
 				} else {
@@ -90,14 +95,16 @@ export class WorkerService implements OnModuleInit {
 							await this.storageService.persistDoc(room, docid, ydoc);
 						}
 					}
+
 					await Promise.all([
 						storeReferences && docChanged
 							? this.storageService.deleteReferences(room, docid, storeReferences)
 							: Promise.resolve(),
-						this.client.redis.tryDeduplicateTask(task, lastId, minMessageLifetime),
+						this.redis.tryDeduplicateTask(task, lastId, minMessageLifetime),
 					]);
+
 					this.logger.log(
-						`Compacted stream 
+						`Compacted stream
 						${JSON.stringify({
 							stream: task.stream,
 							taskId: task.id,
