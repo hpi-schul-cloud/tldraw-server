@@ -11,6 +11,8 @@ export const streamsMessagesReplyFactory = Factory.define<StreamsMessagesReply>(
 					message: {
 						key: `redis-key-${sequence}-1`,
 						m: `message-${sequence}-2`,
+						docName: `doc-name-${sequence}`,
+						compact: `compact-${sequence}`,
 					},
 				},
 				{
@@ -18,6 +20,8 @@ export const streamsMessagesReplyFactory = Factory.define<StreamsMessagesReply>(
 					message: {
 						key: `redis-key-${sequence}-2`,
 						m: `message-${sequence}-2`,
+						docName: `doc-name-${sequence}`,
+						compact: `compact-${sequence}`,
 					},
 				},
 			],
