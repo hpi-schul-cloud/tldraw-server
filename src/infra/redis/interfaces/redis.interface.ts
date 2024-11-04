@@ -1,5 +1,5 @@
 import { RedisKey } from 'ioredis';
-import { StreamMessageReply } from './stream-message-replay.js';
+import { StreamMessageReply } from './stream-message-reply.js';
 
 export type XAutoClaimRawReply = [RedisKey, XItem[]];
 

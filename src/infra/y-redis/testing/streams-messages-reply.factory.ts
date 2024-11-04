@@ -1,5 +1,5 @@
 import { Factory } from 'fishery';
-import { StreamsMessagesReply } from 'infra/redis/interfaces/stream-message-replay.js';
+import { StreamsMessagesReply } from 'infra/redis/interfaces/stream-message-reply.js';
 
 export const streamsMessagesReplyFactory = Factory.define<StreamsMessagesReply>(({ sequence }) => {
 	return [
