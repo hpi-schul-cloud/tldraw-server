@@ -10,7 +10,7 @@ import { xReadBufferReply } from './testing/x-read-buffer-reply.factory.js';
 const testPrefix = 'testPrefix';
 
 describe(IoRedisAdapter.name, () => {
-	let redis: Redis;
+	let redis: DeepMocked<Redis>;
 	let redisAdapter: IoRedisAdapter;
 	let logger: DeepMocked<Logger>;
 	let config: DeepMocked<RedisConfig>;
@@ -41,9 +41,9 @@ describe(IoRedisAdapter.name, () => {
 		};
 
 		it('should call redis subscribe with correct values', () => {
-			const { subscribeSpy, expectedProps } = setup();
+			const { subscribeSpy, callback, expectedProps } = setup();
 
-			redisAdapter.subscribeToDeleteChannel(() => {});
+			redisAdapter.subscribeToDeleteChannel(callback);
 
 			expect(subscribeSpy).toHaveBeenCalledWith(...expectedProps);
 		});
@@ -54,6 +54,18 @@ describe(IoRedisAdapter.name, () => {
 			redisAdapter.subscribeToDeleteChannel(callback);
 
 			expect(onSpy).toHaveBeenCalled();
+		});
+
+		it('should call callback with correct values', () => {
+			const { callback } = setup();
+			// @ts-ignore
+			redis.on.mockImplementation((event, cb) => {
+				cb(event, 'message');
+			});
+
+			redisAdapter.subscribeToDeleteChannel(callback);
+
+			expect(callback).toHaveBeenCalledWith('message');
 		});
 	});
 
@@ -151,6 +163,34 @@ describe(IoRedisAdapter.name, () => {
 			await redisAdapter.createGroup();
 
 			expect(xgroupSpy).toHaveBeenCalledWith(...expectedProps);
+		});
+
+		it('should throw error', async () => {
+			const xgroupSpy = jest.spyOn(redis, 'xgroup');
+			// @ts-ignore
+			xgroupSpy.mockRejectedValue(new Error('error'));
+
+			await expect(redisAdapter.createGroup()).rejects.toThrow('error');
+		});
+
+		it('should not throw error', async () => {
+			const xgroupSpy = jest.spyOn(redis, 'xgroup');
+			const error = new Error('BUSYGROUP Consumer Group name already exists');
+			// @ts-ignore
+			xgroupSpy.mockRejectedValue(error);
+
+			await expect(redisAdapter.createGroup()).resolves.not.toThrow();
+		});
+
+		it('should call logger.log with error', async () => {
+			const xgroupSpy = jest.spyOn(redis, 'xgroup');
+			const error = new Error('BUSYGROUP Consumer Group name already exists');
+			// @ts-ignore
+			xgroupSpy.mockRejectedValue(error);
+
+			await redisAdapter.createGroup();
+
+			expect(logger.log).toHaveBeenCalledWith(error);
 		});
 	});
 
