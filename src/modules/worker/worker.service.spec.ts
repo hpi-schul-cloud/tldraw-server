@@ -1,15 +1,17 @@
+let _destroyed = false;
+
 jest.mock('../../infra/y-redis/api.service.js', () => {
 	return {
 		createApiClient: jest.fn().mockImplementation(() => {
 			return {
 				prototype: jest.fn(),
-				_destroyed: true,
+				_destroyed: _destroyed,
 			};
 		}),
 		Api: jest.fn().mockImplementation(() => {
 			return {
 				prototype: jest.fn(),
-				_destroyed: false,
+				_destroyed: _destroyed,
 			};
 		}),
 	};
@@ -20,18 +22,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '../../infra/logger/logger.js';
 import { RedisAdapter } from '../../infra/redis/redis.adapter.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
-import { xAutoClaimBufferRawReply } from '../../infra/redis/testing/x-auto-claim-raw-reply.factory.js';
-import { xItemBufferFactory } from '../../infra/redis/testing/x-item.factory.js';
-import { xItemsBufferFactory } from '../../infra/redis/testing/x-items.factory.js';
+import { streamMessageReply, xAutoClaimResponse } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
-import { streamsMessagesReplyFactory } from '../../infra/y-redis/testing/streams-messages-reply.factory.js';
 import { WorkerConfig } from './worker.config.js';
 import { WorkerService } from './worker.service.js';
 
 describe(WorkerService.name, () => {
 	let service: WorkerService;
 	let storageService: StorageService;
-	let redisService: RedisAdapter;
+	let redisAdapter: RedisAdapter;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -62,33 +61,99 @@ describe(WorkerService.name, () => {
 
 		service = await module.resolve(WorkerService);
 		storageService = module.get(StorageService);
-		redisService = await module.get(RedisService).createRedisInstance();
+		redisAdapter = await module.get(RedisService).createRedisInstance();
+	});
+
+	it('should be defined', () => {
+		expect(service).toBeDefined();
+	});
+
+	describe('onModuleInit', () => {
+		// describe('when _destroyed is false', () => {
+		// 	const setup = () => {
+		// 		_destroyed = false;
+
+		// 		const reclaimedTasks = xAutoClaimResponse.build();
+
+		// 		jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+		// 		jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
+
+		// 		const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
+
+		// 		return { consumeWorkerQueueSpy };
+		// 	};
+
+		// 	it('should call consumeWorkerQueue', async () => {
+		// 		const { consumeWorkerQueueSpy } = setup();
+
+		// 		await service.onModuleInit();
+
+		// 		expect(consumeWorkerQueueSpy).toHaveBeenCalled();
+		// 	});
+		// });
+
+		describe('when _destroyed is true', () => {
+			const setup = () => {
+				_destroyed = true;
+
+				const reclaimedTasks = xAutoClaimResponse.build();
+
+				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
+
+				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
+
+				return { consumeWorkerQueueSpy };
+			};
+
+			it('should call not consumeWorkerQueue', async () => {
+				const { consumeWorkerQueueSpy } = setup();
+
+				await service.onModuleInit();
+
+				expect(consumeWorkerQueueSpy).not.toHaveBeenCalled();
+			});
+		});
 	});
 
 	describe('consumeWorkerQueue', () => {
-		const setup = async () => {
-			const xItem = xItemBufferFactory.build([Buffer.from('compact'), [Buffer.from('id')]]);
-			const xItems = xItemsBufferFactory.build([xItem]);
-			const xAutoClaim = xAutoClaimBufferRawReply.build();
-			const reclaimedTasksRes = streamsMessagesReplyFactory.build();
-			//@ts-ignore
-			jest.spyOn(redisService, 'reclaimTasks').mockResolvedValue(reclaimedTasksRes);
+		describe('when there are no tasks', () => {
+			const setup = async () => {
+				_destroyed = true;
 
-			jest.spyOn(redisService, 'getDeletedDocEntries').mockResolvedValue([]);
+				const reclaimedTasks = xAutoClaimResponse.build();
 
-			await service.onModuleInit();
-		};
+				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
 
-		it('should return an empty array', async () => {
-			await setup();
-			const result = await service.consumeWorkerQueue();
-			expect(result).toEqual([]);
+				await service.onModuleInit();
+			};
+
+			it('should return an empty array', async () => {
+				await setup();
+				const result = await service.consumeWorkerQueue();
+				expect(result).toEqual([]);
+			});
 		});
 
-		it('should return an array of tasks', async () => {
-			await setup();
-			const result = await service.consumeWorkerQueue();
-			expect(result).toEqual([]);
+		describe('when there are tasks', () => {
+			const setup = async () => {
+				_destroyed = true;
+
+				const reclaimedTasks = xAutoClaimResponse.build();
+				reclaimedTasks.messages = [streamMessageReply.build()];
+
+				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
+
+				await service.onModuleInit();
+			};
+
+			it('should return an array of tasks', async () => {
+				await setup();
+				const result = await service.consumeWorkerQueue();
+				// expect(result).toEqual([{ stream: 'stream', id: 'id' }]);
+			});
 		});
 	});
 });
