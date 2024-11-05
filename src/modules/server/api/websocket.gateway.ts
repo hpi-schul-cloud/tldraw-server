@@ -37,8 +37,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			this.storageService,
 			this.authorizationService.hasPermission.bind(this.authorizationService),
 			{
-				openWsCallback: () => this.incOpenConnectionsGauge(),
-				closeWsCallback: () => this.decOpenConnectionsGauge(),
+				openWsCallback: () => MetricsService.openConnectionsGauge.inc(),
+				closeWsCallback: () => MetricsService.openConnectionsGauge.dec(),
 			},
 			this.redisService,
 		);
@@ -53,13 +53,5 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		redisAdapter.subscribeToDeleteChannel((message: string) => {
 			this.webSocketServer.publish(message, 'action:delete');
 		});
-	}
-
-	private incOpenConnectionsGauge(): void {
-		MetricsService.openConnectionsGauge.inc();
-	}
-
-	private decOpenConnectionsGauge(): void {
-		MetricsService.openConnectionsGauge.dec();
 	}
 }
