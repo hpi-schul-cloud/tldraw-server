@@ -35,6 +35,24 @@ describe('RedisInterface', () => {
 		});
 	});
 
+	describe('checkXItem', () => {
+		describe('when passing type of value is a XItem', () => {
+			const idBuffer = Buffer.from('id');
+			const fieldBuffer = Buffer.from('field');
+			const xItem = [idBuffer, [fieldBuffer]];
+
+			it('should return value', () => {
+				expect(RedisGuard.checkXItem(xItem)).toEqual(xItem);
+			});
+		});
+
+		describe('when passing type of value is NOT a XItem', () => {
+			it('should throw an error', () => {
+				expect(() => RedisGuard.checkXItem(undefined)).toThrow('Value is not a XItem');
+			});
+		});
+	});
+
 	describe('isXItems', () => {
 		describe('when passing type of value is a XItems with buffer', () => {
 			const idBuffer = Buffer.from('id');
