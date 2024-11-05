@@ -1,17 +1,33 @@
-let _destroyed = false;
+let callCount = 0;
 
 jest.mock('../../infra/y-redis/api.service.js', () => {
 	return {
 		createApiClient: jest.fn().mockImplementation(() => {
 			return {
 				prototype: jest.fn(),
-				_destroyed: _destroyed,
+				get _destroyed() {
+					if (callCount === 0) {
+						callCount++;
+
+						return false;
+					}
+
+					return true;
+				},
 			};
 		}),
 		Api: jest.fn().mockImplementation(() => {
 			return {
 				prototype: jest.fn(),
-				_destroyed: _destroyed,
+				get _destroyed() {
+					if (callCount === 0) {
+						callCount++;
+
+						return false;
+					}
+
+					return true;
+				},
 			};
 		}),
 	};
@@ -80,6 +96,7 @@ describe(WorkerService.name, () => {
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		callCount = 0;
 	});
 
 	it('should be defined', () => {
@@ -87,27 +104,25 @@ describe(WorkerService.name, () => {
 	});
 
 	describe('onModuleInit', () => {
-		// describe('when _destroyed is false', () => {
-		// 	const setup = () => {
-		// 		_destroyed = false;
+		describe('when _destroyed is false', () => {
+			const setup = () => {
+				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
 
-		// 		const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
+				return { consumeWorkerQueueSpy };
+			};
 
-		// 		return { consumeWorkerQueueSpy };
-		// 	};
+			it('should call consumeWorkerQueue', async () => {
+				const { consumeWorkerQueueSpy } = setup();
 
-		// 	it('should call consumeWorkerQueue', async () => {
-		// 		const { consumeWorkerQueueSpy } = setup();
+				await service.onModuleInit();
 
-		// 		await service.onModuleInit();
-
-		// 		expect(consumeWorkerQueueSpy).toHaveBeenCalled();
-		// 	});
-		// });
+				expect(consumeWorkerQueueSpy).toHaveBeenCalled();
+			});
+		});
 
 		describe('when _destroyed is true', () => {
 			const setup = () => {
-				_destroyed = true;
+				callCount = 1;
 
 				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
 
@@ -127,7 +142,7 @@ describe(WorkerService.name, () => {
 	describe('consumeWorkerQueue', () => {
 		describe('when there are no tasks', () => {
 			const setup = async () => {
-				_destroyed = true;
+				callCount = 1;
 
 				await service.onModuleInit();
 			};
@@ -143,7 +158,7 @@ describe(WorkerService.name, () => {
 
 		describe('when there are tasks', () => {
 			const setup = async () => {
-				_destroyed = true;
+				callCount = 1;
 
 				const streamMessageReply1 = streamMessageReply.build();
 				const streamMessageReply2 = streamMessageReply.build();
@@ -162,11 +177,13 @@ describe(WorkerService.name, () => {
 
 			it('should return an array of tasks', async () => {
 				await setup();
+
 				const result = await service.consumeWorkerQueue();
+
 				expect(result).toEqual([
-					{ stream: 'prefix:room:room:docid', id: '1' },
-					{ stream: 'prefix:room:room:docid', id: '2' },
-					{ stream: 'prefix:room:room:docid', id: '3' },
+					{ stream: 'prefix:room:room:docid-1', id: '1' },
+					{ stream: 'prefix:room:room:docid-2', id: '2' },
+					{ stream: 'prefix:room:room:docid-3', id: '3' },
 				]);
 			});
 		});
