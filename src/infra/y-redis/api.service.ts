@@ -1,5 +1,5 @@
 import { array, decoding, promise } from 'lib0';
-import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness.js';
+import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
 import { RedisAdapter } from '../redis/redis.adapter.js';

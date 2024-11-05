@@ -1,12 +1,3 @@
-jest.mock('../../../infra/y-redis/api.service.js', () => {
-	return {
-		Api: jest.fn().mockImplementation(() => {
-			return {
-				prototype: jest.fn(),
-			};
-		}),
-	};
-});
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TemplatedApp } from 'uws';
