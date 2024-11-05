@@ -30,6 +30,7 @@ import { WorkerService } from './worker.service.js';
 describe(WorkerService.name, () => {
 	let service: WorkerService;
 	let storageService: StorageService;
+	let redisService: RedisService;
 	let redisAdapter: RedisAdapter;
 
 	beforeAll(async () => {
@@ -61,7 +62,24 @@ describe(WorkerService.name, () => {
 
 		service = await module.resolve(WorkerService);
 		storageService = module.get(StorageService);
-		redisAdapter = await module.get(RedisService).createRedisInstance();
+		redisService = module.get(RedisService);
+
+		const reclaimedTasks = xAutoClaimResponse.build();
+
+		redisAdapter = createMock<RedisAdapter>({
+			redisPrefix: 'prefix',
+			reclaimTasks: jest.fn().mockResolvedValue(reclaimedTasks),
+			getDeletedDocEntries: jest.fn().mockResolvedValue([]),
+			tryClearTask: jest.fn().mockResolvedValue(0),
+			tryDeduplicateTask: jest.fn().mockResolvedValue(undefined),
+			deleteDeleteDocEntry: jest.fn().mockResolvedValue(undefined),
+		});
+
+		jest.spyOn(redisService, 'createRedisInstance').mockResolvedValue(redisAdapter);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
 	});
 
 	it('should be defined', () => {
@@ -72,11 +90,6 @@ describe(WorkerService.name, () => {
 		// describe('when _destroyed is false', () => {
 		// 	const setup = () => {
 		// 		_destroyed = false;
-
-		// 		const reclaimedTasks = xAutoClaimResponse.build();
-
-		// 		jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
-		// 		jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
 
 		// 		const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
 
@@ -95,11 +108,6 @@ describe(WorkerService.name, () => {
 		describe('when _destroyed is true', () => {
 			const setup = () => {
 				_destroyed = true;
-
-				const reclaimedTasks = xAutoClaimResponse.build();
-
-				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
-				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
 
 				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
 
@@ -121,17 +129,14 @@ describe(WorkerService.name, () => {
 			const setup = async () => {
 				_destroyed = true;
 
-				const reclaimedTasks = xAutoClaimResponse.build();
-
-				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
-				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
-
 				await service.onModuleInit();
 			};
 
 			it('should return an empty array', async () => {
 				await setup();
+
 				const result = await service.consumeWorkerQueue();
+
 				expect(result).toEqual([]);
 			});
 		});
@@ -140,11 +145,17 @@ describe(WorkerService.name, () => {
 			const setup = async () => {
 				_destroyed = true;
 
+				const streamMessageReply1 = streamMessageReply.build();
+				const streamMessageReply2 = streamMessageReply.build();
+				const streamMessageReply3 = streamMessageReply.build();
+
 				const reclaimedTasks = xAutoClaimResponse.build();
-				reclaimedTasks.messages = [streamMessageReply.build()];
+				reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
+
+				const deletedDocEntries = [streamMessageReply2];
 
 				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
-				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
+				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
 
 				await service.onModuleInit();
 			};
@@ -152,7 +163,11 @@ describe(WorkerService.name, () => {
 			it('should return an array of tasks', async () => {
 				await setup();
 				const result = await service.consumeWorkerQueue();
-				// expect(result).toEqual([{ stream: 'stream', id: 'id' }]);
+				expect(result).toEqual([
+					{ stream: 'prefix:room:room:docid', id: '1' },
+					{ stream: 'prefix:room:room:docid', id: '2' },
+					{ stream: 'prefix:room:room:docid', id: '3' },
+				]);
 			});
 		});
 	});

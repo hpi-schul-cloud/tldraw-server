@@ -16,7 +16,7 @@ export const streamMessageReply = Factory.define<StreamMessageReply>(({ sequence
 			key: sequence.toString(),
 			m: sequence.toString(),
 			docName: 'docName',
-			compact: 'compact',
+			compact: 'prefix:room:room:docid',
 		},
 	};
 });
