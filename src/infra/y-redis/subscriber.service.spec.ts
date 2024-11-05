@@ -205,5 +205,36 @@ describe(Subscriber.name, () => {
 			expect(subscriptionHandler).toHaveBeenCalledWith(messages[1].stream, messages[1].messages);
 			expect(subscriptionHandler).toHaveBeenCalledWith(messages[2].stream, messages[2].messages);
 		});
+
+		describe('when nextId is not null', () => {
+			const setupRun = () => {
+				const { api, subscriber } = setup();
+				const subscriptionHandler = jest.fn();
+
+				subscriber.subscribe('test', subscriptionHandler);
+				const messages = yRedisMessageFactory.build({ stream: 'test' });
+				api.getMessages.mockResolvedValue([messages]);
+
+				const testSubscriber = subscriber.subscribers.get('test');
+				if (testSubscriber) {
+					testSubscriber.nextId = '1';
+				}
+
+				const expectedMessages = {
+					nextId: null,
+					id: '1',
+				};
+
+				return { api, subscriber, testSubscriber, expectedMessages };
+			};
+
+			it('should set id and nextId ', async () => {
+				const { subscriber, testSubscriber, expectedMessages } = setupRun();
+
+				await subscriber.run();
+
+				expect(testSubscriber).toEqual(expect.objectContaining(expectedMessages));
+			});
+		});
 	});
 });
