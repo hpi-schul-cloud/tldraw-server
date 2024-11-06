@@ -33,7 +33,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
-import { RedisAdapter } from '../../infra/redis/redis.adapter.js';
+import { RedisAdapter } from '../../infra/redis/interfaces/redis-adapter.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
 import {
 	streamMessageReplyFactory,
