@@ -1,3 +1,6 @@
+let callCount = 0;
+let docChanged = false;
+
 jest.mock('../../infra/y-redis/api.service.js', () => {
 	return {
 		createApiClient: jest.fn().mockImplementation(() => {
@@ -19,7 +22,7 @@ jest.mock('../../infra/y-redis/api.service.js', () => {
 					},
 					redisLastId: '0',
 					storeReferences: null,
-					docChanged: false,
+					docChanged: docChanged,
 				}),
 			};
 		}),
@@ -36,8 +39,6 @@ import { streamMessageReply, xAutoClaimResponse } from '../../infra/redis/testin
 import { StorageService } from '../../infra/storage/storage.service.js';
 import { WorkerConfig } from './worker.config.js';
 import { WorkerService } from './worker.service.js';
-
-let callCount = 0;
 
 describe(WorkerService.name, () => {
 	let service: WorkerService;
@@ -153,37 +154,87 @@ describe(WorkerService.name, () => {
 		});
 
 		describe('when there are tasks', () => {
-			const setup = async () => {
-				callCount = 1;
+			describe('when stream length is 0', () => {
+				const setup = async () => {
+					callCount = 1;
 
-				const streamMessageReply1 = streamMessageReply.build();
-				const streamMessageReply2 = streamMessageReply.build();
-				const streamMessageReply3 = streamMessageReply.build();
+					const streamMessageReply1 = streamMessageReply.build();
+					const streamMessageReply2 = streamMessageReply.build();
+					const streamMessageReply3 = streamMessageReply.build();
 
-				const reclaimedTasks = xAutoClaimResponse.build();
-				reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
+					const reclaimedTasks = xAutoClaimResponse.build();
+					reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
 
-				const deletedDocEntries = [streamMessageReply2];
+					const deletedDocEntries = [streamMessageReply2];
 
-				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
-				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
-				jest.spyOn(redisAdapter, 'tryClearTask').mockImplementation(async (task) => {
-					return task.stream.length;
+					jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
+					jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+
+					const expectedTasks = reclaimedTasks.messages.map((m) => ({
+						stream: m.message.compact.toString(),
+						id: m?.id.toString(),
+					}));
+
+					await service.onModuleInit();
+
+					return { expectedTasks };
+				};
+
+				it('should return an array of tasks', async () => {
+					const { expectedTasks } = await setup();
+
+					const result = await service.consumeWorkerQueue();
+
+					expect(result).toEqual(expectedTasks);
+				});
+			});
+
+			describe('when stream length is not 0', () => {
+				const setup = async () => {
+					callCount = 1;
+
+					const streamMessageReply1 = streamMessageReply.build();
+					const streamMessageReply2 = streamMessageReply.build();
+					const streamMessageReply3 = streamMessageReply.build();
+
+					const reclaimedTasks = xAutoClaimResponse.build();
+					reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
+
+					const deletedDocEntries = [streamMessageReply2];
+
+					jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
+					jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+					jest.spyOn(redisAdapter, 'tryClearTask').mockImplementation(async (task) => {
+						return task.stream.length;
+					});
+
+					const expectedTasks = reclaimedTasks.messages.map((m) => ({
+						stream: m.message.compact.toString(),
+						id: m?.id.toString(),
+					}));
+
+					await service.onModuleInit();
+
+					return { expectedTasks };
+				};
+
+				it('should return an array of tasks', async () => {
+					const { expectedTasks } = await setup();
+
+					const result = await service.consumeWorkerQueue();
+
+					expect(result).toEqual(expectedTasks);
 				});
 
-				await service.onModuleInit();
-			};
+				it('should return an array of tasks', async () => {
+					docChanged = true;
 
-			it('should return an array of tasks', async () => {
-				await setup();
+					const { expectedTasks } = await setup();
 
-				const result = await service.consumeWorkerQueue();
+					const result = await service.consumeWorkerQueue();
 
-				expect(result).toEqual([
-					{ stream: 'prefix:room:room:docid-1', id: '1' },
-					{ stream: 'prefix:room:room:docid-2', id: '2' },
-					{ stream: 'prefix:room:room:docid-3', id: '3' },
-				]);
+					expect(result).toEqual(expectedTasks);
+				});
 			});
 		});
 	});
