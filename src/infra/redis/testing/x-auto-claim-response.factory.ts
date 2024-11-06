@@ -1,5 +1,5 @@
 import { Factory } from 'fishery';
-import { XAutoClaimResponse } from '../interfaces/redis.interface.js';
+import { XAutoClaimResponse } from '../interfaces/redis.js';
 import { StreamMessageReply } from '../interfaces/stream-message-reply.js';
 
 export const xAutoClaimResponseFactory = Factory.define<XAutoClaimResponse>(({ sequence }) => {

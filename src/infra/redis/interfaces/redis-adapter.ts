@@ -1,4 +1,4 @@
-import { Task, XAutoClaimResponse } from './redis.interface.js';
+import { Task, XAutoClaimResponse } from './redis.js';
 import { StreamMessageReply, StreamsMessagesReply } from './stream-message-reply.js';
 import { StreamNameClockPair } from './stream-name-clock-pair.js';
 

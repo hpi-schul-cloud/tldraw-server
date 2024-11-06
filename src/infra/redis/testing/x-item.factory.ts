@@ -1,5 +1,5 @@
 import { Factory } from 'fishery';
-import { XItem } from '../interfaces/redis.interface.js';
+import { XItem } from '../interfaces/redis.js';
 
 export const xItemStringFactory = Factory.define<XItem>(({ sequence }) => [sequence.toString(), ['key', 'message']]);
 
