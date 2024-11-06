@@ -10,8 +10,10 @@ import { Api, createApiClient } from './api.service.js';
 import { isSmallerRedisId } from './helper.js';
 import { DocumentStorage } from './storage.js';
 
-const run = async (subscriber: Subscriber): Promise<void> => {
-	while (true) {
+export let running = true;
+
+export const run = async (subscriber: Subscriber): Promise<void> => {
+	while (running) {
 		await subscriber.run();
 	}
 };
@@ -78,7 +80,10 @@ export class Subscriber {
 		);
 
 		for (const message of messages) {
+			console.log('message.stream', message.stream);
+			console.log('subscribers', this.subscribers);
 			const sub = this.subscribers.get(message.stream);
+			console.log('sub', sub);
 			if (sub == null) continue;
 			sub.id = message.lastId;
 			if (sub.nextId != null) {
