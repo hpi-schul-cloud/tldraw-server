@@ -14,6 +14,7 @@ export class WorkerService implements OnModuleInit {
 	private client!: Api;
 	private readonly consumerId = randomUUID();
 	private redis!: RedisAdapter;
+	public running = true;
 
 	public constructor(
 		private readonly storageService: StorageService,
@@ -24,12 +25,19 @@ export class WorkerService implements OnModuleInit {
 		this.logger.setContext(WorkerService.name);
 	}
 
+	private stopRunning(): void {
+		this.running = false;
+	}
+
 	public async onModuleInit(): Promise<void> {
 		this.client = await createApiClient(this.storageService, this.redisService);
+		this.client.registerDestroyedCallback(() => {
+			this.stopRunning();
+		});
 		this.redis = await this.redisService.createRedisInstance();
 
 		this.logger.log(`Created worker process ${this.consumerId}`);
-		while (!this.client._destroyed) {
+		while (this.running) {
 			await this.consumeWorkerQueue();
 		}
 		this.logger.log(`Ended worker process ${this.consumerId}`);
