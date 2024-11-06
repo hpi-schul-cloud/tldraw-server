@@ -1,5 +1,3 @@
-let callCount = 0;
-
 jest.mock('../../infra/y-redis/api.service.js', () => {
 	return {
 		createApiClient: jest.fn().mockImplementation(() => {
@@ -14,20 +12,15 @@ jest.mock('../../infra/y-redis/api.service.js', () => {
 
 					return true;
 				},
-			};
-		}),
-		Api: jest.fn().mockImplementation(() => {
-			return {
-				prototype: jest.fn(),
-				get _destroyed() {
-					if (callCount === 0) {
-						callCount++;
-
-						return false;
-					}
-
-					return true;
-				},
+				getDoc: jest.fn().mockResolvedValue({
+					ydoc: createMock<Doc>(),
+					awareness: {
+						destroy: jest.fn(),
+					},
+					redisLastId: '0',
+					storeReferences: null,
+					docChanged: false,
+				}),
 			};
 		}),
 	};
@@ -35,6 +28,7 @@ jest.mock('../../infra/y-redis/api.service.js', () => {
 
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
 import { RedisAdapter } from '../../infra/redis/redis.adapter.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
@@ -42,6 +36,8 @@ import { streamMessageReply, xAutoClaimResponse } from '../../infra/redis/testin
 import { StorageService } from '../../infra/storage/storage.service.js';
 import { WorkerConfig } from './worker.config.js';
 import { WorkerService } from './worker.service.js';
+
+let callCount = 0;
 
 describe(WorkerService.name, () => {
 	let service: WorkerService;
@@ -169,8 +165,11 @@ describe(WorkerService.name, () => {
 
 				const deletedDocEntries = [streamMessageReply2];
 
-				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
 				jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
+				jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+				jest.spyOn(redisAdapter, 'tryClearTask').mockImplementation(async (task) => {
+					return task.stream.length;
+				});
 
 				await service.onModuleInit();
 			};
