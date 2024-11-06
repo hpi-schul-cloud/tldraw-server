@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TemplatedApp } from 'uws';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
 import { Logger } from '../../../infra/logger/logger.js';
+import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { IoRedisAdapter } from '../../../infra/redis/ioredis.adapter.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
@@ -10,11 +11,14 @@ import { registerYWebsocketServer } from '../../../infra/y-redis/ws.service.js';
 import { ServerConfig } from '../server.config.js';
 import { WebsocketGateway } from './websocket.gateway.js';
 
-jest.mock('../../../infra/y-redis/ws.service.js', () => {
-	return {
-		registerYWebsocketServer: jest.fn(),
-	};
-});
+jest.mock('../../../infra/y-redis/ws.service.js', () => ({
+	registerYWebsocketServer: jest.fn().mockImplementation(() =>
+		Promise.resolve({
+			openWsCallback: jest.fn(),
+			closeWsCallback: jest.fn(),
+		}),
+	),
+}));
 
 describe(WebsocketGateway.name, () => {
 	let service: WebsocketGateway;
@@ -87,6 +91,27 @@ describe(WebsocketGateway.name, () => {
 				},
 				redisService,
 			);
+		});
+
+		it('should increment openConnectionsGauge on openWsCallback', async () => {
+			const openConnectionsGaugeIncSpy = jest.spyOn(MetricsService.openConnectionsGauge, 'inc');
+
+			await service.onModuleInit();
+
+			const openWsCallback = (registerYWebsocketServer as jest.Mock).mock.calls[0][4].openWsCallback;
+			openWsCallback();
+
+			expect(openConnectionsGaugeIncSpy).toHaveBeenCalled();
+		});
+
+		it('should decrement openConnectionsGauge on closeWsCallback', async () => {
+			const openConnectionsGaugeDecSpy = jest.spyOn(MetricsService.openConnectionsGauge, 'dec');
+
+			await service.onModuleInit();
+			const closeWsCallback = (registerYWebsocketServer as jest.Mock).mock.calls[0][4].closeWsCallback;
+			closeWsCallback();
+
+			expect(openConnectionsGaugeDecSpy).toHaveBeenCalled();
 		});
 
 		it('should call webSocketServer.listen', async () => {
