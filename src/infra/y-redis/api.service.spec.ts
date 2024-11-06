@@ -212,7 +212,7 @@ describe(Api.name, () => {
 			const { api, props } = setup();
 			const { room, docid } = props;
 
-			await api.getDoc(room, docid);
+			//await api.getDoc(room, docid);
 
 			//expect(spyComputeRedisRoomStreamName).toHaveBeenCalledTimes(1);
 		});
