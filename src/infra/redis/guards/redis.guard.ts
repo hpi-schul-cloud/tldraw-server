@@ -35,7 +35,7 @@ export class RedisGuard {
 
 	public static checkXItems(value: unknown): XItems {
 		if (!this.isXItems(value)) {
-			throw new Error('Value is not a XItems');
+			throw new Error('One of the values is not an xItem');
 		}
 
 		return value;
