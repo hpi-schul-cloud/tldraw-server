@@ -110,13 +110,13 @@ describe('helper', () => {
 			expect(result).toEqual(
 				new Map([
 					[
-						'roomid',
+						'roomid-1',
 						new Map([
 							[
 								'docid',
 								{
-									lastId: '2-3',
-									messages: ['message-1-2', 'message-1-2'],
+									lastId: 'redis-id-2',
+									messages: ['message-1-2', 'message-2-2'],
 								},
 							],
 						]),
