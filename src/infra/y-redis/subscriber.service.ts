@@ -10,8 +10,10 @@ import { Api, createApiClient } from './api.service.js';
 import { isSmallerRedisId } from './helper.js';
 import { DocumentStorage } from './storage.js';
 
-const run = async (subscriber: Subscriber): Promise<void> => {
-	while (true) {
+export let running = true;
+
+export const run = async (subscriber: Subscriber): Promise<void> => {
+	while (running) {
 		await subscriber.run();
 	}
 };
