@@ -15,7 +15,7 @@ export const streamMessageReply = Factory.define<StreamMessageReply>(({ sequence
 		message: {
 			key: sequence.toString(),
 			m: sequence.toString(),
-			docName: `docName-${sequence.toString()}`,
+			docName: `prefix:room:room:docid-${sequence.toString()}`,
 			compact: `prefix:room:room:docid-${sequence.toString()}`,
 		},
 	};
