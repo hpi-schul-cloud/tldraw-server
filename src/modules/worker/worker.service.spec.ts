@@ -42,7 +42,6 @@ import { WorkerService } from './worker.service.js';
 
 describe(WorkerService.name, () => {
 	let service: WorkerService;
-	let storageService: StorageService;
 	let redisService: RedisService;
 	let redisAdapter: RedisAdapter;
 
@@ -74,7 +73,6 @@ describe(WorkerService.name, () => {
 		}).compile();
 
 		service = await module.resolve(WorkerService);
-		storageService = module.get(StorageService);
 		redisService = module.get(RedisService);
 
 		const reclaimedTasks = xAutoClaimResponse.build();
@@ -218,22 +216,26 @@ describe(WorkerService.name, () => {
 					return { expectedTasks };
 				};
 
-				it('should return an array of tasks', async () => {
-					const { expectedTasks } = await setup();
+				describe('when docChanged is false', () => {
+					it('should return an array of tasks', async () => {
+						const { expectedTasks } = await setup();
 
-					const result = await service.consumeWorkerQueue();
+						const result = await service.consumeWorkerQueue();
 
-					expect(result).toEqual(expectedTasks);
+						expect(result).toEqual(expectedTasks);
+					});
 				});
 
-				it('should return an array of tasks', async () => {
-					docChanged = true;
+				describe('when docChanged is true', () => {
+					it('should return an array of tasks', async () => {
+						docChanged = true;
 
-					const { expectedTasks } = await setup();
+						const { expectedTasks } = await setup();
 
-					const result = await service.consumeWorkerQueue();
+						const result = await service.consumeWorkerQueue();
 
-					expect(result).toEqual(expectedTasks);
+						expect(result).toEqual(expectedTasks);
+					});
 				});
 			});
 		});
