@@ -3,7 +3,7 @@ import { Redis } from 'ioredis';
 import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
-import { xAutoClaimRawReply } from './testing/x-auto-claim-raw-reply.factory.js';
+import { xAutoClaimRawReplyFactory } from './testing/x-auto-claim-raw-reply.factory.js';
 import { xItemsBufferFactory } from './testing/x-items.factory.js';
 import { xReadBufferReplyFactory } from './testing/x-read-buffer-reply.factory.js';
 
@@ -284,7 +284,7 @@ describe(IoRedisAdapter.name, () => {
 			const consumer = 'consumer';
 			const redisTaskDebounce = 1000;
 
-			const returnValue = xAutoClaimRawReply.build();
+			const returnValue = xAutoClaimRawReplyFactory.build();
 			xautoclaimSpy.mockResolvedValue(returnValue);
 
 			const expectedProps = [

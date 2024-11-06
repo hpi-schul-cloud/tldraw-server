@@ -35,7 +35,10 @@ import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
 import { RedisAdapter } from '../../infra/redis/redis.adapter.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
-import { streamMessageReply, xAutoClaimResponse } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
+import {
+	streamMessageReplyFactory,
+	xAutoClaimResponseFactory,
+} from '../../infra/redis/testing/x-auto-claim-response.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
 import { WorkerConfig } from './worker.config.js';
 import { WorkerService } from './worker.service.js';
@@ -75,7 +78,7 @@ describe(WorkerService.name, () => {
 		service = await module.resolve(WorkerService);
 		redisService = module.get(RedisService);
 
-		const reclaimedTasks = xAutoClaimResponse.build();
+		const reclaimedTasks = xAutoClaimResponseFactory.build();
 
 		redisAdapter = createMock<RedisAdapter>({
 			redisPrefix: 'prefix',
@@ -157,11 +160,11 @@ describe(WorkerService.name, () => {
 					const setup = async () => {
 						callCount = 1;
 
-						const streamMessageReply1 = streamMessageReply.build();
-						const streamMessageReply2 = streamMessageReply.build();
-						const streamMessageReply3 = streamMessageReply.build();
+						const streamMessageReply1 = streamMessageReplyFactory.build();
+						const streamMessageReply2 = streamMessageReplyFactory.build();
+						const streamMessageReply3 = streamMessageReplyFactory.build();
 
-						const reclaimedTasks = xAutoClaimResponse.build();
+						const reclaimedTasks = xAutoClaimResponseFactory.build();
 						reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
 
 						jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
@@ -190,11 +193,11 @@ describe(WorkerService.name, () => {
 					const setup = async () => {
 						callCount = 1;
 
-						const streamMessageReply1 = streamMessageReply.build();
-						const streamMessageReply2 = streamMessageReply.build();
-						const streamMessageReply3 = streamMessageReply.build();
+						const streamMessageReply1 = streamMessageReplyFactory.build();
+						const streamMessageReply2 = streamMessageReplyFactory.build();
+						const streamMessageReply3 = streamMessageReplyFactory.build();
 
-						const reclaimedTasks = xAutoClaimResponse.build();
+						const reclaimedTasks = xAutoClaimResponseFactory.build();
 						reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
 
 						const deletedDocEntries = [streamMessageReply2];
@@ -226,11 +229,11 @@ describe(WorkerService.name, () => {
 				const setup = async () => {
 					callCount = 1;
 
-					const streamMessageReply1 = streamMessageReply.build();
-					const streamMessageReply2 = streamMessageReply.build();
-					const streamMessageReply3 = streamMessageReply.build();
+					const streamMessageReply1 = streamMessageReplyFactory.build();
+					const streamMessageReply2 = streamMessageReplyFactory.build();
+					const streamMessageReply3 = streamMessageReplyFactory.build();
 
-					const reclaimedTasks = xAutoClaimResponse.build();
+					const reclaimedTasks = xAutoClaimResponseFactory.build();
 					reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
 
 					const deletedDocEntries = [streamMessageReply2];
