@@ -5,7 +5,7 @@ import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 import { xAutoClaimRawReply } from './testing/x-auto-claim-raw-reply.factory.js';
 import { xItemsBufferFactory } from './testing/x-items.factory.js';
-import { xReadBufferReply } from './testing/x-read-buffer-reply.factory.js';
+import { xReadBufferReplyFactory } from './testing/x-read-buffer-reply.factory.js';
 
 const testPrefix = 'testPrefix';
 
@@ -199,7 +199,7 @@ describe(IoRedisAdapter.name, () => {
 			const streams = [{ key: 'key', id: '1728917177284-0' }];
 			const xreadBufferSpy = jest.spyOn(redis, 'xreadBuffer');
 
-			const reply = xReadBufferReply.build();
+			const reply = xReadBufferReplyFactory.build();
 			// @ts-ignore
 			xreadBufferSpy.mockResolvedValue(reply);
 
@@ -243,7 +243,7 @@ describe(IoRedisAdapter.name, () => {
 			const xreadBufferSpy = jest.spyOn(redis, 'xreadBuffer');
 			const computeRedisRoomStreamName = 'computeRedisRoomStreamName';
 
-			const readBufferReply = xReadBufferReply.build();
+			const readBufferReply = xReadBufferReplyFactory.build();
 			// @ts-ignore
 			xreadBufferSpy.mockResolvedValue(readBufferReply);
 			// @ts-ignore
