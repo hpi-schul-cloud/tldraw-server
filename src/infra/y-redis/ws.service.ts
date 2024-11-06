@@ -32,7 +32,7 @@ import { createSubscriber, Subscriber } from './subscriber.service.js';
  *   }
  */
 
-class YWebsocketServer {
+export class YWebsocketServer {
 	public constructor(
 		public readonly app: uws.TemplatedApp,
 		public readonly client: Api,
@@ -47,7 +47,7 @@ class YWebsocketServer {
 
 let _idCnt = 0;
 
-class User {
+export class User {
 	public subs: Set<string>;
 	public id: number;
 	public awarenessId: number | null;
@@ -77,6 +77,103 @@ class User {
 		this.isClosed = false;
 	}
 }
+
+export const upgradeCallback = async (
+	res: uws.HttpResponse,
+	req: uws.HttpRequest,
+	context: uws.us_socket_context_t,
+	checkAuth: (req: uws.HttpRequest) => Promise<ResponsePayload>,
+): Promise<void> => {
+	try {
+		const headerWsKey = req.getHeader('sec-websocket-key');
+		const headerWsProtocol = req.getHeader('sec-websocket-protocol');
+		const headerWsExtensions = req.getHeader('sec-websocket-extensions');
+		let aborted = false;
+		res.onAborted(() => {
+			aborted = true;
+		});
+
+		const { hasWriteAccess, room, userid, error } = await checkAuth(req);
+		if (aborted) return;
+		res.cork(() => {
+			res.upgrade(
+				new User(room, hasWriteAccess, userid, error),
+				headerWsKey,
+				headerWsProtocol,
+				headerWsExtensions,
+				context,
+			);
+		});
+	} catch (error) {
+		res.cork(() => {
+			res.writeStatus('500 Internal Server Error').end('Internal Server Error');
+		});
+		console.error(error);
+	}
+};
+
+export const openCallback = async (
+	ws: uws.WebSocket<User>,
+	subscriber: Subscriber,
+	client: Api,
+	redisMessageSubscriber: (stream: string, messages: Uint8Array[]) => void,
+	openWsCallback?: (ws: uws.WebSocket<User>) => void,
+	initDocCallback?: (room: string, docname: string, client: Api) => void,
+): Promise<void> => {
+	try {
+		const user = ws.getUserData();
+		if (user.error != null) {
+			const { code, reason } = user.error;
+			ws.end(code, reason);
+
+			return;
+		}
+
+		if (user.room === null || user.userid === null) {
+			ws.end(1008);
+
+			return;
+		}
+
+		if (openWsCallback) {
+			openWsCallback(ws);
+		}
+		const stream = computeRedisRoomStreamName(user.room, 'index', client.redisPrefix);
+		user.subs.add(stream);
+		ws.subscribe(stream);
+		user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId;
+		const indexDoc = await client.getDoc(user.room, 'index');
+		if (indexDoc.ydoc.store.clients.size === 0) {
+			if (initDocCallback) {
+				initDocCallback(user.room, 'index', client);
+			}
+		}
+		if (user.isClosed) return;
+		ws.cork(() => {
+			ws.send(protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)), true, false);
+			ws.send(protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)), true, true);
+			if (indexDoc.awareness.states.size > 0) {
+				ws.send(
+					protocol.encodeAwarenessUpdate(indexDoc.awareness, array.from(indexDoc.awareness.states.keys())),
+					true,
+					true,
+				);
+			}
+		});
+
+		// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
+		indexDoc.awareness.destroy();
+
+		if (isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)) {
+			// our subscription is newer than the content that we received from the api
+			// need to renew subscription id and make sure that we catch the latest content.
+			subscriber.ensureSubId(stream, indexDoc.redisLastId);
+		}
+	} catch (error) {
+		console.error(error);
+		ws.end(1011);
+	}
+};
 
 /**
  * @param {uws.TemplatedApp} app
@@ -129,89 +226,9 @@ export const registerYWebsocketServer = async (
 		maxPayloadLength: 100 * 1024 * 1024,
 		idleTimeout: 60,
 		sendPingsAutomatically: true,
-		upgrade: async (res, req, context) => {
-			try {
-				const headerWsKey = req.getHeader('sec-websocket-key');
-				const headerWsProtocol = req.getHeader('sec-websocket-protocol');
-				const headerWsExtensions = req.getHeader('sec-websocket-extensions');
-				let aborted = false;
-				res.onAborted(() => {
-					aborted = true;
-				});
-
-				const { hasWriteAccess, room, userid, error } = await checkAuth(req);
-				if (aborted) return;
-				res.cork(() => {
-					res.upgrade(
-						new User(room, hasWriteAccess, userid, error),
-						headerWsKey,
-						headerWsProtocol,
-						headerWsExtensions,
-						context,
-					);
-				});
-			} catch (error) {
-				res.cork(() => {
-					res.writeStatus('500 Internal Server Error').end('Internal Server Error');
-				});
-				console.error(error);
-			}
-		},
-		open: async (ws: uws.WebSocket<User>) => {
-			try {
-				const user = ws.getUserData();
-				if (user.error != null) {
-					const { code, reason } = user.error;
-					ws.end(code, reason);
-
-					return;
-				}
-
-				if (user.room === null || user.userid === null) {
-					ws.end(1008);
-
-					return;
-				}
-
-				if (openWsCallback) {
-					openWsCallback(ws);
-				}
-				const stream = computeRedisRoomStreamName(user.room, 'index', client.redisPrefix);
-				user.subs.add(stream);
-				ws.subscribe(stream);
-				user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId;
-				const indexDoc = await client.getDoc(user.room, 'index');
-				if (indexDoc.ydoc.store.clients.size === 0) {
-					if (initDocCallback) {
-						initDocCallback(user.room, 'index', client);
-					}
-				}
-				if (user.isClosed) return;
-				ws.cork(() => {
-					ws.send(protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)), true, false);
-					ws.send(protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)), true, true);
-					if (indexDoc.awareness.states.size > 0) {
-						ws.send(
-							protocol.encodeAwarenessUpdate(indexDoc.awareness, array.from(indexDoc.awareness.states.keys())),
-							true,
-							true,
-						);
-					}
-				});
-
-				// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
-				indexDoc.awareness.destroy();
-
-				if (isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)) {
-					// our subscription is newer than the content that we received from the api
-					// need to renew subscription id and make sure that we catch the latest content.
-					subscriber.ensureSubId(stream, indexDoc.redisLastId);
-				}
-			} catch (error) {
-				console.error(error);
-				ws.end(1011);
-			}
-		},
+		upgrade: (res, req, context) => upgradeCallback(res, req, context, checkAuth),
+		open: (ws: uws.WebSocket<User>) =>
+			openCallback(ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback),
 		message: (ws, messageBuffer) => {
 			try {
 				const user = ws.getUserData();
