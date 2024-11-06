@@ -9,12 +9,12 @@ export class RedisGuard {
 
 		const [id, fields] = value;
 
-		const isBuffer =
+		const isXItem =
 			(Buffer.isBuffer(id) || TypeGuard.isString(id)) &&
 			Array.isArray(fields) &&
 			(fields.every((field) => Buffer.isBuffer(field)) || fields.every((field) => TypeGuard.isString(field)));
 
-		return isBuffer;
+		return isXItem;
 	}
 
 	public static checkXItem(value: unknown): XItem {
