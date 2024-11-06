@@ -14,7 +14,7 @@ export class WorkerService implements OnModuleInit {
 	private client!: Api;
 	private readonly consumerId = randomUUID();
 	private redis!: RedisAdapter;
-	public running = true;
+	private running = true;
 
 	public constructor(
 		private readonly storageService: StorageService,
@@ -25,7 +25,7 @@ export class WorkerService implements OnModuleInit {
 		this.logger.setContext(WorkerService.name);
 	}
 
-	private stopRunning(): void {
+	public stopRunning(): void {
 		this.running = false;
 	}
 
