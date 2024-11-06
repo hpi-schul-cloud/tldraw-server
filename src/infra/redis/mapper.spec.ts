@@ -1,6 +1,6 @@
 import { mapToStreamMessagesReplies, mapToStreamsMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
 import { xItemBufferFactory, xItemStringFactory } from './testing/x-item.factory.js';
-import { xReadBufferReply } from './testing/x-read-buffer-reply.factory.js';
+import { xReadBufferReplyFactory } from './testing/x-read-buffer-reply.factory.js';
 
 describe('Mapper', () => {
 	describe('mapToXAutoClaimResponse', () => {
@@ -289,7 +289,7 @@ describe('Mapper', () => {
 
 		describe('when streamReply is valid XReadBufferReply', () => {
 			const setup = () => {
-				const streamReply = xReadBufferReply.build();
+				const streamReply = xReadBufferReplyFactory.build();
 
 				if (streamReply === null) {
 					throw new Error('streamReply is null');

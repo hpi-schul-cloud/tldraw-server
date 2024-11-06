@@ -1,15 +1,15 @@
 import { Factory } from 'fishery';
-import { XAutoClaimResponse } from '../interfaces/redis.interface.js';
+import { XAutoClaimResponse } from '../interfaces/redis.js';
 import { StreamMessageReply } from '../interfaces/stream-message-reply.js';
 
-export const xAutoClaimResponse = Factory.define<XAutoClaimResponse>(({ sequence }) => {
+export const xAutoClaimResponseFactory = Factory.define<XAutoClaimResponse>(({ sequence }) => {
 	return {
 		nextId: sequence.toString(),
 		messages: [],
 	};
 });
 
-export const streamMessageReply = Factory.define<StreamMessageReply>(({ sequence }) => {
+export const streamMessageReplyFactory = Factory.define<StreamMessageReply>(({ sequence }) => {
 	return {
 		id: sequence.toString(),
 		message: {

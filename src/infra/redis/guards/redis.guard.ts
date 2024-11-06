@@ -1,4 +1,4 @@
-import { XItem, XItems } from '../interfaces/redis.interface.js';
+import { XItem, XItems } from '../interfaces/redis.js';
 import { TypeGuard } from './type.guard.js';
 
 export class RedisGuard {
@@ -9,12 +9,12 @@ export class RedisGuard {
 
 		const [id, fields] = value;
 
-		const isBuffer =
+		const isXItem =
 			(Buffer.isBuffer(id) || TypeGuard.isString(id)) &&
 			Array.isArray(fields) &&
 			(fields.every((field) => Buffer.isBuffer(field)) || fields.every((field) => TypeGuard.isString(field)));
 
-		return isBuffer;
+		return isXItem;
 	}
 
 	public static checkXItem(value: unknown): XItem {
@@ -35,7 +35,7 @@ export class RedisGuard {
 
 	public static checkXItems(value: unknown): XItems {
 		if (!this.isXItems(value)) {
-			throw new Error('Value is not a XItems');
+			throw new Error('One of the values is not an xItem');
 		}
 
 		return value;

@@ -1,11 +1,11 @@
 import { Redis } from 'ioredis';
 import { Logger } from '../logger/index.js';
 import { addMessageCommand, xDelIfEmptyCommand } from './commands.js';
-import { Task, XAutoClaimResponse } from './interfaces/redis.interface.js';
+import { RedisAdapter } from './interfaces/redis-adapter.js';
+import { Task, XAutoClaimResponse } from './interfaces/redis.js';
 import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-reply.js';
 import { StreamNameClockPair } from './interfaces/stream-name-clock-pair.js';
 import { mapToStreamMessagesReplies, mapToStreamsMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
-import { RedisAdapter } from './redis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 
 export class IoRedisAdapter implements RedisAdapter {
@@ -16,7 +16,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	public readonly redisDeletionActionKey: string;
 
 	public constructor(
-		private readonly internalRedisInstance: Redis,
+		private readonly redis: Redis,
 		private readonly config: RedisConfig,
 		private readonly logger: Logger,
 	) {
@@ -28,55 +28,49 @@ export class IoRedisAdapter implements RedisAdapter {
 		this.redisWorkerGroupName = `${this.redisPrefix}:worker`;
 		this.redisDeletionActionKey = `${this.redisPrefix}:delete:action`;
 
-		internalRedisInstance.defineCommand('addMessage', {
+		redis.defineCommand('addMessage', {
 			numberOfKeys: 1,
 			lua: addMessageCommand(this.redisWorkerStreamName, this.redisWorkerGroupName),
 		});
 
-		internalRedisInstance.defineCommand('xDelIfEmpty', {
+		redis.defineCommand('xDelIfEmpty', {
 			numberOfKeys: 1,
 			lua: xDelIfEmptyCommand(),
 		});
 	}
 
 	public subscribeToDeleteChannel(callback: (message: string) => void): void {
-		this.internalRedisInstance.subscribe(this.redisDeletionActionKey);
-		this.internalRedisInstance.on('message', (chan, message) => {
+		this.redis.subscribe(this.redisDeletionActionKey);
+		this.redis.on('message', (chan, message) => {
 			callback(message);
 		});
 	}
 
 	public async markToDeleteByDocName(docName: string): Promise<void> {
-		await this.internalRedisInstance.xadd(this.redisDeleteStreamName, '*', 'docName', docName);
-		await this.internalRedisInstance.publish(this.redisDeletionActionKey, docName);
+		await this.redis.xadd(this.redisDeleteStreamName, '*', 'docName', docName);
+		await this.redis.publish(this.redisDeletionActionKey, docName);
 	}
 
 	public async addMessage(key: string, message: unknown): Promise<void> {
 		// @ts-ignore
-		await this.internalRedisInstance.addMessage(key, message);
+		await this.redis.addMessage(key, message);
 	}
 
 	public getEntriesLen(streamName: string): Promise<number> {
-		const result = this.internalRedisInstance.xlen(streamName);
+		const result = this.redis.xlen(streamName);
 
 		return result;
 	}
 
 	public exists(stream: string): Promise<number> {
-		const result = this.internalRedisInstance.exists(stream);
+		const result = this.redis.exists(stream);
 
 		return result;
 	}
 
 	public async createGroup(): Promise<void> {
 		try {
-			await this.internalRedisInstance.xgroup(
-				'CREATE',
-				this.redisWorkerStreamName,
-				this.redisWorkerGroupName,
-				'0',
-				'MKSTREAM',
-			);
+			await this.redis.xgroup('CREATE', this.redisWorkerStreamName, this.redisWorkerGroupName, '0', 'MKSTREAM');
 		} catch (e) {
 			this.logger.log(e);
 			// It is okay when the group already exists, so we can ignore this error.
@@ -87,11 +81,11 @@ export class IoRedisAdapter implements RedisAdapter {
 	}
 
 	public async quit(): Promise<void> {
-		await this.internalRedisInstance.quit();
+		await this.redis.quit();
 	}
 
 	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamsMessagesReply> {
-		const reads = await this.internalRedisInstance.xreadBuffer(
+		const reads = await this.redis.xreadBuffer(
 			'COUNT',
 			1000,
 			'BLOCK',
@@ -107,7 +101,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	}
 
 	public async readMessagesFromStream(streamName: string): Promise<StreamsMessagesReply> {
-		const reads = await this.internalRedisInstance.xreadBuffer(
+		const reads = await this.redis.xreadBuffer(
 			'COUNT',
 			1000, // Adjust the count as needed
 			'BLOCK',
@@ -127,7 +121,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		redisTaskDebounce: number,
 		tryClaimCount = 5,
 	): Promise<XAutoClaimResponse> {
-		const reclaimedTasks = await this.internalRedisInstance.xautoclaim(
+		const reclaimedTasks = await this.redis.xautoclaim(
 			this.redisWorkerStreamName,
 			this.redisWorkerGroupName,
 			consumerName,
@@ -143,7 +137,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	}
 
 	public async getDeletedDocEntries(): Promise<StreamMessageReply[]> {
-		const deletedDocEntries = await this.internalRedisInstance.xrangeBuffer(this.redisDeleteStreamName, '-', '+');
+		const deletedDocEntries = await this.redis.xrangeBuffer(this.redisDeleteStreamName, '-', '+');
 
 		const transformedDeletedTasks = mapToStreamMessagesReplies(deletedDocEntries);
 
@@ -151,16 +145,16 @@ export class IoRedisAdapter implements RedisAdapter {
 	}
 
 	public deleteDeleteDocEntry(id: string): Promise<number> {
-		const result = this.internalRedisInstance.xdel(this.redisDeleteStreamName, id);
+		const result = this.redis.xdel(this.redisDeleteStreamName, id);
 
 		return result;
 	}
 
 	public async tryClearTask(task: Task): Promise<number> {
-		const streamlen = await this.internalRedisInstance.xlen(task.stream);
+		const streamlen = await this.redis.xlen(task.stream);
 
 		if (streamlen === 0) {
-			await this.internalRedisInstance
+			await this.redis
 				.multi()
 				// @ts-ignore
 				.xDelIfEmpty(task.stream)
@@ -177,7 +171,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		// @todo either use a different datastructure or make sure that task doesn't exist yet
 		// before adding it to the worker queue
 		// This issue is not critical, as no data will be lost if this happens.
-		await this.internalRedisInstance
+		await this.redis
 			.multi()
 			.xtrim(task.stream, 'MINID', lastId - redisMinMessageLifetime)
 			.xadd(this.redisWorkerStreamName, '*', 'compact', task.stream)

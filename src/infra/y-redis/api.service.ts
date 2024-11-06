@@ -1,8 +1,8 @@
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
+import { RedisAdapter } from '../redis/interfaces/redis-adapter.js';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
-import { RedisAdapter } from '../redis/redis.adapter.js';
 import { RedisService } from '../redis/redis.service.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
@@ -53,11 +53,6 @@ export class Api {
 		return res;
 	}
 
-	/**
-	 * @param {string} room
-	 * @param {string} docid
-	 * @param {Buffer} m
-	 */
 	public addMessage(room: string, docid: string, m: Buffer): Promise<unknown> {
 		// handle sync step 2 like a normal update message
 		if (m[0] === protocol.messageSync && m[1] === protocol.messageSyncStep2) {
