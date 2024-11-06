@@ -85,19 +85,16 @@ export const mergeMessages = (messages: Uint8Array[]): Uint8Array[] => {
 	return result;
 };
 
-export const encodeSyncStep1 = (sv: Uint8Array): Uint8Array =>
+const encodeSyncStep = (value: Uint8Array, syncStep: number): Uint8Array =>
 	encoding.encode((encoder) => {
 		encoding.writeVarUint(encoder, messageSync);
-		encoding.writeVarUint(encoder, messageSyncStep1);
-		encoding.writeVarUint8Array(encoder, sv);
+		encoding.writeVarUint(encoder, syncStep);
+		encoding.writeVarUint8Array(encoder, value);
 	});
 
-export const encodeSyncStep2 = (diff: Uint8Array): Uint8Array =>
-	encoding.encode((encoder) => {
-		encoding.writeVarUint(encoder, messageSync);
-		encoding.writeVarUint(encoder, messageSyncStep2);
-		encoding.writeVarUint8Array(encoder, diff);
-	});
+export const encodeSyncStep1 = (sv: Uint8Array): Uint8Array => encodeSyncStep(sv, messageSyncStep1);
+
+export const encodeSyncStep2 = (diff: Uint8Array): Uint8Array => encodeSyncStep(diff, messageSyncStep2);
 
 export const encodeAwarenessUpdate = (awareness: awarenessProtocol.Awareness, clients: number[]): Uint8Array =>
 	encoding.encode((encoder) => {
