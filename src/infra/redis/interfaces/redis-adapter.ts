@@ -1,5 +1,5 @@
 import { Task, XAutoClaimResponse } from './redis.js';
-import { StreamMessageReply, StreamsMessagesReply } from './stream-message-reply.js';
+import { StreamMessageReply, StreamMessagesReply } from './stream-message-reply.js';
 import { StreamNameClockPair } from './stream-name-clock-pair.js';
 
 export interface RedisAdapter {
@@ -11,8 +11,8 @@ export interface RedisAdapter {
 	exists(stream: string): Promise<number>;
 	createGroup(): Promise<void>;
 	quit(): Promise<void>;
-	readStreams(streams: StreamNameClockPair[]): Promise<StreamsMessagesReply>;
-	readMessagesFromStream(streamName: string): Promise<StreamsMessagesReply>;
+	readStreams(streams: StreamNameClockPair[]): Promise<StreamMessagesReply>;
+	readMessagesFromStream(streamName: string): Promise<StreamMessagesReply>;
 	reclaimTasks(consumerName: string, redisTaskDebounce: number, tryClaimCount: number): Promise<XAutoClaimResponse>;
 	getDeletedDocEntries(): Promise<StreamMessageReply[]>;
 	deleteDeleteDocEntry(id: string): Promise<number>;

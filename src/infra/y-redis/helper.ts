@@ -1,5 +1,5 @@
 import { array, map } from 'lib0';
-import { StreamsMessagesReply } from '../redis/interfaces/stream-message-reply.js';
+import { StreamMessagesReply } from '../redis/interfaces/stream-message-reply.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,
@@ -33,7 +33,7 @@ export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: stri
 };
 
 export const extractMessagesFromStreamReply = (
-	streamReply: StreamsMessagesReply,
+	streamReply: StreamMessagesReply,
 	prefix: string,
 ): Map<string, Map<string, YRedisMessage>> => {
 	const messages = new Map<string, Map<string, YRedisMessage>>();

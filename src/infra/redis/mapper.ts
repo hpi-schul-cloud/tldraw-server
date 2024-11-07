@@ -1,7 +1,7 @@
 import { RedisKey } from 'ioredis';
 import { RedisGuard, TypeGuard } from './guards/index.js';
 import { XAutoClaimResponse, XItem, XItems, XReadBufferReply } from './interfaces/redis.js';
-import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-reply.js';
+import { StreamMessageReply, StreamMessagesReply } from './interfaces/stream-message-reply.js';
 
 export function mapToXAutoClaimResponse(value: unknown): XAutoClaimResponse {
 	if (value === null || value === undefined) {
@@ -36,7 +36,7 @@ export function mapToStreamMessagesReplies(messages: XItems | unknown): StreamMe
 	return result;
 }
 
-export function mapToStreamsMessagesReply(streamReply: XReadBufferReply | unknown): StreamsMessagesReply {
+export function mapToStreamMessagesReply(streamReply: XReadBufferReply | unknown): StreamMessagesReply {
 	if (streamReply === null) {
 		return [];
 	}
