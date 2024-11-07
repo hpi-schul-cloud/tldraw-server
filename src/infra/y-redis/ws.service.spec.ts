@@ -488,6 +488,33 @@ describe('ws service', () => {
 
 		describe('when user has write access', () => {
 			describe('when user has room', () => {
+				describe('when error is thrown', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+
+						ws.getUserData.mockImplementationOnce(() => {
+							throw new Error('error');
+						});
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer };
+					};
+
+					it('should not pass the error and call ws.end', () => {
+						const { ws, client, messageBuffer } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(ws.end).toHaveBeenCalledWith(1011);
+					});
+				});
+
 				describe('when message is awareness update and users awarenessid is null', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
@@ -821,6 +848,33 @@ describe('ws service', () => {
 
 		describe('when user has room', () => {
 			describe('when user has awarenessId', () => {
+				describe('when error is thrown', () => {
+					const setup = () => {
+						const { ws, client, app, subscriber } = buildParams();
+
+						ws.getUserData.mockImplementationOnce(() => {
+							throw new Error('error');
+						});
+						const code = 0;
+						const message = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+						const redisMessageSubscriber = jest.fn();
+
+						return { ws, client, app, code, subscriber, message, redisMessageSubscriber };
+					};
+
+					it('should not pass error', () => {
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber } = setup();
+
+						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
+					});
+				});
+
 				describe('when app has 0 subscribers', () => {
 					const setup = () => {
 						const { ws, client, app, subscriber } = buildParams();
