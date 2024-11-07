@@ -77,7 +77,7 @@ describe('StorageService', () => {
 		describe('when putObject resolves', () => {
 			const setup = () => {
 				const uploadedObjectInfoMock = createMock<UploadedObjectInfo>();
-				client.putObject.mockResolvedValue(uploadedObjectInfoMock);
+				client.putObject.mockResolvedValueOnce(uploadedObjectInfoMock);
 				const room = 'room';
 				const docname = 'docname';
 				const r = new Uint8Array(0);
