@@ -72,7 +72,7 @@ describe('Mapper', () => {
 		describe('when redisKey and XItem is string', () => {
 			it('returns nextId as string and messages as array', () => {
 				const value = ['string', 'string'];
-				const error = new Error('Value is not a XItems');
+				const error = new Error('One of the values is not an xItem.');
 
 				expect(() => mapToXAutoClaimResponse(value)).toThrow(error);
 			});
@@ -223,7 +223,7 @@ describe('Mapper', () => {
 
 			it('returns array with messages', () => {
 				const { messages } = setup();
-				const error = new Error('Value is not a XItems');
+				const error = new Error('One of the values is not an xItem.');
 
 				expect(() => mapToStreamMessagesReplies(messages)).toThrow(error);
 			});
