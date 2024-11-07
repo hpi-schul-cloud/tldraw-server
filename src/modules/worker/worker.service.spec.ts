@@ -241,7 +241,7 @@ describe(WorkerService.name, () => {
 					jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
 					jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
 					jest.spyOn(redisAdapter, 'tryClearTask').mockImplementation(async (task) => {
-						return task.stream.length;
+						return await Promise.resolve(task.stream.length);
 					});
 
 					const expectedTasks = reclaimedTasks.messages.map((m) => ({
