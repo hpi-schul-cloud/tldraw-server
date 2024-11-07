@@ -1,6 +1,8 @@
 import { array, map } from 'lib0';
-import { StreamMessagesReply } from '../redis/interfaces/stream-message-reply.js';
+import { StreamMessageReply, StreamMessagesReply, StreamMessagesSingleReply } from 'infra/redis/interfaces/stream-message-reply.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
+import { TypeGuard } from 'infra/redis/guards/type.guard.js';
+import { RedisKey } from 'ioredis';
 
 /* This file contains the implementation of the functions,
     which was copied from the y-redis repository.
@@ -21,7 +23,10 @@ export const isSmallerRedisId = (a: string, b: string): boolean => {
 export const computeRedisRoomStreamName = (room: string, docid: string, prefix: string): string =>
 	`${prefix}:room:${encodeURIComponent(room)}:${encodeURIComponent(docid)}`;
 
-export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: string) => {
+export const decodeRedisRoomStreamName = (
+	rediskey: string,
+	expectedPrefix: string,
+): { room: string; docid: string } => {
 	const match = rediskey.match(/^(.*):room:(.*):(.*)$/);
 	if (match == null || match[1] !== expectedPrefix) {
 		throw new Error(
@@ -30,6 +35,22 @@ export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: stri
 	}
 
 	return { room: decodeURIComponent(match[2]), docid: decodeURIComponent(match[3]) };
+};
+
+const getIdFromLastStreamMessageReply = (docStreamReplay: StreamMessagesSingleReply): RedisKey | undefined => {
+	let id = undefined;
+	if (TypeGuard.isArrayWithElements(docStreamReplay.messages)) {
+		id = array.last(docStreamReplay.messages).id;
+	}
+
+	return id;
+};
+
+const castRedisKeyToUnit8Array = (redisKey: RedisKey): Uint8Array => {
+	// Be carful the redis key do not include any of the Unit8Array methods.
+	const castedRedisKey = redisKey as Uint8Array;
+
+	return castedRedisKey;
 };
 
 export const extractMessagesFromStreamReply = (
@@ -41,14 +62,13 @@ export const extractMessagesFromStreamReply = (
 	streamReply?.forEach((docStreamReply) => {
 		const { room, docid } = decodeRedisRoomStreamName(docStreamReply.name.toString(), prefix);
 		const docMessages = map.setIfUndefined(map.setIfUndefined(messages, room, map.create), docid, () => ({
-			// @ts-ignore
-			lastId: array.last(docStreamReply.messages).id,
+			lastId: getIdFromLastStreamMessageReply(docStreamReply),
 			messages: [] as Uint8Array[],
 		}));
-		docStreamReply.messages?.forEach((m) => {
+		docStreamReply.messages?.forEach((m: StreamMessageReply) => {
 			if (m.message.m != null) {
-				// @ts-ignore
-				docMessages.messages.push(m.message.m);
+				const unit8ArrayRedisKey = castRedisKeyToUnit8Array(m.message.m);
+				docMessages.messages.push(unit8ArrayRedisKey);
 			}
 		});
 	});
