@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { RedisAdapter } from 'infra/redis/interfaces/redis-adapter.js';
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'crypto';
 import { Logger } from '../../infra/logger/index.js';
 import { Task } from '../../infra/redis/interfaces/redis.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
