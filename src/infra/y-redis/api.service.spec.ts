@@ -1,11 +1,14 @@
 import { createMock } from '@golevelup/ts-jest';
-import * as yjs from 'yjs';
+import * as Awareness from 'y-protocols/awareness';
+import * as Y from 'yjs';
+import { RedisService } from '../../infra/redis/redis.service.js';
 import { RedisAdapter } from '../redis/interfaces/redis-adapter.js';
-import { Api } from './api.service.js';
+import { Api, createApiClient, handleMessageUpdates } from './api.service.js';
 import * as helper from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
+import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
 
 describe(Api.name, () => {
 	const setupApi = () => {
@@ -19,7 +22,7 @@ describe(Api.name, () => {
 	};
 
 	afterEach(() => {
-		jest.resetAllMocks();
+		jest.restoreAllMocks();
 	});
 
 	describe('getMessages', () => {
@@ -186,13 +189,17 @@ describe(Api.name, () => {
 
 	describe('getDoc', () => {
 		const setup = () => {
-			const { api, store } = setupApi();
+			const { api, store, redis } = setupApi();
 			const spyComputeRedisRoomStreamName = jest.spyOn(helper, 'computeRedisRoomStreamName');
 			const spyExtractMessagesFromStreamReply = jest.spyOn(helper, 'extractMessagesFromStreamReply');
-			//const spyAwareness = jest.spyOn(awareness, 'Awareness');
-			//const spyDoc = jest.spyOn(yjs, 'Doc');
-			const spyApplyUpdateV2 = jest.spyOn(yjs, 'applyUpdateV2');
-			const room = 'room';
+
+			const ydoc = new Y.Doc();
+			const doc = Y.encodeStateAsUpdateV2(ydoc);
+			const streamReply = streamMessagesReplyFactory.build();
+			redis.readMessagesFromStream.mockResolvedValueOnce(streamReply);
+			store.retrieveDoc.mockResolvedValueOnce({ doc, references: [] });
+
+			const room = 'roomid-1';
 			const docid = 'docid';
 
 			const props = { room, docid };
@@ -200,21 +207,50 @@ describe(Api.name, () => {
 			return {
 				api,
 				store,
+				redis,
 				props,
 				spyComputeRedisRoomStreamName,
 				spyExtractMessagesFromStreamReply,
-				//spyAwareness,
-				spyApplyUpdateV2,
+				streamReply,
 			};
 		};
 
 		it('should call computeRedisRoomStreamName with correctly params', async () => {
+			const { api, props, spyComputeRedisRoomStreamName } = setup();
+			const { room, docid } = props;
+
+			await api.getDoc(room, docid);
+
+			expect(spyComputeRedisRoomStreamName).toHaveBeenCalledWith(room, docid, 'prefix');
+		});
+
+		it('should call redis.readMessagesFromStream with correctly params', async () => {
+			const { api, props, redis } = setup();
+			const { room, docid } = props;
+
+			await api.getDoc(room, docid);
+
+			expect(redis.readMessagesFromStream).toHaveBeenCalledTimes(1);
+			expect(redis.readMessagesFromStream).toHaveBeenCalledWith('prefix:room:roomid-1:docid');
+		});
+
+		it('should call extractMessagesFromStreamReply with correctly params', async () => {
+			const { api, props, spyExtractMessagesFromStreamReply, streamReply } = setup();
+			const { room, docid } = props;
+
+			await api.getDoc(room, docid);
+
+			expect(spyExtractMessagesFromStreamReply).toHaveBeenCalledWith(streamReply, 'prefix');
+		});
+
+		it('should return expected result', async () => {
 			const { api, props } = setup();
 			const { room, docid } = props;
 
-			//await api.getDoc(room, docid);
+			const result = await api.getDoc(room, docid);
 
-			//expect(spyComputeRedisRoomStreamName).toHaveBeenCalledTimes(1);
+			expect(result).toBeDefined();
+			expect(result).toEqual(expect.objectContaining({ ydoc: expect.any(Y.Doc) }));
 		});
 	});
 
@@ -225,6 +261,14 @@ describe(Api.name, () => {
 			return { api, redis };
 		};
 
+		it('should set _destroyed to true', () => {
+			const { api } = setup();
+
+			api.destroy();
+
+			expect(api._destroyed).toBeTruthy();
+		});
+
 		it('should call store.destroy with correctly params', async () => {
 			const { api, redis } = setup();
 
@@ -232,5 +276,83 @@ describe(Api.name, () => {
 
 			expect(redis.quit).toHaveBeenCalledTimes(1);
 		});
+	});
+});
+
+describe('handleMessageUpdates', () => {
+	describe('when a message is messageSyncUpdate', () => {
+		const setup = () => {
+			const ydoc = new Y.Doc();
+			const awareness = createMock<Awareness.Awareness>();
+			const message = Buffer.from([protocol.messageSync, protocol.messageSyncUpdate, 0x54, 0x45, 0x53, 0x54]);
+
+			const messages = yRedisMessageFactory.build({ messages: [message] });
+
+			const spyApplyUpdate = jest.spyOn(Y, 'applyUpdate');
+			spyApplyUpdate.mockReturnValueOnce(undefined);
+
+			return { ydoc, awareness, messages, spyApplyUpdate };
+		};
+
+		it('should call Y.applyUpdate with correctly params', () => {
+			const { ydoc, awareness, messages, spyApplyUpdate } = setup();
+
+			handleMessageUpdates(messages, ydoc, awareness);
+
+			expect(spyApplyUpdate).toHaveBeenCalledWith(ydoc, expect.anything());
+		});
+	});
+
+	describe('when a message is messageSyncAwareness', () => {
+		const setup = () => {
+			const ydoc = new Y.Doc();
+			const awareness = createMock<Awareness.Awareness>();
+			const message = Buffer.from([protocol.messageAwareness, 0x54, 0x45, 0x53, 0x54]);
+
+			const messages = yRedisMessageFactory.build({ messages: [message] });
+
+			const spyApplyAwarenessUpdate = jest.spyOn(Awareness, 'applyAwarenessUpdate');
+			spyApplyAwarenessUpdate.mockReturnValueOnce(undefined);
+
+			return { ydoc, awareness, messages, spyApplyAwarenessUpdate };
+		};
+
+		it('should call Y.applyAwarenessUpdate with correctly params', () => {
+			const { ydoc, awareness, messages, spyApplyAwarenessUpdate } = setup();
+
+			handleMessageUpdates(messages, ydoc, awareness);
+
+			expect(spyApplyAwarenessUpdate).toHaveBeenCalledWith(awareness, expect.anything(), null);
+		});
+	});
+});
+
+describe('createApiClient', () => {
+	const setup = () => {
+		const store = createMock<DocumentStorage>();
+		const redisService = createMock<RedisService>();
+		const redisInstance = createMock<RedisAdapter>();
+		const apiInstance = createMock<Api>({
+			redis: redisInstance,
+		});
+
+		return { store, redisService, redisInstance, apiInstance };
+	};
+
+	it('should call createRedisInstance.createRedisInstance', async () => {
+		const { store, redisService } = setup();
+
+		await createApiClient(store, redisService);
+
+		expect(redisService.createRedisInstance).toHaveBeenCalledTimes(1);
+	});
+
+	it('should return an instance of Api', async () => {
+		const { store, redisService } = setup();
+
+		const result = await createApiClient(store, redisService);
+
+		expect(result).toBeDefined();
+		expect(result).toBeInstanceOf(Api);
 	});
 });
