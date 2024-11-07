@@ -9,6 +9,27 @@ import { YRedisMessage } from './interfaces/stream-message.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
+export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void => {
+	docMessages?.messages.forEach((m) => {
+		const decoder = decoding.createDecoder(m);
+		const messageType = decoding.readVarUint(decoder);
+		switch (messageType) {
+			case protocol.messageSync: {
+				// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
+				const syncType = decoding.readVarUint(decoder);
+				if (syncType === protocol.messageSyncUpdate) {
+					applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
+				}
+				break;
+			}
+			case protocol.messageAwareness: {
+				applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
+				break;
+			}
+		}
+	});
+};
+
 export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
 	const a = new Api(store, await createRedisInstance.createRedisInstance());
 
@@ -80,8 +101,12 @@ export class Api {
 		storeReferences: string[] | null;
 		docChanged: boolean;
 	}> {
+		let docChanged = false;
+
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
-		const ms = extractMessagesFromStreamReply(await this.redis.readMessagesFromStream(roomComputed), this.redisPrefix);
+		const streamReply = await this.redis.readMessagesFromStream(roomComputed);
+
+		const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
 
 		const docMessages = ms.get(room)?.get(docid) ?? null;
 		const docstate = await this.store.retrieveDoc(room, docid);
@@ -89,32 +114,17 @@ export class Api {
 		const ydoc = new Doc();
 		const awareness = new Awareness(ydoc);
 		awareness.setLocalState(null); // we don't want to propagate awareness state
+
 		if (docstate) {
 			applyUpdateV2(ydoc, docstate.doc);
 		}
-		let docChanged = false;
+
 		ydoc.once('afterTransaction', (tr) => {
 			docChanged = tr.changed.size > 0;
 		});
+
 		ydoc.transact(() => {
-			docMessages?.messages.forEach((m) => {
-				const decoder = decoding.createDecoder(m);
-				switch (decoding.readVarUint(decoder)) {
-					case 0: {
-						// sync message
-						if (decoding.readVarUint(decoder) === 2) {
-							// update message
-							applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
-						}
-						break;
-					}
-					case 1: {
-						// awareness message
-						applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
-						break;
-					}
-				}
-			});
+			handleMessageUpdates(docMessages, ydoc, awareness);
 		});
 
 		return {
