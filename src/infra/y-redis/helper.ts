@@ -8,13 +8,6 @@ import {
 } from '../../infra/redis/interfaces/stream-message-reply.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 
-/* This file contains the implementation of the functions,
-    which was copied from the y-redis repository.
-	Adopting this code allows us to integrate proven and
-	optimized logic into the current project.
-	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
-	By adhering to the license terms, we ensure that the use of the code from the `y-redis` repository is legally compliant.
-*/
 export const isSmallerRedisId = (a: string, b: string): boolean => {
 	const [a1, a2 = '0'] = a.split('-');
 	const [b1, b2 = '0'] = b.split('-');
