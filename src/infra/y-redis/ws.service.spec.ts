@@ -960,13 +960,12 @@ describe('ws service', () => {
 							lastClock: 76,
 						});
 						const redisMessageSubscriber = jest.fn();
-						const closeWsCallback = jest.fn();
 
-						return { ws, client, app, code, subscriber, message, redisMessageSubscriber, user, closeWsCallback };
+						return { ws, client, app, code, subscriber, message, redisMessageSubscriber };
 					};
 
 					it('should not call addMessage', () => {
-						const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber } = setup();
 
 						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
 
@@ -996,13 +995,12 @@ describe('ws service', () => {
 							lastClock: 76,
 						});
 						const redisMessageSubscriber = jest.fn();
-						const closeWsCallback = jest.fn();
 
-						return { ws, client, app, code, subscriber, message, redisMessageSubscriber, user, closeWsCallback };
+						return { ws, client, app, code, subscriber, message, redisMessageSubscriber };
 					};
 
 					it('should not call addMessage', () => {
-						const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber } = setup();
 
 						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
 
