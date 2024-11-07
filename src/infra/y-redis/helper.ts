@@ -1,8 +1,12 @@
-import { array, map } from 'lib0';
-import { StreamMessageReply, StreamMessagesReply, StreamMessagesSingleReply } from 'infra/redis/interfaces/stream-message-reply.js';
-import { YRedisMessage } from './interfaces/stream-message.js';
-import { TypeGuard } from 'infra/redis/guards/type.guard.js';
 import { RedisKey } from 'ioredis';
+import { array, map } from 'lib0';
+import { TypeGuard } from '../../infra/redis/guards/type.guard.js';
+import {
+	StreamMessageReply,
+	StreamMessagesReply,
+	StreamMessagesSingleReply,
+} from '../../infra/redis/interfaces/stream-message-reply.js';
+import { YRedisMessage } from './interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,
     which was copied from the y-redis repository.
