@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Client } from 'minio';
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'crypto';
 import { Stream } from 'stream';
 import * as Y from 'yjs';
 import { Logger } from '../logger/index.js';

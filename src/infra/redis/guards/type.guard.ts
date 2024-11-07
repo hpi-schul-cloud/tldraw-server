@@ -27,7 +27,7 @@ export class TypeGuard {
 		return value;
 	}
 
-	public static isArrayWithElements(value: unknown): value is [] {
+	public static isArrayWithElements<T>(value: T[] | unknown): value is T[] {
 		const isArrayWithElements = TypeGuard.isArray(value) && value.length > 0;
 
 		return isArrayWithElements;

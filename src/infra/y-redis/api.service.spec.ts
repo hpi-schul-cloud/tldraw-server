@@ -5,7 +5,7 @@ import { Api } from './api.service.js';
 import * as helper from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
-import { streamsMessagesReplyFactory } from './testing/streams-messages-reply.factory.js';
+import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
 
 describe(Api.name, () => {
 	const setupApi = () => {
@@ -37,7 +37,7 @@ describe(Api.name, () => {
 			const setup = () => {
 				const { redis, api } = setupApi();
 
-				const m = streamsMessagesReplyFactory.build();
+				const m = streamMessagesReplyFactory.build();
 				redis.readStreams.mockResolvedValueOnce(m);
 
 				const props = [

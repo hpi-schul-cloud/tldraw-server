@@ -4,7 +4,7 @@ import {
 	extractMessagesFromStreamReply,
 	isSmallerRedisId,
 } from './helper.js';
-import { streamsMessagesReplyFactory } from './testing/streams-messages-reply.factory.js';
+import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
 
 describe('helper', () => {
 	describe('isSmallerRedisId', () => {
@@ -102,7 +102,7 @@ describe('helper', () => {
 
 	describe('extractMessagesFromStreamReply', () => {
 		it('returns the expected value', () => {
-			const streamReply = streamsMessagesReplyFactory.build();
+			const streamReply = streamMessagesReplyFactory.build();
 			const prefix = 'prefix';
 
 			const result = extractMessagesFromStreamReply(streamReply, prefix);

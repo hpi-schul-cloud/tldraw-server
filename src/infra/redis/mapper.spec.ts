@@ -1,4 +1,4 @@
-import { mapToStreamMessagesReplies, mapToStreamsMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
+import { mapToStreamMessagesReplies, mapToStreamMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
 import { xItemBufferFactory, xItemStringFactory } from './testing/x-item.factory.js';
 import { xReadBufferReplyFactory } from './testing/x-read-buffer-reply.factory.js';
 
@@ -72,7 +72,7 @@ describe('Mapper', () => {
 		describe('when redisKey and XItem is string', () => {
 			it('returns nextId as string and messages as array', () => {
 				const value = ['string', 'string'];
-				const error = new Error('Value is not a XItems');
+				const error = new Error('One of the values is not an xItem.');
 
 				expect(() => mapToXAutoClaimResponse(value)).toThrow(error);
 			});
@@ -223,7 +223,7 @@ describe('Mapper', () => {
 
 			it('returns array with messages', () => {
 				const { messages } = setup();
-				const error = new Error('Value is not a XItems');
+				const error = new Error('One of the values is not an xItem.');
 
 				expect(() => mapToStreamMessagesReplies(messages)).toThrow(error);
 			});
@@ -257,12 +257,12 @@ describe('Mapper', () => {
 		});
 	});
 
-	describe('mapToStreamsMessagesReply', () => {
+	describe('mapToStreamMessagesReply', () => {
 		describe('when streamReply is null', () => {
 			it('returns empty array', () => {
 				const streamReply = null;
 
-				const result = mapToStreamsMessagesReply(streamReply);
+				const result = mapToStreamMessagesReply(streamReply);
 
 				expect(result).toStrictEqual([]);
 			});
@@ -273,7 +273,7 @@ describe('Mapper', () => {
 				const streamReply = undefined;
 				const error = new Error('Type is not an array with elements.');
 
-				expect(() => mapToStreamsMessagesReply(streamReply)).toThrow(error);
+				expect(() => mapToStreamMessagesReply(streamReply)).toThrow(error);
 			});
 		});
 
@@ -283,7 +283,7 @@ describe('Mapper', () => {
 
 				const error = new Error('Type is not an array with elements.');
 
-				expect(() => mapToStreamsMessagesReply(streamReply)).toThrow(error);
+				expect(() => mapToStreamMessagesReply(streamReply)).toThrow(error);
 			});
 		});
 
@@ -297,17 +297,17 @@ describe('Mapper', () => {
 
 				const key = streamReply[0].toString();
 
-				const streamsMessagesReply = mapToStreamMessagesReplies(streamReply[0][1]);
+				const streamMessagesReply = mapToStreamMessagesReplies(streamReply[0][1]);
 
-				return { streamReply, key, streamsMessagesReply };
+				return { streamReply, key, streamMessagesReply };
 			};
 
 			it('returns array with messages', () => {
-				const { streamReply, key, streamsMessagesReply } = setup();
+				const { streamReply, key, streamMessagesReply } = setup();
 
-				const result = mapToStreamsMessagesReply(streamReply);
+				const result = mapToStreamMessagesReply(streamReply);
 
-				expect(result).toEqual([{ name: key[0], messages: streamsMessagesReply }]);
+				expect(result).toEqual([{ name: key[0], messages: streamMessagesReply }]);
 			});
 		});
 	});

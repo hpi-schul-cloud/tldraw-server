@@ -3,9 +3,9 @@ import { Logger } from '../logger/index.js';
 import { addMessageCommand, xDelIfEmptyCommand } from './commands.js';
 import { RedisAdapter } from './interfaces/redis-adapter.js';
 import { Task, XAutoClaimResponse } from './interfaces/redis.js';
-import { StreamMessageReply, StreamsMessagesReply } from './interfaces/stream-message-reply.js';
+import { StreamMessageReply, StreamMessagesReply } from './interfaces/stream-message-reply.js';
 import { StreamNameClockPair } from './interfaces/stream-name-clock-pair.js';
-import { mapToStreamMessagesReplies, mapToStreamsMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
+import { mapToStreamMessagesReplies, mapToStreamMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
 import { RedisConfig } from './redis.config.js';
 
 export class IoRedisAdapter implements RedisAdapter {
@@ -84,7 +84,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		await this.redis.quit();
 	}
 
-	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamsMessagesReply> {
+	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamMessagesReply> {
 		const reads = await this.redis.xreadBuffer(
 			'COUNT',
 			1000,
@@ -95,12 +95,12 @@ export class IoRedisAdapter implements RedisAdapter {
 			...streams.map((stream) => stream.id),
 		);
 
-		const streamReplyRes = mapToStreamsMessagesReply(reads);
+		const streamReplyRes = mapToStreamMessagesReply(reads);
 
 		return streamReplyRes;
 	}
 
-	public async readMessagesFromStream(streamName: string): Promise<StreamsMessagesReply> {
+	public async readMessagesFromStream(streamName: string): Promise<StreamMessagesReply> {
 		const reads = await this.redis.xreadBuffer(
 			'COUNT',
 			1000, // Adjust the count as needed
@@ -111,7 +111,7 @@ export class IoRedisAdapter implements RedisAdapter {
 			'0',
 		);
 
-		const streamReplyRes = mapToStreamsMessagesReply(reads);
+		const streamReplyRes = mapToStreamMessagesReply(reads);
 
 		return streamReplyRes;
 	}
