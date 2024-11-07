@@ -175,6 +175,86 @@ export const openCallback = async (
 	}
 };
 
+const isAwarenessUpdate = (message: Buffer): boolean => message[0] === protocol.messageAwareness;
+const isSyncUpdateOrSyncStep2OrAwarenessUpdate = (message: Buffer): boolean =>
+	(message[0] === protocol.messageSync &&
+		(message[1] === protocol.messageSyncUpdate || message[1] === protocol.messageSyncStep2)) ||
+	isAwarenessUpdate(message);
+
+export const messageCallback = (ws: uws.WebSocket<User>, messageBuffer: ArrayBuffer, client: Api): void => {
+	try {
+		const user = ws.getUserData();
+		// don't read any messages from users without write access
+		if (!user.hasWriteAccess || !user.room) return;
+		// It is important to copy the data here
+		const message = Buffer.from(messageBuffer.slice(0, messageBuffer.byteLength));
+
+		if (
+			// filter out messages that we simply want to propagate to all clients
+			// sync update or sync step 2
+			// awareness update
+			isSyncUpdateOrSyncStep2OrAwarenessUpdate(message)
+		) {
+			if (isAwarenessUpdate(message)) {
+				const decoder = decoding.createDecoder(message);
+				decoding.readVarUint(decoder); // read message type
+				decoding.readVarUint(decoder); // read length of awareness update
+				const alen = decoding.readVarUint(decoder); // number of awareness updates
+				const awId = decoding.readVarUint(decoder);
+				if (alen === 1 && (user.awarenessId === null || user.awarenessId === awId)) {
+					// only update awareness if len=1
+					user.awarenessId = awId;
+					user.awarenessLastClock = decoding.readVarUint(decoder);
+				}
+			}
+			client.addMessage(user.room, 'index', message);
+		} else if (message[0] === protocol.messageSync && message[1] === protocol.messageSyncStep1) {
+			// sync step 1
+			// can be safely ignored because we send the full initial state at the beginning
+		} else {
+			console.error('Unexpected message type', message);
+		}
+	} catch (error) {
+		console.error(error);
+		ws.end(1011);
+	}
+};
+
+export const closeCallback = (
+	app: uws.TemplatedApp,
+	ws: uws.WebSocket<User>,
+	client: Api,
+	subscriber: Subscriber,
+	code: number,
+	message: ArrayBuffer,
+	redisMessageSubscriber: (stream: string, messages: Uint8Array[]) => void,
+	closeWsCallback?: (ws: uws.WebSocket<User>, code: number, message: ArrayBuffer) => void,
+): void => {
+	try {
+		const user = ws.getUserData();
+		if (!user.room) return;
+
+		user.awarenessId &&
+			client.addMessage(
+				user.room,
+				'index',
+				Buffer.from(protocol.encodeAwarenessUserDisconnected(user.awarenessId, user.awarenessLastClock)),
+			);
+		user.isClosed = true;
+
+		if (closeWsCallback) {
+			closeWsCallback(ws, code, message);
+		}
+		user.subs.forEach((topic) => {
+			if (app.numSubscribers(topic) === 0) {
+				subscriber.unsubscribe(topic, redisMessageSubscriber);
+			}
+		});
+	} catch (error) {
+		console.error(error);
+	}
+};
+
 /**
  * @param {uws.TemplatedApp} app
  * @param {uws.RecognizedString} pattern
@@ -221,6 +301,7 @@ export const registerYWebsocketServer = async (
 					);
 		app.publish(stream, message, true, false);
 	};
+
 	app.ws(pattern, {
 		compression: uws.SHARED_COMPRESSOR,
 		maxPayloadLength: 100 * 1024 * 1024,
@@ -229,70 +310,9 @@ export const registerYWebsocketServer = async (
 		upgrade: (res, req, context) => upgradeCallback(res, req, context, checkAuth),
 		open: (ws: uws.WebSocket<User>) =>
 			openCallback(ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback),
-		message: (ws, messageBuffer) => {
-			try {
-				const user = ws.getUserData();
-				// don't read any messages from users without write access
-				if (!user.hasWriteAccess || !user.room) return;
-				// It is important to copy the data here
-				const message = Buffer.from(messageBuffer.slice(0, messageBuffer.byteLength));
-				if (
-					// filter out messages that we simply want to propagate to all clients
-					// sync update or sync step 2
-					(message[0] === protocol.messageSync &&
-						(message[1] === protocol.messageSyncUpdate || message[1] === protocol.messageSyncStep2)) ||
-					// awareness update
-					message[0] === protocol.messageAwareness
-				) {
-					if (message[0] === protocol.messageAwareness) {
-						const decoder = decoding.createDecoder(message);
-						decoding.readVarUint(decoder); // read message type
-						decoding.readVarUint(decoder); // read length of awareness update
-						const alen = decoding.readVarUint(decoder); // number of awareness updates
-						const awId = decoding.readVarUint(decoder);
-						if (alen === 1 && (user.awarenessId === null || user.awarenessId === awId)) {
-							// only update awareness if len=1
-							user.awarenessId = awId;
-							user.awarenessLastClock = decoding.readVarUint(decoder);
-						}
-					}
-					client.addMessage(user.room, 'index', message);
-				} else if (message[0] === protocol.messageSync && message[1] === protocol.messageSyncStep1) {
-					// sync step 1
-					// can be safely ignored because we send the full initial state at the beginning
-				} else {
-					console.error('Unexpected message type', message);
-				}
-			} catch (error) {
-				console.error(error);
-				ws.end(1011);
-			}
-		},
-		close: (ws, code, message) => {
-			try {
-				const user = ws.getUserData();
-				if (!user.room) return;
-
-				user.awarenessId &&
-					client.addMessage(
-						user.room,
-						'index',
-						Buffer.from(protocol.encodeAwarenessUserDisconnected(user.awarenessId, user.awarenessLastClock)),
-					);
-				user.isClosed = true;
-
-				if (closeWsCallback) {
-					closeWsCallback(ws, code, message);
-				}
-				user.subs.forEach((topic) => {
-					if (app.numSubscribers(topic) === 0) {
-						subscriber.unsubscribe(topic, redisMessageSubscriber);
-					}
-				});
-			} catch (error) {
-				console.error(error);
-			}
-		},
+		message: (ws, messageBuffer) => messageCallback(ws, messageBuffer, client),
+		close: (ws, code, message) =>
+			closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber, closeWsCallback),
 	});
 
 	return new YWebsocketServer(app, client, subscriber);

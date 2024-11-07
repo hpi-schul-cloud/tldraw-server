@@ -1,38 +1,83 @@
 import { createMock } from '@golevelup/ts-jest';
+import { encoding } from 'lib0';
 import * as uws from 'uws';
 import { Awareness } from 'y-protocols/awareness.js';
 import * as Y from 'yjs';
 import { RedisService } from '../redis/redis.service.js';
+import * as apiClass from './api.service.js';
 import { Api } from './api.service.js';
 import { computeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
+import * as subscriberClass from './subscriber.service.js';
 import { Subscriber } from './subscriber.service.js';
-import { openCallback, registerYWebsocketServer, upgradeCallback, User, YWebsocketServer } from './ws.service.js';
+import {
+	closeCallback,
+	messageCallback,
+	openCallback,
+	registerYWebsocketServer,
+	upgradeCallback,
+	User,
+	YWebsocketServer,
+} from './ws.service.js';
 
 describe('ws service', () => {
 	beforeEach(() => {
 		jest.resetAllMocks();
 	});
 
+	const buildUpdate = (props: {
+		messageType: number;
+		length: number;
+		numberOfUpdates: number;
+		awarenessId: number;
+		lastClock: number;
+	}): Buffer => {
+		const { messageType, length, numberOfUpdates, awarenessId, lastClock } = props;
+		const encoder = encoding.createEncoder();
+		encoding.writeVarUint(encoder, messageType); //
+		encoding.writeVarUint(encoder, length); // Length of update
+		encoding.writeVarUint(encoder, numberOfUpdates); // Number of awareness updates
+		encoding.writeVarUint(encoder, awarenessId); // Awareness id
+		encoding.writeVarUint(encoder, lastClock); // Lasclocl
+
+		return Buffer.from(encoding.toUint8Array(encoder));
+	};
+
 	describe('registerYWebsocketServer', () => {
-		const buildParams = () => {
+		const setup = () => {
 			const app = createMock<uws.TemplatedApp>();
 			const pattern = 'pattern';
 			const store = createMock<DocumentStorage>();
 			const checkAuth = jest.fn();
 			const options = {};
 			const createRedisInstance = createMock<RedisService>();
+			const client = createMock<Api>();
+			jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
+			const subscriber = createMock<Subscriber>();
+			jest.spyOn(subscriberClass, 'createSubscriber').mockResolvedValueOnce(subscriber);
 
-			return { app, pattern, store, checkAuth, options, createRedisInstance };
+			return { app, pattern, store, checkAuth, options, createRedisInstance, subscriber, client };
 		};
 
 		it('returns YWebsocketServer', async () => {
-			const { app, pattern, store, checkAuth, options, createRedisInstance } = buildParams();
+			const { app, pattern, store, checkAuth, options, createRedisInstance } = setup();
 
 			const result = await registerYWebsocketServer(app, pattern, store, checkAuth, options, createRedisInstance);
 
 			expect(result).toEqual(expect.any(YWebsocketServer));
+		});
+
+		describe('yWebsocketServer.destroy', () => {
+			it('should destroy client and subscriber', async () => {
+				const { app, pattern, store, checkAuth, options, createRedisInstance, subscriber, client } = setup();
+
+				const server = await registerYWebsocketServer(app, pattern, store, checkAuth, options, createRedisInstance);
+				server.destroy();
+
+				expect(subscriber.destroy).toHaveBeenCalledTimes(1);
+				expect(client.destroy).toHaveBeenCalledTimes(1);
+			});
 		});
 	});
 
@@ -350,6 +395,47 @@ describe('ws service', () => {
 						expect(ws.send).toHaveBeenNthCalledWith(2, encodedArray, true, true);
 					});
 				});
+
+				describe('when lastId is smaller than initial redis id', () => {
+					it('should call subscriber.ensureSubId', async () => {
+						const { ws, subscriber, client, user, redisMessageSubscriber } = setup();
+						const ydoc = createMock<Y.Doc>({ store: { clients: { size: 0 } } });
+						const awareness = createMock<Awareness>();
+						client.getDoc.mockResolvedValueOnce({
+							ydoc,
+							awareness,
+							redisLastId: '0-1',
+							storeReferences: [],
+							docChanged: true,
+						});
+						subscriber.subscribe.mockReturnValueOnce({ redisId: '1-2' });
+						const redisStream = computeRedisRoomStreamName(user.room ?? '', 'index', client.redisPrefix);
+
+						await openCallback(ws, subscriber, client, redisMessageSubscriber);
+
+						expect(subscriber.ensureSubId).toHaveBeenCalledWith(redisStream, '0-1');
+					});
+				});
+
+				describe('when lastId is bigger than initial redis id', () => {
+					it('should call subscriber.ensureSubId', async () => {
+						const { ws, subscriber, client, redisMessageSubscriber } = setup();
+						const ydoc = createMock<Y.Doc>({ store: { clients: { size: 0 } } });
+						const awareness = createMock<Awareness>();
+						client.getDoc.mockResolvedValueOnce({
+							ydoc,
+							awareness,
+							redisLastId: '2-1',
+							storeReferences: [],
+							docChanged: true,
+						});
+						subscriber.subscribe.mockReturnValueOnce({ redisId: '1-2' });
+
+						await openCallback(ws, subscriber, client, redisMessageSubscriber);
+
+						expect(subscriber.ensureSubId).not.toHaveBeenCalled();
+					});
+				});
 			});
 
 			describe('when getDoc resolves with ydoc.store.clients.size > 0', () => {
@@ -388,6 +474,487 @@ describe('ws service', () => {
 				await openCallback(ws, subscriber, client, redisMessageSubscriber);
 
 				expect(ws.cork).not.toHaveBeenCalled();
+			});
+		});
+	});
+
+	describe('messageCallback', () => {
+		const buildParams = () => {
+			const ws = createMock<uws.WebSocket<User>>();
+			const client = createMock<Api>({ redisPrefix: 'prefix' });
+
+			return { ws, client };
+		};
+
+		describe('when user has write access', () => {
+			describe('when user has room', () => {
+				describe('when message is awareness update and users awarenessid is null', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: true,
+							room: 'room',
+							awarenessId: null,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(75);
+						expect(user.awarenessLastClock).toBe(76);
+					});
+
+					it('should call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+
+				describe('when message is awareness update and users awarenessid is messages awarenessid', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: true,
+							room: 'room',
+							awarenessId: 75,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(75);
+						expect(user.awarenessLastClock).toBe(76);
+					});
+
+					it('should call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+
+				describe('when message is sync update', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: true,
+							room: 'room',
+							awarenessId: null,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageSync,
+							length: protocol.messageSyncUpdate,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should not update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(null);
+						expect(user.awarenessLastClock).toBe(99);
+					});
+
+					it('should call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+
+				describe('when message is sync step 2 update', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: true,
+							room: 'room',
+							awarenessId: null,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageSync,
+							length: protocol.messageSyncStep2,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should not update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(null);
+						expect(user.awarenessLastClock).toBe(99);
+					});
+
+					it('should call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+
+				describe('when message is sync step 1 update', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: true,
+							room: 'room',
+							awarenessId: null,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageSync,
+							length: protocol.messageSyncStep1,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should not update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(null);
+						expect(user.awarenessLastClock).toBe(99);
+					});
+
+					it('should not call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).not.toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+
+				describe('when message is of unknown type', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: true,
+							room: 'room',
+							awarenessId: null,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: 999,
+							length: 999,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should not update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(null);
+						expect(user.awarenessLastClock).toBe(99);
+					});
+
+					it('should not call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).not.toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+			});
+
+			describe('when user has no room', () => {
+				describe('when message is awareness update', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: true,
+							room: null,
+							awarenessId: null,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should not update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(null);
+						expect(user.awarenessLastClock).toBe(99);
+					});
+
+					it('should not call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).not.toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+			});
+		});
+
+		describe('when user has no write access', () => {
+			describe('when user has room', () => {
+				describe('when message is awareness update', () => {
+					const setup = () => {
+						const { ws, client } = buildParams();
+						const user = createMock<User>({
+							hasWriteAccess: false,
+							room: 'room',
+							awarenessId: null,
+							awarenessLastClock: 99,
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const messageBuffer = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+
+						return { ws, client, messageBuffer, user };
+					};
+
+					it('should not update users awarenessId and awarenessLastClock', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(user.awarenessId).toBe(null);
+						expect(user.awarenessLastClock).toBe(99);
+					});
+
+					it('should not call addMessage', () => {
+						const { ws, client, messageBuffer, user } = setup();
+
+						messageCallback(ws, messageBuffer, client);
+
+						expect(client.addMessage).not.toHaveBeenCalledWith(user.room, 'index', messageBuffer);
+					});
+				});
+			});
+		});
+	});
+
+	describe('closeCallback', () => {
+		const buildParams = () => {
+			const ws = createMock<uws.WebSocket<User>>();
+			const client = createMock<Api>({ redisPrefix: 'prefix' });
+			const app = createMock<uws.TemplatedApp>();
+			const subscriber = createMock<Subscriber>();
+
+			return { ws, client, app, subscriber };
+		};
+
+		describe('when user has room', () => {
+			describe('when user has awarenessId', () => {
+				describe('when app has 0 subscribers', () => {
+					const setup = () => {
+						const { ws, client, app, subscriber } = buildParams();
+						app.numSubscribers.mockReturnValue(0);
+
+						const user = createMock<User>({
+							room: 'room',
+							awarenessId: 22,
+							awarenessLastClock: 1,
+							subs: new Set(['topic1', 'topic2']),
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const code = 0;
+						const message = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+						const redisMessageSubscriber = jest.fn();
+						const closeWsCallback = jest.fn();
+
+						return { ws, client, app, code, subscriber, message, redisMessageSubscriber, user, closeWsCallback };
+					};
+
+					it('should call addMessage', () => {
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+
+						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
+
+						expect(client.addMessage).toHaveBeenCalledWith(
+							user.room,
+							'index',
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							Buffer.from(protocol.encodeAwarenessUserDisconnected(user.awarenessId!, user.awarenessLastClock)),
+						);
+					});
+
+					it('should set users isClosed to true', () => {
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+
+						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
+
+						expect(user.isClosed).toBe(true);
+					});
+
+					it('should call closeWsCallback', () => {
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber, closeWsCallback } = setup();
+
+						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber, closeWsCallback);
+
+						expect(closeWsCallback).toHaveBeenCalledWith(ws, code, message);
+					});
+
+					it('should call subscriber.unsubscribe for every topic of user', () => {
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber } = setup();
+
+						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
+
+						expect(subscriber.unsubscribe).toHaveBeenNthCalledWith(1, 'topic1', redisMessageSubscriber);
+						expect(subscriber.unsubscribe).toHaveBeenNthCalledWith(2, 'topic2', redisMessageSubscriber);
+					});
+				});
+
+				describe('when app has 1 subscriber', () => {
+					const setup = () => {
+						const { ws, client, app, subscriber } = buildParams();
+						app.numSubscribers.mockReturnValue(1);
+						const user = createMock<User>({
+							room: 'room',
+							awarenessId: 22,
+							awarenessLastClock: 1,
+							subs: new Set(['topic1', 'topic2']),
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const code = 0;
+						const message = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+						const redisMessageSubscriber = jest.fn();
+						const closeWsCallback = jest.fn();
+
+						return { ws, client, app, code, subscriber, message, redisMessageSubscriber, user, closeWsCallback };
+					};
+
+					it('should not call addMessage', () => {
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+
+						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
+
+						expect(subscriber.unsubscribe).not.toHaveBeenCalled();
+					});
+				});
+			});
+
+			describe('when user has no awarenessId', () => {
+				describe('when app has 0 subscribers', () => {
+					const setup = () => {
+						const { ws, client, app, subscriber } = buildParams();
+						app.numSubscribers.mockReturnValueOnce(0);
+						const user = createMock<User>({
+							room: 'room',
+							awarenessId: null,
+							awarenessLastClock: 1,
+							subs: new Set(['topic1', 'topic2']),
+						});
+						ws.getUserData.mockReturnValueOnce(user);
+						const code = 0;
+						const message = buildUpdate({
+							messageType: protocol.messageAwareness,
+							length: 0,
+							numberOfUpdates: 1,
+							awarenessId: 75,
+							lastClock: 76,
+						});
+						const redisMessageSubscriber = jest.fn();
+						const closeWsCallback = jest.fn();
+
+						return { ws, client, app, code, subscriber, message, redisMessageSubscriber, user, closeWsCallback };
+					};
+
+					it('should not call addMessage', () => {
+						const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+
+						closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
+
+						expect(client.addMessage).not.toHaveBeenCalled();
+					});
+				});
 			});
 		});
 	});
