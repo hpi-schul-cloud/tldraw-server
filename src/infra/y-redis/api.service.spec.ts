@@ -219,7 +219,8 @@ describe(Api.name, () => {
 			const { api, props, spyComputeRedisRoomStreamName } = setup();
 			const { room, docid } = props;
 
-			await api.getDoc(room, docid);
+			const result = await api.getDoc(room, docid);
+			result.awareness.destroy();
 
 			expect(spyComputeRedisRoomStreamName).toHaveBeenCalledWith(room, docid, 'prefix');
 		});
@@ -228,7 +229,8 @@ describe(Api.name, () => {
 			const { api, props, redis } = setup();
 			const { room, docid } = props;
 
-			await api.getDoc(room, docid);
+			const result = await api.getDoc(room, docid);
+			result.awareness.destroy();
 
 			expect(redis.readMessagesFromStream).toHaveBeenCalledTimes(1);
 			expect(redis.readMessagesFromStream).toHaveBeenCalledWith('prefix:room:roomid-1:docid');
@@ -238,7 +240,8 @@ describe(Api.name, () => {
 			const { api, props, spyExtractMessagesFromStreamReply, streamReply } = setup();
 			const { room, docid } = props;
 
-			await api.getDoc(room, docid);
+			const result = await api.getDoc(room, docid);
+			result.awareness.destroy();
 
 			expect(spyExtractMessagesFromStreamReply).toHaveBeenCalledWith(streamReply, 'prefix');
 		});
@@ -248,6 +251,7 @@ describe(Api.name, () => {
 			const { room, docid } = props;
 
 			const result = await api.getDoc(room, docid);
+			result.awareness.destroy();
 
 			expect(result).toBeDefined();
 			expect(result).toEqual(expect.objectContaining({ ydoc: expect.any(Y.Doc) }));
