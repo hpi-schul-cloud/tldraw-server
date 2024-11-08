@@ -3,7 +3,7 @@
 	Adopting this code allows us to integrate proven and
 	optimized logic into the current project.
 	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
-	By adhering to the license terms, we ensure that the use of the code from the `y-redis` repository is legally compliant.
+	https://github.com/yjs/y-redis
 */
 /* eslint-disable max-classes-per-file */
 import * as array from 'lib0/array';
