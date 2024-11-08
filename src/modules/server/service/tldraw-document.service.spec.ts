@@ -1,8 +1,8 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { IoRedisAdapter } from 'infra/redis/ioredis.adapter.js';
 import { TemplatedApp } from 'uws';
 import { RedisService } from '../../../infra/redis/index.js';
+import { IoRedisAdapter } from '../../../infra/redis/ioredis.adapter.js';
 import { TldrawDocumentService } from './tldraw-document.service.js';
 
 describe('Tldraw-Document Service', () => {

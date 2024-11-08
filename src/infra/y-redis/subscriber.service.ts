@@ -23,7 +23,9 @@ export const createSubscriber = async (
 ): Promise<Subscriber> => {
 	const client = await createApiClient(store, createRedisInstance);
 	const subscriber = new Subscriber(client);
-	await run(subscriber);
+	// Here we are not using an "await", as it would block further execution
+	// of our code, as the subscriber.run() is an infinite loop.
+	run(subscriber);
 
 	return subscriber;
 };
