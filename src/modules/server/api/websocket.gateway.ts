@@ -1,12 +1,11 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-// @ts-expect-error - @y/redis is only having jsdoc types
-import { registerYWebsocketServer } from '@y/redis';
 import { TemplatedApp } from 'uws';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
 import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
+import { registerYWebsocketServer } from '../../../infra/y-redis/ws.service.js';
 import { ServerConfig } from '../server.config.js';
 
 export const UWS = 'UWS';
@@ -15,7 +14,7 @@ export const UWS = 'UWS';
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	public constructor(
 		@Inject(UWS) private readonly webSocketServer: TemplatedApp,
-		private readonly storage: StorageService,
+		private readonly storageService: StorageService,
 		private readonly authorizationService: AuthorizationService,
 		private readonly redisService: RedisService,
 		private readonly config: ServerConfig,
@@ -35,14 +34,13 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		await registerYWebsocketServer(
 			this.webSocketServer,
 			`${wsPathPrefix}/:room`,
-			await this.storage.get(),
+			this.storageService,
 			this.authorizationService.hasPermission.bind(this.authorizationService),
 			{
-				redisPrefix: this.config.REDIS_PREFIX,
-				openWsCallback: () => this.incOpenConnectionsGauge(),
-				closeWsCallback: () => this.decOpenConnectionsGauge(),
+				openWsCallback: () => MetricsService.openConnectionsGauge.inc(),
+				closeWsCallback: () => MetricsService.openConnectionsGauge.dec(),
 			},
-			this.redisService.createRedisInstance.bind(this.redisService),
+			this.redisService,
 		);
 
 		this.webSocketServer.listen(wsPort, (t) => {
@@ -51,16 +49,9 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 		});
 
-		this.redisService.subscribeToDeleteChannel((message: string) => {
+		const redisAdapter = await this.redisService.createRedisInstance();
+		redisAdapter.subscribeToDeleteChannel((message: string) => {
 			this.webSocketServer.publish(message, 'action:delete');
 		});
-	}
-
-	private incOpenConnectionsGauge(): void {
-		MetricsService.openConnectionsGauge.inc();
-	}
-
-	private decOpenConnectionsGauge(): void {
-		MetricsService.openConnectionsGauge.dec();
 	}
 }

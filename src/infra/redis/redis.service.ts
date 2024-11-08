@@ -3,57 +3,29 @@ import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
 import { Logger } from '../logger/index.js';
+import { RedisAdapter } from './interfaces/index.js';
+import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 
 @Injectable()
 export class RedisService {
-	private readonly redisDeletionKey: string;
-	private readonly redisDeletionActionKey: string;
-	private internalRedisInstance?: Redis;
-
 	public constructor(
 		private readonly config: RedisConfig,
 		private readonly logger: Logger,
 	) {
-		const redisPrefix = this.config.REDIS_PREFIX;
-
-		this.redisDeletionKey = `${redisPrefix}:delete`;
-		this.redisDeletionActionKey = `${redisPrefix}:delete:action`;
 		this.logger.setContext(RedisService.name);
 	}
 
-	public async createRedisInstance(): Promise<Redis> {
+	public async createRedisInstance(): Promise<RedisAdapter> {
 		let redisInstance: Redis;
 		if (this.config.REDIS_CLUSTER_ENABLED) {
 			redisInstance = await this.createRedisSentinelInstance();
 		} else {
 			redisInstance = this.createNewRedisInstance();
 		}
+		const redisAdapter = new IoRedisAdapter(redisInstance, this.config, this.logger);
 
-		return redisInstance;
-	}
-
-	public async addDeleteDocument(docName: string): Promise<void> {
-		const redisInstance = await this.getInternalRedisInstance();
-
-		await redisInstance.xadd(this.redisDeletionKey, '*', 'docName', docName);
-		await redisInstance.publish(this.redisDeletionActionKey, docName);
-	}
-
-	public async subscribeToDeleteChannel(callback: (message: string) => void): Promise<void> {
-		const redisSubscriberInstance = await this.createRedisInstance();
-		redisSubscriberInstance.subscribe(this.redisDeletionActionKey);
-		redisSubscriberInstance.on('message', (chan, message) => {
-			callback(message);
-		});
-	}
-
-	private async getInternalRedisInstance(): Promise<Redis> {
-		if (!this.internalRedisInstance) {
-			this.internalRedisInstance = await this.createRedisInstance();
-		}
-
-		return this.internalRedisInstance;
+		return redisAdapter;
 	}
 
 	private createNewRedisInstance(): Redis {

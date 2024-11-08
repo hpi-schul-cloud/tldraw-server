@@ -2,6 +2,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { TemplatedApp } from 'uws';
 import { RedisService } from '../../../infra/redis/index.js';
+import { IoRedisAdapter } from '../../../infra/redis/ioredis.adapter.js';
 import { TldrawDocumentService } from './tldraw-document.service.js';
 
 describe('Tldraw-Document Service', () => {
@@ -32,23 +33,32 @@ describe('Tldraw-Document Service', () => {
 			const docName = `y:room:${parentId}:index`;
 			const expectedMessage = 'action:delete';
 
-			return { parentId, docName, expectedMessage };
+			const redisInstance = createMock<IoRedisAdapter>({
+				redisPrefix: 'y',
+			});
+
+			redisService.createRedisInstance.mockResolvedValueOnce(redisInstance);
+
+			return { parentId, docName, expectedMessage, redisInstance };
 		};
 
-		it('should call publish', async () => {
+		it('should call webSocketServer.publish', async () => {
 			const { parentId, docName, expectedMessage } = setup();
+			await service.onModuleInit();
 
 			await service.deleteByDocName(parentId);
 
 			expect(webSocketServer.publish).toHaveBeenCalledWith(docName, expectedMessage);
 		});
 
-		it('should call addDeleteDocument', async () => {
-			const { parentId, docName } = setup();
+		it('should call redisInstance.markToDeleteByDocName', async () => {
+			const { parentId, docName, redisInstance } = setup();
+
+			await service.onModuleInit();
 
 			await service.deleteByDocName(parentId);
 
-			expect(redisService.addDeleteDocument).toHaveBeenCalledWith(docName);
+			expect(redisInstance.markToDeleteByDocName).toHaveBeenCalledWith(docName);
 		});
 	});
 });
