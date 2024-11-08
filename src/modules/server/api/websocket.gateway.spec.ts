@@ -7,18 +7,10 @@ import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { IoRedisAdapter } from '../../../infra/redis/ioredis.adapter.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
+import * as WsService from '../../../infra/y-redis/ws.service.js';
 import { registerYWebsocketServer } from '../../../infra/y-redis/ws.service.js';
 import { ServerConfig } from '../server.config.js';
 import { WebsocketGateway } from './websocket.gateway.js';
-
-jest.mock('../../../infra/y-redis/ws.service.js', () => ({
-	registerYWebsocketServer: jest.fn().mockImplementation(() =>
-		Promise.resolve({
-			openWsCallback: jest.fn(),
-			closeWsCallback: jest.fn(),
-		}),
-	),
-}));
 
 describe(WebsocketGateway.name, () => {
 	let service: WebsocketGateway;
@@ -78,8 +70,16 @@ describe(WebsocketGateway.name, () => {
 	});
 
 	describe('onModuleInit', () => {
+		const setup = () => {
+			const yWebsocketServer = createMock<WsService.YWebsocketServer>();
+			jest.spyOn(WsService, 'registerYWebsocketServer').mockResolvedValueOnce(yWebsocketServer);
+		};
+
 		it('should call registerYWebsocketServer', async () => {
+			setup();
+
 			await service.onModuleInit();
+
 			expect(registerYWebsocketServer).toHaveBeenCalledWith(
 				webSocketServer,
 				'tests/:room',
@@ -94,6 +94,7 @@ describe(WebsocketGateway.name, () => {
 		});
 
 		it('should increment openConnectionsGauge on openWsCallback', async () => {
+			setup();
 			const openConnectionsGaugeIncSpy = jest.spyOn(MetricsService.openConnectionsGauge, 'inc');
 
 			await service.onModuleInit();
@@ -105,6 +106,7 @@ describe(WebsocketGateway.name, () => {
 		});
 
 		it('should decrement openConnectionsGauge on closeWsCallback', async () => {
+			setup();
 			const openConnectionsGaugeDecSpy = jest.spyOn(MetricsService.openConnectionsGauge, 'dec');
 
 			await service.onModuleInit();
@@ -115,12 +117,14 @@ describe(WebsocketGateway.name, () => {
 		});
 
 		it('should call webSocketServer.listen', async () => {
+			setup();
 			await service.onModuleInit();
 
 			expect(webSocketServer.listen).toHaveBeenCalledWith(3345, expect.any(Function));
 		});
 
 		it('should call redisAdapter.subscribeToDeleteChannel', async () => {
+			setup();
 			redisService.createRedisInstance.mockResolvedValueOnce(redisAdapter);
 
 			await service.onModuleInit();
@@ -130,6 +134,7 @@ describe(WebsocketGateway.name, () => {
 		});
 
 		it('should call webSocketServer.publish', async () => {
+			setup();
 			redisService.createRedisInstance.mockResolvedValueOnce(redisAdapter);
 			redisAdapter.subscribeToDeleteChannel.mockImplementation((cb) => cb('test'));
 
@@ -139,6 +144,7 @@ describe(WebsocketGateway.name, () => {
 		});
 
 		it('should log if webSocketServer.listen return true', async () => {
+			setup();
 			// @ts-ignore
 			webSocketServer.listen.mockImplementationOnce((_, cb) => cb(true));
 
@@ -149,7 +155,13 @@ describe(WebsocketGateway.name, () => {
 	});
 
 	describe('onModuleDestroy', () => {
+		const setup = () => {
+			const yWebsocketServer = createMock<WsService.YWebsocketServer>();
+			jest.spyOn(WsService, 'registerYWebsocketServer').mockResolvedValueOnce(yWebsocketServer);
+		};
+
 		it('should call webSocketServer.close', () => {
+			setup();
 			service.onModuleDestroy();
 
 			expect(webSocketServer.close).toHaveBeenCalled();
