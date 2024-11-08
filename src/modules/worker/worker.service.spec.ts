@@ -29,7 +29,7 @@ jest.mock('../../infra/y-redis/api.service.js', () => {
 	};
 });
 
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
@@ -45,8 +45,7 @@ import { WorkerService } from './worker.service.js';
 
 describe(WorkerService.name, () => {
 	let service: WorkerService;
-	let redisService: RedisService;
-	let redisAdapter: RedisAdapter;
+	let redisService: DeepMocked<RedisService>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -77,19 +76,6 @@ describe(WorkerService.name, () => {
 
 		service = await module.resolve(WorkerService);
 		redisService = module.get(RedisService);
-
-		const reclaimedTasks = xAutoClaimResponseFactory.build();
-
-		redisAdapter = createMock<RedisAdapter>({
-			redisPrefix: 'prefix',
-			reclaimTasks: jest.fn().mockResolvedValue(reclaimedTasks),
-			getDeletedDocEntries: jest.fn().mockResolvedValue([]),
-			tryClearTask: jest.fn().mockResolvedValue(0),
-			tryDeduplicateTask: jest.fn().mockResolvedValue(undefined),
-			deleteDeleteDocEntry: jest.fn().mockResolvedValue(undefined),
-		});
-
-		jest.spyOn(redisService, 'createRedisInstance').mockResolvedValue(redisAdapter);
 	});
 
 	afterEach(() => {
@@ -104,7 +90,7 @@ describe(WorkerService.name, () => {
 	describe('onModuleInit', () => {
 		describe('when _destroyed is false', () => {
 			const setup = () => {
-				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
+				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValueOnce([]);
 
 				return { consumeWorkerQueueSpy };
 			};
@@ -122,7 +108,7 @@ describe(WorkerService.name, () => {
 			const setup = () => {
 				callCount = 1;
 
-				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValue([]);
+				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValueOnce([]);
 
 				return { consumeWorkerQueueSpy };
 			};
@@ -167,8 +153,11 @@ describe(WorkerService.name, () => {
 						const reclaimedTasks = xAutoClaimResponseFactory.build();
 						reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
 
-						jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue([]);
-						jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+						const redisAdapterMock = createMock<RedisAdapter>({ redisPrefix: 'prefix' });
+						redisAdapterMock.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
+						redisAdapterMock.getDeletedDocEntries.mockResolvedValueOnce([]);
+
+						redisService.createRedisInstance.mockResolvedValueOnce(redisAdapterMock);
 
 						const expectedTasks = reclaimedTasks.messages.map((m) => ({
 							stream: m.message.compact.toString(),
@@ -202,8 +191,11 @@ describe(WorkerService.name, () => {
 
 						const deletedDocEntries = [streamMessageReply2];
 
-						jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
-						jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
+						const redisAdapterMock = createMock<RedisAdapter>({ redisPrefix: 'prefix' });
+						redisAdapterMock.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
+						redisAdapterMock.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
+
+						redisService.createRedisInstance.mockResolvedValueOnce(redisAdapterMock);
 
 						const expectedTasks = reclaimedTasks.messages.map((m) => ({
 							stream: m.message.compact.toString(),
@@ -238,11 +230,21 @@ describe(WorkerService.name, () => {
 
 					const deletedDocEntries = [streamMessageReply2];
 
-					jest.spyOn(redisAdapter, 'getDeletedDocEntries').mockResolvedValue(deletedDocEntries);
-					jest.spyOn(redisAdapter, 'reclaimTasks').mockResolvedValue(reclaimedTasks);
-					jest.spyOn(redisAdapter, 'tryClearTask').mockImplementation(async (task) => {
-						return await Promise.resolve(task.stream.length);
-					});
+					const redisAdapterMock = createMock<RedisAdapter>({ redisPrefix: 'prefix' });
+					redisAdapterMock.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
+					redisAdapterMock.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
+					redisAdapterMock.tryClearTask
+						.mockImplementationOnce(async (task) => {
+							return await Promise.resolve(task.stream.length);
+						})
+						.mockImplementationOnce(async (task) => {
+							return await Promise.resolve(task.stream.length);
+						})
+						.mockImplementationOnce(async (task) => {
+							return await Promise.resolve(task.stream.length);
+						});
+
+					redisService.createRedisInstance.mockResolvedValueOnce(redisAdapterMock);
 
 					const expectedTasks = reclaimedTasks.messages.map((m) => ({
 						stream: m.message.compact.toString(),
