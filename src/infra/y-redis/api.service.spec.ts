@@ -2,7 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import * as Awareness from 'y-protocols/awareness';
 import * as Y from 'yjs';
 import { RedisService } from '../../infra/redis/redis.service.js';
-import { RedisAdapter } from '../redis/interfaces/redis-adapter.js';
+import { RedisAdapter } from '../redis/interfaces/index.js';
 import { Api, createApiClient, handleMessageUpdates } from './api.service.js';
 import * as helper from './helper.js';
 import * as protocol from './protocol.js';

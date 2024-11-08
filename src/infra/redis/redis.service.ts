@@ -3,7 +3,7 @@ import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
 import { Logger } from '../logger/index.js';
-import { RedisAdapter } from './interfaces/redis-adapter.js';
+import { RedisAdapter } from './interfaces/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 

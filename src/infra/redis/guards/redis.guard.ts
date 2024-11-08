@@ -1,4 +1,4 @@
-import { XItem, XItems } from '../interfaces/redis.js';
+import { XItem, XItems } from '../interfaces/index.js';
 import { TypeGuard } from './type.guard.js';
 
 export class RedisGuard {

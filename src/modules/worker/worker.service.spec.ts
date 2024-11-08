@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Awareness } from 'y-protocols/awareness.js';
 import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
-import { RedisAdapter } from '../../infra/redis/interfaces/redis-adapter.js';
+import { RedisAdapter } from '../../infra/redis/interfaces/index.js';
 import { RedisService } from '../../infra/redis/redis.service.js';
 import {
 	streamMessageReplyFactory,

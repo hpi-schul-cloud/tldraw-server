@@ -5,7 +5,7 @@ import {
 	StreamMessageReply,
 	StreamMessagesReply,
 	StreamMessagesSingleReply,
-} from '../../infra/redis/interfaces/stream-message-reply.js';
+} from '../../infra/redis/interfaces/index.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,

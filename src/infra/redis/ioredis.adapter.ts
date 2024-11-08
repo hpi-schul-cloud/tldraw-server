@@ -1,10 +1,14 @@
 import { Redis } from 'ioredis';
 import { Logger } from '../logger/index.js';
 import { addMessageCommand, xDelIfEmptyCommand } from './commands.js';
-import { RedisAdapter } from './interfaces/redis-adapter.js';
-import { Task, XAutoClaimResponse } from './interfaces/redis.js';
-import { StreamMessageReply, StreamMessagesReply } from './interfaces/stream-message-reply.js';
-import { StreamNameClockPair } from './interfaces/stream-name-clock-pair.js';
+import {
+	RedisAdapter,
+	StreamMessageReply,
+	StreamMessagesReply,
+	StreamNameClockPair,
+	Task,
+	XAutoClaimResponse,
+} from './interfaces/index.js';
 import { mapToStreamMessagesReplies, mapToStreamMessagesReply, mapToXAutoClaimResponse } from './mapper.js';
 import { RedisConfig } from './redis.config.js';
 
