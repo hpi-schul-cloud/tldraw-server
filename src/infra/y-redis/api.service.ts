@@ -1,11 +1,13 @@
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
+import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter } from '../redis/interfaces/redis-adapter.js';
 import { StreamNameClockPair } from '../redis/interfaces/stream-name-clock-pair.js';
 import { RedisService } from '../redis/redis.service.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
+import { YRedisDoc } from './interfaces/y-redis-doc.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
@@ -91,16 +93,9 @@ export class Api {
 		return this.store.retrieveStateVector(room, docid);
 	}
 
-	public async getDoc(
-		room: string,
-		docid: string,
-	): Promise<{
-		ydoc: Doc;
-		awareness: Awareness;
-		redisLastId: string;
-		storeReferences: string[] | null;
-		docChanged: boolean;
-	}> {
+	public async getDoc(room: string, docid: string): Promise<YRedisDoc> {
+		const end = MetricsService.methodDurationHistogram.startTimer();
+
 		let docChanged = false;
 
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
@@ -126,6 +121,8 @@ export class Api {
 		ydoc.transact(() => {
 			handleMessageUpdates(docMessages, ydoc, awareness);
 		});
+
+		end();
 
 		return {
 			ydoc,
