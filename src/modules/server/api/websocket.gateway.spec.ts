@@ -18,7 +18,6 @@ describe(WebsocketGateway.name, () => {
 	let redisService: DeepMocked<RedisService>;
 	let webSocketServer: DeepMocked<TemplatedApp>;
 	let logger: DeepMocked<Logger>;
-	const redisAdapter: DeepMocked<IoRedisAdapter> = createMock<IoRedisAdapter>();
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -73,6 +72,10 @@ describe(WebsocketGateway.name, () => {
 		const setup = () => {
 			const yWebsocketServer = createMock<WsService.YWebsocketServer>();
 			jest.spyOn(WsService, 'registerYWebsocketServer').mockResolvedValueOnce(yWebsocketServer);
+
+			const redisAdapter: DeepMocked<IoRedisAdapter> = createMock<IoRedisAdapter>();
+
+			return { redisAdapter };
 		};
 
 		it('should call registerYWebsocketServer', async () => {
@@ -124,7 +127,7 @@ describe(WebsocketGateway.name, () => {
 		});
 
 		it('should call redisAdapter.subscribeToDeleteChannel', async () => {
-			setup();
+			const { redisAdapter } = setup();
 			redisService.createRedisInstance.mockResolvedValueOnce(redisAdapter);
 
 			await service.onModuleInit();
@@ -134,7 +137,8 @@ describe(WebsocketGateway.name, () => {
 		});
 
 		it('should call webSocketServer.publish', async () => {
-			setup();
+			const { redisAdapter } = setup();
+
 			redisService.createRedisInstance.mockResolvedValueOnce(redisAdapter);
 			redisAdapter.subscribeToDeleteChannel.mockImplementation((cb) => cb('test'));
 
