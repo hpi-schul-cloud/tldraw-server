@@ -1,4 +1,4 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-jest';
 import { Redis } from 'ioredis';
 import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
@@ -7,57 +7,50 @@ import { xAutoClaimRawReplyFactory } from './testing/x-auto-claim-raw-reply.fact
 import { xItemsBufferFactory } from './testing/x-items.factory.js';
 import { xReadBufferReplyFactory } from './testing/x-read-buffer-reply.factory.js';
 
-const testPrefix = 'testPrefix';
-
 describe(IoRedisAdapter.name, () => {
-	let redis: DeepMocked<Redis>;
-	let redisAdapter: IoRedisAdapter;
-	let logger: DeepMocked<Logger>;
-	let config: DeepMocked<RedisConfig>;
-
-	beforeAll(async () => {
-		logger = createMock<Logger>();
-		config = createMock<RedisConfig>({
+	const testPrefix = 'testPrefix';
+	const buildParams = async () => {
+		const logger = createMock<Logger>();
+		const config = createMock<RedisConfig>({
 			REDIS_PREFIX: testPrefix,
 		});
-		redis = createMock<Redis>();
-		redisAdapter = new IoRedisAdapter(redis, config, logger);
+		const redis = createMock<Redis>();
+		const redisAdapter = new IoRedisAdapter(redis, config, logger);
 		await redisAdapter.createGroup();
-	});
 
-	afterAll(() => {
-		redis.quit();
-	});
+		return { redisAdapter, redis, logger };
+	};
 
 	describe('subscribeToDeleteChannel', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const subscribeSpy = jest.spyOn(redis, 'subscribe');
 			const onSpy = jest.spyOn(redis, 'on');
 			const callback = jest.fn();
 
 			const expectedProps = [redisAdapter.redisDeletionActionKey];
 
-			return { subscribeSpy, onSpy, callback, expectedProps };
+			return { subscribeSpy, onSpy, callback, expectedProps, redisAdapter, redis };
 		};
 
-		it('should call redis subscribe with correct values', () => {
-			const { subscribeSpy, callback, expectedProps } = setup();
+		it('should call redis subscribe with correct values', async () => {
+			const { subscribeSpy, callback, expectedProps, redisAdapter } = await setup();
 
 			redisAdapter.subscribeToDeleteChannel(callback);
 
 			expect(subscribeSpy).toHaveBeenCalledWith(...expectedProps);
 		});
 
-		it('should call redis on with correct values', () => {
-			const { onSpy, callback } = setup();
+		it('should call redis on with correct values', async () => {
+			const { onSpy, callback, redisAdapter } = await setup();
 
 			redisAdapter.subscribeToDeleteChannel(callback);
 
 			expect(onSpy).toHaveBeenCalled();
 		});
 
-		it('should call callback with correct values', () => {
-			const { callback } = setup();
+		it('should call callback with correct values', async () => {
+			const { callback, redisAdapter, redis } = await setup();
 			// @ts-ignore
 			redis.on.mockImplementation((event, cb) => {
 				cb(event, 'message');
@@ -70,7 +63,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('addMessage', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const key = 'key';
 			const message = 'message';
 			// @ts-ignore
@@ -78,11 +72,11 @@ describe(IoRedisAdapter.name, () => {
 
 			const expectedProps = [key, message];
 
-			return { key, message, addMessageSpy, expectedProps };
+			return { key, message, addMessageSpy, expectedProps, redisAdapter };
 		};
 
 		it('should call redis addMessage with correct values', async () => {
-			const { key, message, addMessageSpy, expectedProps } = setup();
+			const { key, message, addMessageSpy, expectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.addMessage(key, message);
 
@@ -91,17 +85,18 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('getEntriesLen', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const streamName = 'streamName';
 			const xlenSpy = jest.spyOn(redis, 'xlen');
 
 			xlenSpy.mockResolvedValue(0);
 
-			return { streamName, xlenSpy };
+			return { streamName, xlenSpy, redisAdapter };
 		};
 
 		it('should call redis xlen with correct values', async () => {
-			const { streamName, xlenSpy } = setup();
+			const { streamName, xlenSpy, redisAdapter } = await setup();
 
 			await redisAdapter.getEntriesLen(streamName);
 
@@ -109,7 +104,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { streamName } = setup();
+			const { streamName, redisAdapter } = await setup();
 
 			const result = await redisAdapter.getEntriesLen(streamName);
 
@@ -118,17 +113,18 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('exists', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const stream = 'stream';
 			const existsSpy = jest.spyOn(redis, 'exists');
 
 			existsSpy.mockResolvedValue(1);
 
-			return { stream, existsSpy };
+			return { stream, existsSpy, redisAdapter };
 		};
 
 		it('should call redis exists with correct values', async () => {
-			const { stream, existsSpy } = setup();
+			const { stream, existsSpy, redisAdapter } = await setup();
 
 			await redisAdapter.exists(stream);
 
@@ -136,7 +132,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { stream } = setup();
+			const { stream, redisAdapter } = await setup();
 
 			const result = await redisAdapter.exists(stream);
 
@@ -145,7 +141,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('createGroup', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis, logger } = await buildParams();
 			const xgroupSpy = jest.spyOn(redis, 'xgroup');
 
 			const expectedProps = [
@@ -156,16 +153,19 @@ describe(IoRedisAdapter.name, () => {
 				'MKSTREAM',
 			];
 
-			return { xgroupSpy, expectedProps };
+			return { xgroupSpy, expectedProps, redisAdapter, redis, logger };
 		};
 		it('should call redis xgroup with correct values', async () => {
-			const { xgroupSpy, expectedProps } = setup();
+			const { xgroupSpy, expectedProps, redisAdapter } = await setup();
+
 			await redisAdapter.createGroup();
 
 			expect(xgroupSpy).toHaveBeenCalledWith(...expectedProps);
 		});
 
 		it('should throw error', async () => {
+			const { redis, redisAdapter } = await setup();
+
 			const xgroupSpy = jest.spyOn(redis, 'xgroup');
 			// @ts-ignore
 			xgroupSpy.mockRejectedValue(new Error('error'));
@@ -174,6 +174,8 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should not throw error', async () => {
+			const { redis, redisAdapter } = await setup();
+
 			const xgroupSpy = jest.spyOn(redis, 'xgroup');
 			const error = new Error('BUSYGROUP Consumer Group name already exists');
 			// @ts-ignore
@@ -183,6 +185,8 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call logger.log with error', async () => {
+			const { redis, redisAdapter, logger } = await setup();
+
 			const xgroupSpy = jest.spyOn(redis, 'xgroup');
 			const error = new Error('BUSYGROUP Consumer Group name already exists');
 			// @ts-ignore
@@ -195,7 +199,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('readStreams', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const streams = [{ key: 'key', id: '1728917177284-0' }];
 			const xreadBufferSpy = jest.spyOn(redis, 'xreadBuffer');
 
@@ -213,11 +218,11 @@ describe(IoRedisAdapter.name, () => {
 				...streams.map((stream) => stream.id),
 			];
 
-			return { xreadBufferSpy, streams, expectedProps };
+			return { xreadBufferSpy, streams, expectedProps, redisAdapter };
 		};
 
 		it('should call redis xreadBuffer with correct values', async () => {
-			const { xreadBufferSpy, streams, expectedProps } = setup();
+			const { xreadBufferSpy, streams, expectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.readStreams(streams);
 
@@ -225,7 +230,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { streams } = setup();
+			const { streams, redisAdapter } = await setup();
 
 			const result = await redisAdapter.readStreams(streams);
 
@@ -239,7 +244,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('readMessagesFromStream', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const xreadBufferSpy = jest.spyOn(redis, 'xreadBuffer');
 			const computeRedisRoomStreamName = 'computeRedisRoomStreamName';
 
@@ -258,11 +264,11 @@ describe(IoRedisAdapter.name, () => {
 				},
 			];
 
-			return { xreadBufferSpy, computeRedisRoomStreamName, expectedProps, expectedResult };
+			return { xreadBufferSpy, computeRedisRoomStreamName, expectedProps, expectedResult, redisAdapter };
 		};
 
 		it('should call redis xreadBuffer with correct values', async () => {
-			const { xreadBufferSpy, computeRedisRoomStreamName, expectedProps } = setup();
+			const { xreadBufferSpy, computeRedisRoomStreamName, expectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.readMessagesFromStream(computeRedisRoomStreamName);
 
@@ -270,7 +276,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { computeRedisRoomStreamName, expectedResult } = setup();
+			const { computeRedisRoomStreamName, expectedResult, redisAdapter } = await setup();
 
 			const result = await redisAdapter.readMessagesFromStream(computeRedisRoomStreamName);
 
@@ -279,7 +285,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('reclaimTasks', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const xautoclaimSpy = jest.spyOn(redis, 'xautoclaim');
 			const consumer = 'consumer';
 			const redisTaskDebounce = 1000;
@@ -297,11 +304,11 @@ describe(IoRedisAdapter.name, () => {
 				5,
 			];
 
-			return { xautoclaimSpy, consumer, redisTaskDebounce, expectedProps };
+			return { xautoclaimSpy, consumer, redisTaskDebounce, expectedProps, redisAdapter };
 		};
 
 		it('should call redis xautoclaim with correct values', async () => {
-			const { xautoclaimSpy, consumer, redisTaskDebounce, expectedProps } = setup();
+			const { xautoclaimSpy, consumer, redisTaskDebounce, expectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.reclaimTasks(consumer, redisTaskDebounce);
 
@@ -309,7 +316,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { consumer, redisTaskDebounce } = setup();
+			const { consumer, redisTaskDebounce, redisAdapter } = await setup();
 
 			const result = await redisAdapter.reclaimTasks(consumer, redisTaskDebounce);
 
@@ -318,7 +325,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('markToDeleteByDocName', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const docName = 'docName';
 			const xaddSpy = jest.spyOn(redis, 'xadd');
 			const publishSpy = jest.spyOn(redis, 'publish');
@@ -326,11 +334,11 @@ describe(IoRedisAdapter.name, () => {
 			const xaddExpectedProps = [redisAdapter.redisDeleteStreamName, '*', 'docName', docName];
 			const publishExpectedProps = [redisAdapter.redisDeletionActionKey, docName];
 
-			return { docName, xaddSpy, publishSpy, xaddExpectedProps, publishExpectedProps };
+			return { docName, xaddSpy, publishSpy, xaddExpectedProps, publishExpectedProps, redisAdapter };
 		};
 
 		it('should call redis xadd with correct values', async () => {
-			const { docName, xaddSpy, xaddExpectedProps } = setup();
+			const { docName, xaddSpy, xaddExpectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.markToDeleteByDocName(docName);
 
@@ -338,7 +346,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis publish with correct values', async () => {
-			const { docName, publishSpy, publishExpectedProps } = setup();
+			const { docName, publishSpy, publishExpectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.markToDeleteByDocName(docName);
 
@@ -347,7 +355,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('getDeletedDocEntries', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const redisDeleteStreamName = `${testPrefix}:delete`;
 			const xrangeBufferSpy = jest.spyOn(redis, 'xrangeBuffer');
 
@@ -367,11 +376,11 @@ describe(IoRedisAdapter.name, () => {
 				},
 			];
 
-			return { xrangeBufferSpy, redisDeleteStreamName, expectedProps, expectedReturn };
+			return { xrangeBufferSpy, redisDeleteStreamName, expectedProps, expectedReturn, redisAdapter };
 		};
 
 		it('should call redis xrangeBuffer with correct values', async () => {
-			const { xrangeBufferSpy, expectedProps } = setup();
+			const { xrangeBufferSpy, expectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.getDeletedDocEntries();
 
@@ -379,7 +388,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { expectedReturn } = setup();
+			const { expectedReturn, redisAdapter } = await setup();
 
 			const result = await redisAdapter.getDeletedDocEntries();
 
@@ -388,7 +397,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('deleteDeleteDocEntry', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const id = '1728975844762-0';
 			const xdelSpy = jest.spyOn(redis, 'xdel');
 
@@ -396,11 +406,11 @@ describe(IoRedisAdapter.name, () => {
 
 			const expectedProps = [redisAdapter.redisDeleteStreamName, id];
 
-			return { id, xdelSpy, expectedProps };
+			return { id, xdelSpy, expectedProps, redisAdapter };
 		};
 
 		it('should call redis xdel with correct values', async () => {
-			const { id, xdelSpy, expectedProps } = setup();
+			const { id, xdelSpy, expectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.deleteDeleteDocEntry(id);
 
@@ -408,7 +418,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { id } = setup();
+			const { id, redisAdapter } = await setup();
 
 			const result = await redisAdapter.deleteDeleteDocEntry(id);
 
@@ -417,7 +427,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('tryClearTask', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const xlenSpy = jest.spyOn(redis, 'xlen');
 			const multiSpy = jest.spyOn(redis, 'multi');
 			// @ts-ignore
@@ -440,11 +451,11 @@ describe(IoRedisAdapter.name, () => {
 				id: 'id',
 			};
 
-			return { xlenSpy, xDelIfEmptySpy, multiSpy, task, xdelSpy, execSpy };
+			return { xlenSpy, xDelIfEmptySpy, multiSpy, task, xdelSpy, execSpy, redisAdapter };
 		};
 
 		it('should call redis xlen with correct values', async () => {
-			const { xlenSpy, task } = setup();
+			const { xlenSpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryClearTask(task);
 
@@ -452,7 +463,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis multi with correct values', async () => {
-			const { multiSpy } = setup();
+			const { multiSpy, redisAdapter } = await setup();
 
 			await redisAdapter.tryClearTask({ stream: 'stream', id: 'id' });
 
@@ -460,7 +471,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis xDelIfEmpty with correct values', async () => {
-			const { xDelIfEmptySpy, task } = setup();
+			const { xDelIfEmptySpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryClearTask(task);
 
@@ -468,7 +479,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis xdel with correct values', async () => {
-			const { xdelSpy, task } = setup();
+			const { xdelSpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryClearTask(task);
 
@@ -476,7 +487,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis exec with correct values', async () => {
-			const { execSpy } = setup();
+			const { execSpy, redisAdapter } = await setup();
 
 			await redisAdapter.tryClearTask({ stream: 'stream', id: 'id' });
 
@@ -484,7 +495,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should return correct value', async () => {
-			const { task } = setup();
+			const { task, redisAdapter } = await setup();
 
 			const result = await redisAdapter.tryClearTask(task);
 
@@ -493,7 +504,8 @@ describe(IoRedisAdapter.name, () => {
 	});
 
 	describe('tryDeduplicateTask', () => {
-		const setup = () => {
+		const setup = async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const multiSpy = jest.spyOn(redis, 'multi');
 			const xtrimSpy = jest.spyOn(redis, 'xtrim');
 			const xaddSpy = jest.spyOn(redis, 'xadd');
@@ -519,11 +531,11 @@ describe(IoRedisAdapter.name, () => {
 				id: 'id',
 			};
 
-			return { multiSpy, xtrimSpy, xaddSpy, xreadgroupSpy, task, xdelSpy, execSpy };
+			return { multiSpy, xtrimSpy, xaddSpy, xreadgroupSpy, task, xdelSpy, execSpy, redisAdapter };
 		};
 
 		it('should call redis multi with correct values', async () => {
-			const { multiSpy, task } = setup();
+			const { multiSpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryDeduplicateTask(task, 0, 0);
 
@@ -531,7 +543,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis xtrim with correct values', async () => {
-			const { xtrimSpy, task } = setup();
+			const { xtrimSpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryDeduplicateTask(task, 123, 1);
 
@@ -539,7 +551,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis xadd with correct values', async () => {
-			const { xaddSpy, task } = setup();
+			const { xaddSpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryDeduplicateTask(task, 0, 0);
 
@@ -547,7 +559,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis xreadgroup with correct values', async () => {
-			const { xreadgroupSpy, task } = setup();
+			const { xreadgroupSpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryDeduplicateTask(task, 0, 0);
 			expect(xreadgroupSpy).toHaveBeenCalledWith(
@@ -563,7 +575,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis xdel with correct values', async () => {
-			const { xdelSpy, task } = setup();
+			const { xdelSpy, task, redisAdapter } = await setup();
 
 			await redisAdapter.tryDeduplicateTask(task, 0, 0);
 
@@ -571,7 +583,7 @@ describe(IoRedisAdapter.name, () => {
 		});
 
 		it('should call redis exec with correct values', async () => {
-			const { execSpy } = setup();
+			const { execSpy, redisAdapter } = await setup();
 
 			await redisAdapter.tryDeduplicateTask({ stream: 'stream', id: 'id' }, 0, 0);
 
@@ -581,6 +593,7 @@ describe(IoRedisAdapter.name, () => {
 
 	describe('quit', () => {
 		it('should call redis quit with correct values', async () => {
+			const { redisAdapter, redis } = await buildParams();
 			const quitSpy = jest.spyOn(redis, 'quit');
 
 			await redisAdapter.quit();
