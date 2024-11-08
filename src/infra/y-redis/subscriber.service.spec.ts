@@ -1,5 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
-import { RedisService } from 'infra/redis/redis.service.js';
+import { RedisService } from '../../infra/redis/redis.service.js';
 import { Api } from './api.service.js';
 import { DocumentStorage } from './storage.js';
 import * as subscriberService from './subscriber.service.js';
