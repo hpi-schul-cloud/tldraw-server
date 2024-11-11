@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { App } from 'uws';
+import { App } from 'uWebSockets.js';
 import { RedisService } from '../../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../../infra/storage/storage.service.js';
 import { ServerModule } from '../../server.module.js';
