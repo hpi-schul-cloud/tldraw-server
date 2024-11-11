@@ -1,5 +1,5 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { TemplatedApp } from 'uws';
+import { TemplatedApp } from 'uWebSockets.js';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
 import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
