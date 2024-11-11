@@ -1,28 +1,18 @@
-import { createMock } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { App } from 'uws';
-import { RedisService } from '../../../../infra/redis/redis.service.js';
-import { StorageService } from '../../../../infra/storage/storage.service.js';
+import { XApiKeyConfig } from 'infra/auth-guard/x-api-key.config.js';
 import { ServerModule } from '../../server.module.js';
-import { WebsocketGateway } from '../websocket.gateway.js';
+import { TestApiClient } from './test-api-client.js';
 
 describe('Tldraw-Document Api Test', () => {
 	let app: INestApplication;
+	let testApiClient: TestApiClient;
+	const baseRoute = 'tldraw-document';
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
 			imports: [ServerModule],
-		})
-			.overrideProvider(StorageService)
-			.useValue(createMock<StorageService>())
-			.overrideProvider(RedisService)
-			.useValue(createMock<RedisService>())
-			.overrideProvider('UWS')
-			.useValue(createMock<typeof App>())
-			.overrideProvider(WebsocketGateway)
-			.useValue(createMock<WebsocketGateway>())
-			.compile();
+		}).compile();
 
 		app = moduleFixture.createNestApplication();
 		await app.init();
@@ -33,8 +23,49 @@ describe('Tldraw-Document Api Test', () => {
 	});
 
 	describe('deleteByDocName', () => {
-		it('true to be true', () => {
-			expect(true).toBe(true);
+		describe('when apiKey is not valid', () => {
+			const setup = () => {
+				const parentId = '60f1b9b3b3b3b3b3b3b3b3b3';
+				const useAsApiKey = true;
+				const invalidApiKey = 'invalid';
+				testApiClient = new TestApiClient(app, baseRoute, invalidApiKey, useAsApiKey);
+
+				return { testApiClient, parentId };
+			};
+
+			it('returns unauthorized ', async () => {
+				const { testApiClient, parentId } = setup();
+
+				await testApiClient.delete(parentId).expect(401);
+			});
+		});
+
+		describe('when apiKey is valid', () => {
+			const setup = () => {
+				const useAsApiKey = true;
+				const validApiKey: XApiKeyConfig['ADMIN_API__ALLOWED_API_KEYS'][0] = 'randomString';
+
+				testApiClient = new TestApiClient(app, baseRoute, validApiKey, useAsApiKey);
+
+				return { testApiClient };
+			};
+
+			describe('when parentId is not a mongoId', () => {
+				it('returns bad request 400', async () => {
+					const { testApiClient } = setup();
+
+					await testApiClient.delete('/asas').expect(400);
+				});
+			});
+
+			describe('when parentId is a mongoId', () => {
+				it('returns no content 204', async () => {
+					const { testApiClient } = setup();
+					const parentId = '60f1b9b3b3b3b3b3b3b3b3b3';
+
+					await testApiClient.delete(parentId).expect(204);
+				});
+			});
 		});
 	});
 });
