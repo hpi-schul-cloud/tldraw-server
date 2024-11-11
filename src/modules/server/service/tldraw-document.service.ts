@@ -1,5 +1,5 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { TemplatedApp } from 'uws';
+import { TemplatedApp } from 'uWebSockets.js';
 import { RedisService } from '../../../infra/redis/index.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/index.js';
 import { computeRedisRoomStreamName } from '../../../infra/y-redis/helper.js';

@@ -1,6 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TemplatedApp } from 'uws';
+import { TemplatedApp } from 'uWebSockets.js';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
 import { Logger } from '../../../infra/logger/logger.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';

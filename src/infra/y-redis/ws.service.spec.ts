@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { encoding } from 'lib0';
-import * as uws from 'uws';
+import * as uws from 'uWebSockets.js';
 import { Awareness } from 'y-protocols/awareness.js';
 import * as Y from 'yjs';
 import { RedisService } from '../redis/redis.service.js';
