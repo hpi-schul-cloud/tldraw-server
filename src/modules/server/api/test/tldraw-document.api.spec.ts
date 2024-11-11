@@ -7,7 +7,6 @@ describe('Tldraw-Document Api Test', () => {
 	let app: INestApplication;
 	const baseRoute = 'tldraw-document';
 	const xApiKey = 'randomString';
-	process.env.ADMIN_API__ALLOWED_API_KEYS = xApiKey;
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
