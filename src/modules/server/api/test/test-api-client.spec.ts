@@ -32,23 +32,23 @@ class TestXApiKeyController {
 }
 
 describe(TestApiClient.name, () => {
-	describe('when test request instance exists - x-api-key auth', () => {
-		let app: INestApplication;
-		const baseRoute = '';
+	let app: INestApplication;
+	const baseRoute = '';
 
-		beforeAll(async () => {
-			const moduleFixture = await Test.createTestingModule({
-				controllers: [TestXApiKeyController],
-			}).compile();
+	beforeAll(async () => {
+		const moduleFixture = await Test.createTestingModule({
+			controllers: [TestXApiKeyController],
+		}).compile();
 
-			app = moduleFixture.createNestApplication();
-			await app.init();
-		});
+		app = moduleFixture.createNestApplication();
+		await app.init();
+	});
 
-		afterAll(async () => {
-			await app.close();
-		});
+	afterAll(async () => {
+		await app.close();
+	});
 
+	describe('when apiKey is defined', () => {
 		const setup = () => {
 			const id = '60f1b9b3b3b3b3b3b3b3b3b3';
 			const useAsApiKey = true;
@@ -121,6 +121,28 @@ describe(TestApiClient.name, () => {
 
 				expect(result.statusCode).toEqual(HttpStatus.CREATED);
 				expect(result.body).toEqual(expect.objectContaining({ method: 'post' }));
+			});
+		});
+	});
+
+	describe('when apiKey is undefined', () => {
+		const setup = () => {
+			const id = '60f1b9b3b3b3b3b3b3b3b3b3';
+			const useAsApiKey = true;
+			const invalidApiKey = undefined;
+			const testApiClient = new TestApiClient(app, baseRoute, invalidApiKey, useAsApiKey);
+
+			return { testApiClient, id };
+		};
+
+		describe('get', () => {
+			it('should resolve requests', async () => {
+				const { testApiClient, id } = setup();
+
+				const result = await testApiClient.get(id);
+
+				expect(result.statusCode).toEqual(HttpStatus.OK);
+				expect(result.body).toEqual(expect.objectContaining({ authorization: '', method: 'get' }));
 			});
 		});
 	});

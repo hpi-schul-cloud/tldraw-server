@@ -1056,7 +1056,7 @@ describe('ws service', () => {
 			};
 
 			it('should not call addMessage', () => {
-				const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+				const { app, ws, client, subscriber, code, message, redisMessageSubscriber } = setup();
 
 				closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
 
