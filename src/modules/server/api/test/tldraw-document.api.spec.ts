@@ -6,7 +6,6 @@ import { TestApiClient } from './test-api-client.js';
 
 describe('Tldraw-Document Api Test', () => {
 	let app: INestApplication;
-	let testApiClient: TestApiClient;
 	const baseRoute = 'tldraw-document';
 
 	beforeAll(async () => {
@@ -28,7 +27,7 @@ describe('Tldraw-Document Api Test', () => {
 				const parentId = '60f1b9b3b3b3b3b3b3b3b3b3';
 				const useAsApiKey = true;
 				const invalidApiKey = 'invalid';
-				testApiClient = new TestApiClient(app, baseRoute, invalidApiKey, useAsApiKey);
+				const testApiClient = new TestApiClient(app, baseRoute, invalidApiKey, useAsApiKey);
 
 				return { testApiClient, parentId };
 			};
@@ -45,7 +44,7 @@ describe('Tldraw-Document Api Test', () => {
 				const useAsApiKey = true;
 				const validApiKey: XApiKeyConfig['ADMIN_API__ALLOWED_API_KEYS'][0] = 'randomString';
 
-				testApiClient = new TestApiClient(app, baseRoute, validApiKey, useAsApiKey);
+				const testApiClient = new TestApiClient(app, baseRoute, validApiKey, useAsApiKey);
 
 				return { testApiClient };
 			};
