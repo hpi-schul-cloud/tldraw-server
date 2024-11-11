@@ -10,7 +10,7 @@ import * as array from 'lib0/array';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import * as promise from 'lib0/promise';
-import * as uws from 'uws';
+import * as uws from 'uWebSockets.js';
 import * as Y from 'yjs';
 import { ResponsePayload } from '../authorization/interfaces/response.payload.js';
 import { RedisService } from '../redis/redis.service.js';

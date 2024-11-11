@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { App } from 'uws';
+import { App } from 'uWebSockets.js';
 import { AuthGuardModule } from '../../infra/auth-guard/auth-guard.module.js';
 import { AuthorizationModule } from '../../infra/authorization/authorization.module.js';
 import { ConfigurationModule } from '../../infra/configuration/configuration.module.js';
