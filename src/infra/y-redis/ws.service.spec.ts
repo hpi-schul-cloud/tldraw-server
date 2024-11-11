@@ -116,34 +116,53 @@ describe('ws service', () => {
 		});
 
 		describe('when checkAuth resolves ', () => {
-			it('should upgrade the connection', async () => {
-				const res = createMock<uws.HttpResponse>();
-				const req = createMock<uws.HttpRequest>();
-				const context = createMock<uws.us_socket_context_t>();
-				const checkAuth = jest.fn().mockResolvedValue({ hasWriteAccess: true, room: 'room', userid: 'userid' });
+			describe('when connection is not aborted', () => {
+				it('should upgrade the connection', async () => {
+					const res = createMock<uws.HttpResponse>();
+					const req = createMock<uws.HttpRequest>();
+					const context = createMock<uws.us_socket_context_t>();
+					const checkAuth = jest.fn().mockResolvedValue({ hasWriteAccess: true, room: 'room', userid: 'userid' });
 
-				await upgradeCallback(res, req, context, checkAuth);
+					await upgradeCallback(res, req, context, checkAuth);
 
-				expect(res.cork).toHaveBeenCalledTimes(1);
-				expect(res.cork).toHaveBeenCalledWith(expect.any(Function));
-				res.cork.mock.calls[0][0]();
-				expect(res.upgrade).toHaveBeenCalledWith(
-					expect.objectContaining({
-						awarenessId: null,
-						awarenessLastClock: 0,
-						error: null,
-						hasWriteAccess: true,
-						id: 0,
-						initialRedisSubId: '0',
-						isClosed: false,
-						room: 'room',
-						userid: 'userid',
-					}),
-					req.getHeader('sec-websocket-key'),
-					req.getHeader('sec-websocket-protocol'),
-					req.getHeader('sec-websocket-extensions'),
-					context,
-				);
+					expect(res.cork).toHaveBeenCalledTimes(1);
+					expect(res.cork).toHaveBeenCalledWith(expect.any(Function));
+					res.cork.mock.calls[0][0]();
+					expect(res.upgrade).toHaveBeenCalledWith(
+						expect.objectContaining({
+							awarenessId: null,
+							awarenessLastClock: 0,
+							error: null,
+							hasWriteAccess: true,
+							id: 0,
+							initialRedisSubId: '0',
+							isClosed: false,
+							room: 'room',
+							userid: 'userid',
+						}),
+						req.getHeader('sec-websocket-key'),
+						req.getHeader('sec-websocket-protocol'),
+						req.getHeader('sec-websocket-extensions'),
+						context,
+					);
+				});
+			});
+
+			describe('when connection is aborted', () => {
+				it('should not upgrade the connection', async () => {
+					const res = createMock<uws.HttpResponse>();
+					const req = createMock<uws.HttpRequest>();
+					const context = createMock<uws.us_socket_context_t>();
+					const checkAuth = jest.fn().mockImplementationOnce(async () => {
+						res.onAborted.mock.calls[0][0]();
+
+						return await Promise.resolve({ hasWriteAccess: true, room: 'room', userid: 'userid' });
+					});
+
+					await upgradeCallback(res, req, context, checkAuth);
+
+					expect(res.cork).not.toHaveBeenCalled();
+				});
 			});
 		});
 	});
@@ -1007,6 +1026,49 @@ describe('ws service', () => {
 						expect(client.addMessage).not.toHaveBeenCalled();
 					});
 				});
+			});
+		});
+
+		describe('when user has no room', () => {
+			const setup = () => {
+				const { ws, client, app, subscriber } = buildParams();
+				app.numSubscribers.mockReturnValue(0);
+
+				const user = createMock<User>({
+					room: null,
+					awarenessId: 22,
+					awarenessLastClock: 1,
+					subs: new Set(['topic1', 'topic2']),
+				});
+				ws.getUserData.mockReturnValueOnce(user);
+				const code = 0;
+				const message = buildUpdate({
+					messageType: protocol.messageAwareness,
+					length: 0,
+					numberOfUpdates: 1,
+					awarenessId: 75,
+					lastClock: 76,
+				});
+				const redisMessageSubscriber = jest.fn();
+				const closeWsCallback = jest.fn();
+
+				return { ws, client, app, code, subscriber, message, redisMessageSubscriber, user, closeWsCallback };
+			};
+
+			it('should not call addMessage', () => {
+				const { app, ws, client, subscriber, code, message, redisMessageSubscriber, user } = setup();
+
+				closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber);
+
+				expect(client.addMessage).not.toHaveBeenCalled();
+			});
+
+			it('should not call closeWsCallback', () => {
+				const { app, ws, client, subscriber, code, message, redisMessageSubscriber, closeWsCallback } = setup();
+
+				closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber, closeWsCallback);
+
+				expect(closeWsCallback).not.toHaveBeenCalled();
 			});
 		});
 	});
