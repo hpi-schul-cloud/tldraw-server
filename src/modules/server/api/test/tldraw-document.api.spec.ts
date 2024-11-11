@@ -1,12 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { XApiKeyConfig } from 'infra/auth-guard/x-api-key.config.js';
 import { ServerModule } from '../../server.module.js';
 import { TestApiClient } from './test-api-client.js';
 
 describe('Tldraw-Document Api Test', () => {
 	let app: INestApplication;
 	const baseRoute = 'tldraw-document';
+	const xApiKey = 'randomString';
+	process.env.ADMIN_API__ALLOWED_API_KEYS = xApiKey;
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -42,8 +43,7 @@ describe('Tldraw-Document Api Test', () => {
 		describe('when apiKey is valid', () => {
 			const setup = () => {
 				const useAsApiKey = true;
-				const validApiKey: XApiKeyConfig['ADMIN_API__ALLOWED_API_KEYS'][0] = 'randomString';
-				const testApiClient = new TestApiClient(app, baseRoute, validApiKey, useAsApiKey);
+				const testApiClient = new TestApiClient(app, baseRoute, xApiKey, useAsApiKey);
 
 				return { testApiClient };
 			};
