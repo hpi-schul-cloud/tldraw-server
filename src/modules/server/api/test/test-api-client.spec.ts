@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Headers, HttpStatus, INestApplication, Post } from '@nestjs/common';
+import { Controller, Delete, Get, Headers, HttpStatus, INestApplication, Patch, Post, Put } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { XApiKeyConfig } from 'infra/auth-guard/x-api-key.config.js';
 import { TestApiClient } from './test-api-client.js';
@@ -18,6 +18,16 @@ class TestXApiKeyController {
 	@Get(':id')
 	public get(@Headers('X-API-KEY') authorization: string) {
 		return Promise.resolve({ method: 'get', authorization });
+	}
+
+	@Put()
+	public put(@Headers('X-API-KEY') authorization: string) {
+		return Promise.resolve({ method: 'put', authorization });
+	}
+
+	@Patch(':id')
+	public patch(@Headers('X-API-KEY') authorization: string) {
+		return Promise.resolve({ method: 'patch', authorization });
 	}
 }
 
@@ -59,6 +69,39 @@ describe(TestApiClient.name, () => {
 			});
 		});
 
+		describe('delete', () => {
+			it('should resolve requests', async () => {
+				const { testApiClient, id } = setup();
+
+				const result = await testApiClient.delete(id);
+
+				expect(result.statusCode).toEqual(HttpStatus.OK);
+				expect(result.body).toEqual(expect.objectContaining({ method: 'delete' }));
+			});
+		});
+
+		describe('put', () => {
+			it('should resolve requests', async () => {
+				const { testApiClient } = setup();
+
+				const result = await testApiClient.put();
+
+				expect(result.statusCode).toEqual(HttpStatus.OK);
+				expect(result.body).toEqual(expect.objectContaining({ method: 'put' }));
+			});
+		});
+
+		describe('patch', () => {
+			it('should resolve requests', async () => {
+				const { testApiClient, id } = setup();
+
+				const result = await testApiClient.patch(id);
+
+				expect(result.statusCode).toEqual(HttpStatus.OK);
+				expect(result.body).toEqual(expect.objectContaining({ method: 'patch' }));
+			});
+		});
+
 		describe('post', () => {
 			it('should resolve requests', async () => {
 				const { testApiClient } = setup();
@@ -70,14 +113,14 @@ describe(TestApiClient.name, () => {
 			});
 		});
 
-		describe('delete', () => {
+		describe('postWithAttachment', () => {
 			it('should resolve requests', async () => {
-				const { testApiClient, id } = setup();
+				const { testApiClient } = setup();
 
-				const result = await testApiClient.delete(id);
+				const result = await testApiClient.postWithAttachment('', 'file', Buffer.from('some test data'), 'file.txt');
 
-				expect(result.statusCode).toEqual(HttpStatus.OK);
-				expect(result.body).toEqual(expect.objectContaining({ method: 'delete' }));
+				expect(result.statusCode).toEqual(HttpStatus.CREATED);
+				expect(result.body).toEqual(expect.objectContaining({ method: 'post' }));
 			});
 		});
 	});
