@@ -43,7 +43,6 @@ describe('Tldraw-Document Api Test', () => {
 			const setup = () => {
 				const useAsApiKey = true;
 				const validApiKey: XApiKeyConfig['ADMIN_API__ALLOWED_API_KEYS'][0] = 'randomString';
-
 				const testApiClient = new TestApiClient(app, baseRoute, validApiKey, useAsApiKey);
 
 				return { testApiClient };
