@@ -18,6 +18,6 @@ module.exports = {
 	collectCoverageFrom: ['**/*.(t|j)s'],
 	coverageDirectory: '../coverage',
 	testEnvironment: 'node',
-	globalSetup: '<rootDir>/testing/globalSetup.ts',
-	globalTeardown: '<rootDir>/testing/globalTeardown.ts',
+	globalSetup: '<rootDir>/../scripts/testing/globalSetup.ts',
+	globalTeardown: '<rootDir>/../scripts/testing/globalTeardown.ts',
 };
