@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { ServerTestModule } from '../../server.test.module.js';
+import { ServerModule } from '../../server.module.js';
 import { TestApiClient } from './test-api-client.js';
 
 describe('Tldraw-Config Api Test', () => {
@@ -9,7 +9,7 @@ describe('Tldraw-Config Api Test', () => {
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
-			imports: [ServerTestModule],
+			imports: [ServerModule],
 		}).compile();
 
 		app = moduleFixture.createNestApplication();
