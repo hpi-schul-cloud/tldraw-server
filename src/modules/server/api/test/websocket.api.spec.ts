@@ -30,7 +30,6 @@ describe('Websocket Api Test', () => {
 
 		const redisService = await app.resolve(RedisService);
 		redisAdapter = await redisService.createRedisInstance();
-
 		authorizationService = await app.resolve(AuthorizationService);
 	});
 
@@ -52,61 +51,152 @@ describe('Websocket Api Test', () => {
 		return { ydoc, provider };
 	};
 
-	const waitUntilDocsEqual = (ydoc1: Doc, ydoc2: Doc): Promise<void> => {
-		console.info('waiting for docs to sync...');
-
-		return promise.until(0, () => {
+	const waitUntilDocsEqual = (ydoc1: Doc, ydoc2: Doc): Promise<void> =>
+		promise.until(0, () => {
 			const e1 = encodeStateAsUpdateV2(ydoc1);
 			const e2 = encodeStateAsUpdateV2(ydoc2);
 			const isSynced = array.equalFlat(e1, e2);
-			isSynced && console.info('docs sycned!');
 
 			return isSynced;
 		});
-	};
 
-	describe('when two clients connect to the same doc', () => {
-		const setup = () => {
-			authorizationService.hasPermission.mockResolvedValue({
-				hasWriteAccess: true,
-				room: 'testRoom',
-				userid: 'userId',
-				error: null,
+	const waitUntilDocValueMatches = (ydoc: Doc, key: string, value: number): Promise<void> =>
+		promise.until(0, () => {
+			const result = ydoc.getMap().get(key);
+			const isMatch = result === value;
+
+			return isMatch;
+		});
+
+	describe('when clients are authenticated', () => {
+		describe('when clients have permission for room', () => {
+			describe('when two clients connect to the same doc before any changes', () => {
+				const setup = () => {
+					const randomString = Math.random().toString(36).substring(7);
+					const room = randomString;
+
+					authorizationService.hasPermission.mockResolvedValueOnce({
+						hasWriteAccess: true,
+						room,
+						userid: 'userId1',
+						error: null,
+					});
+					authorizationService.hasPermission.mockResolvedValueOnce({
+						hasWriteAccess: true,
+						room,
+						userid: 'userId2',
+						error: null,
+					});
+
+					const { ydoc: client1Doc, provider } = createWsClient(room);
+					const { ydoc: client2Doc } = createWsClient(room);
+
+					return { client1Doc, client2Doc, provider };
+				};
+
+				it('syncs doc changes of first client to second client', async () => {
+					const { client1Doc, client2Doc, provider } = setup();
+
+					client1Doc.getMap().set('a', 1);
+					if (provider.ws) {
+						provider.ws.onclose = () => {
+							console.log('closed');
+						};
+					}
+
+					await waitUntilDocsEqual(client1Doc, client2Doc);
+
+					const result = client2Doc.getMap().get('a');
+					expect(result).toBe(1);
+				});
+
+				it('syncs subsequent doc changes of second client to first client', async () => {
+					const { client1Doc, client2Doc } = setup();
+
+					client1Doc.getMap().set('a', 1);
+					await waitUntilDocsEqual(client1Doc, client2Doc);
+
+					client2Doc.getMap().set('a', 2);
+					await waitUntilDocsEqual(client1Doc, client2Doc);
+
+					const result = client1Doc.getMap().get('a');
+					expect(result).toBe(2);
+				});
+
+				it('syncs nearly parallel doc changes of second client to first client', async () => {
+					// This test is instable
+					const { client1Doc, client2Doc } = setup();
+
+					client1Doc.getMap().set('a', 1);
+					client2Doc.getMap().set('a', 2);
+
+					await waitUntilDocValueMatches(client1Doc, 'a', 2);
+
+					const result = client1Doc.getMap().get('a');
+					expect(result).toBe(2);
+				});
 			});
-		};
 
-		it('syncs docs between clients', async () => {
-			setup();
-			const { ydoc: doc1 } = createWsClient('testRoom');
-			doc1.getMap().set('a', 1);
+			describe('when two clients connect to the same doc one before and one after the changes', () => {
+				const setup = () => {
+					const randomString = Math.random().toString(36).substring(7);
+					const room = randomString;
 
-			const { ydoc: doc2 } = createWsClient('testRoom');
+					authorizationService.hasPermission.mockResolvedValue({
+						hasWriteAccess: true,
+						room: randomString,
+						userid: 'userId',
+						error: null,
+					});
 
-			await waitUntilDocsEqual(doc1, doc2);
+					const { ydoc: client1Doc } = createWsClient(room);
 
-			const result = doc2.getMap().get('a');
+					return { client1Doc, room };
+				};
 
-			expect(result).toBe(1);
-		});
+				it('syncs doc changes of first client to second client', async () => {
+					const { client1Doc, room } = setup();
 
-		it('syncs docs between clients when seconde client overwrites first', async () => {
-			const { ydoc: doc1 } = createWsClient('testRoom');
-			doc1.getMap().set('a', 1);
+					client1Doc.getMap().set('a', 1);
 
-			const { ydoc: doc2 } = createWsClient('testRoom');
+					const { ydoc: client2Doc } = createWsClient(room);
+					await waitUntilDocsEqual(client1Doc, client2Doc);
 
-			await waitUntilDocsEqual(doc1, doc2);
+					const result = client2Doc.getMap().get('a');
+					expect(result).toBe(1);
+				});
 
-			doc2.getMap().set('a', 2);
+				it('syncs subsequent doc changes of second client to first client', async () => {
+					const { client1Doc, room } = setup();
 
-			await waitUntilDocsEqual(doc1, doc2);
+					client1Doc.getMap().set('a', 1);
 
-			const result = doc1.getMap().get('a');
+					const { ydoc: client2Doc } = createWsClient(room);
+					await waitUntilDocsEqual(client1Doc, client2Doc);
 
-			expect(result).toBe(2);
-		});
+					client2Doc.getMap().set('a', 2);
+					await waitUntilDocsEqual(client1Doc, client2Doc);
 
-		/* describe('when doc is only pesisted in storage and not in redis', () => {
+					const result = client1Doc.getMap().get('a');
+					expect(result).toBe(2);
+				});
+
+				it('syncs nearly parallel doc changes of second client to first client', async () => {
+					const { client1Doc, room } = setup();
+
+					client1Doc.getMap().set('a', 1);
+
+					const { ydoc: client2Doc } = createWsClient(room);
+					client2Doc.getMap().set('a', 2);
+
+					await waitUntilDocValueMatches(client1Doc, 'a', 2);
+
+					const result = client1Doc.getMap().get('a');
+					expect(result).toBe(2);
+				});
+			});
+
+			/* describe('when doc is only pesisted in storage and not in redis', () => {
 			it('syncs docs between clients', async () => {
 				const room = 'testRoom';
 				const { ydoc: doc1 } = createWsClient(room);
@@ -125,5 +215,44 @@ describe('Websocket Api Test', () => {
 				expect(result).toBe(1);
 			});
 		}); */
+		});
+
+		describe('when client has no permission for room', () => {
+			describe('when client connects and updates', () => {
+				const setup = () => {
+					const randomString = Math.random().toString(36).substring(7);
+					const room = randomString;
+
+					authorizationService.hasPermission.mockRejectedValue(new Error('No permission'));
+
+					const { ydoc: client1Doc, provider } = createWsClient(room);
+
+					return { client1Doc, provider };
+				};
+
+				it('syncs doc changes of first client to second client', async () => {
+					const { client1Doc, provider } = setup();
+
+					client1Doc.getMap().set('a', 1);
+
+					let error: ErrorEvent;
+					if (provider.ws) {
+						provider.ws.onerror = (event: Event) => {
+							error = event as ErrorEvent;
+							console.log('message ++++', event);
+						};
+					}
+
+					await promise.until(0, () => {
+						return error as unknown as boolean;
+					});
+
+					// @ts-ignore
+					expect(error.message).toBe('Unexpected server response: 500');
+				});
+			});
+		});
 	});
+
+	describe('when clients are unauthenticated', () => {});
 });
