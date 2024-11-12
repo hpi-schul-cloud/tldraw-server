@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { TestApiClient } from '../../../modules/server/api/test/test-api-client.js';
+import { TestApiClient } from '../../testing/test-api-client.js';
 import { MetricsModule } from '../metrics.module.js';
 
 describe('Tldraw-Document Api Test', () => {

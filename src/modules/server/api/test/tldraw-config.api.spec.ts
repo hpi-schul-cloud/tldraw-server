@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { TestApiClient } from '../../../../infra/testing/test-api-client.js';
 import { ServerModule } from '../../server.module.js';
-import { TestApiClient } from './test-api-client.js';
 
 describe('Tldraw-Config Api Test', () => {
 	let app: INestApplication;

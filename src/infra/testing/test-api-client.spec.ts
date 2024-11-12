@@ -1,6 +1,6 @@
 import { Controller, Delete, Get, Headers, HttpStatus, INestApplication, Patch, Post, Put } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { XApiKeyConfig } from 'infra/auth-guard/x-api-key.config.js';
+import { XApiKeyConfig } from '../auth-guard/x-api-key.config.js';
 import { TestApiClient } from './test-api-client.js';
 
 @Controller('')
