@@ -3,6 +3,12 @@ kind: Deployment
 metadata:
   name: tldraw-worker-deployment
   namespace: {{ NAMESPACE }}
+{% if ANNOTATIONS is defined and ANNOTATIONS|bool %}
+  annotations:
+{% if RELOADER is defined and RELOADER|bool %}
+    reloader.stakater.com/auto: "true"
+{% endif %}
+{% endif %}
   labels:
     app: tldraw-server-worker
     app.kubernetes.io/part-of: schulcloud-verbund
@@ -42,19 +48,9 @@ spec:
         fsGroup: 1000
         runAsNonRoot: true
       containers:
-      - name: tldraw
+      - name: tldraw-worker
         image: {{ TLDRAW_SERVER_IMAGE }}:{{ TLDRAW_SERVER_IMAGE_TAG }}
         imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 3345
-          name: tldraw-ws
-          protocol: TCP
-        - containerPort: 3349
-          name: tldraw-http
-          protocol: TCP
-        - containerPort: 9090
-          name: api-metrics
-          protocol: TCP
         envFrom:
         - configMapRef:
             name: tldraw-server-configmap
@@ -62,7 +58,7 @@ spec:
             name: tldraw-server-secret
         - secretRef:
             name: tldraw-valkey-password
-        command: ['npm', 'run', 'start:y-redis-worker']
+        command: ['npm', 'run', 'start:worker:prod']
         resources:
           limits:
             cpu: {{ TLDRAW_SERVER_WORKER_CPU_LIMITS|default("2000m", true) }}

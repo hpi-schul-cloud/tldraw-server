@@ -3,6 +3,12 @@ kind: Deployment
 metadata:
   name: tldraw-server-deployment
   namespace: {{ NAMESPACE }}
+{% if ANNOTATIONS is defined and ANNOTATIONS|bool %}
+  annotations:
+{% if RELOADER is defined and RELOADER|bool %}
+    reloader.stakater.com/auto: "true"
+{% endif %}
+{% endif %}
   labels:
     app: tldraw-server
     app.kubernetes.io/part-of: schulcloud-verbund
@@ -48,6 +54,9 @@ spec:
         ports:
         - containerPort: 3345
           name: tldraw-ws
+          protocol: TCP
+        - containerPort: 3349
+          name: tldraw-http
           protocol: TCP
         - containerPort: 9090
           name: metrics
