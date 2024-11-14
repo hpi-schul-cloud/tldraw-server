@@ -9,6 +9,7 @@
 	"scripts": {
 		"dev:server": "nodemon --env-file=.env src/server.js",
 		"dev:worker": "nodemon --env-file=.env src/worker.js",
+		"start:worker:prod": "nodemon --env-file=.env src/worker.js",
 		"start:y-redis-server": "node --env-file=.env src/server.js",
 		"start:y-redis-worker": "node --env-file=.env src/worker.js",
 		"test": "echo \"Error: no test specified\" && exit 1"

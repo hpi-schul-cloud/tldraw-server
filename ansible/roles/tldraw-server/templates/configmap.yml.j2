@@ -10,6 +10,7 @@ data:
   WS_PATH_PREFIX: "/tldraw-server"
   WS_PORT: "3345"
   FEATURE_PROMETHEUS_METRICS_ENABLED: "true"
+  REDIS: "redis://localhost:6379"
   REDIS_CLUSTER_ENABLED: "true"
   REDIS_SENTINEL_SERVICE_NAME: "valkey-headless.{{ NAMESPACE }}.svc.cluster.local"
   TLDRAW__WEBSOCKET_URL: "wss://{{ DOMAIN }}/tldraw-server"
