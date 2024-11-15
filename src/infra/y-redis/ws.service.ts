@@ -141,7 +141,11 @@ export const openCallback = async (
 		const stream = computeRedisRoomStreamName(user.room, 'index', client.redisPrefix);
 		user.subs.add(stream);
 		ws.subscribe(stream);
-		user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId;
+		const { id, otherId } = subscriber.subscribe(stream, redisMessageSubscriber);
+
+		user.initialRedisSubId = id;
+
+		console.log('new subscriber otherId', otherId);
 		const indexDoc = await client.getDoc(user.room, 'index');
 		if (indexDoc.ydoc.store.clients.size === 0) {
 			if (initDocCallback) {
@@ -163,10 +167,21 @@ export const openCallback = async (
 
 		// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
 		indexDoc.awareness.destroy();
-
+		console.log(
+			'redisLastId vs. userInitialRedisId and otherId',
+			indexDoc.redisLastId,
+			user.initialRedisSubId,
+			otherId,
+		);
 		if (isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)) {
 			// our subscription is newer than the content that we received from the api
 			// need to renew subscription id and make sure that we catch the latest content.
+			console.log(
+				'renew subscription redisLastId vs. userInitialRedisId and otherId',
+				indexDoc.redisLastId,
+				user.initialRedisSubId,
+				otherId,
+			);
 			subscriber.ensureSubId(stream, indexDoc.redisLastId);
 		}
 	} catch (error) {

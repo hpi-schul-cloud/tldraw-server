@@ -408,7 +408,8 @@ describe('ws service', () => {
 							storeReferences: [],
 							docChanged: true,
 						});
-						subscriber.subscribe.mockReturnValueOnce({ redisId: '1-2' });
+						// @ts-ignore
+						subscriber.subscribe.mockReturnValueOnce({ id: '1-2', otherId: 'otherId' });
 						const redisStream = computeRedisRoomStreamName(user.room ?? '', 'index', client.redisPrefix);
 
 						await openCallback(ws, subscriber, client, redisMessageSubscriber);
@@ -429,7 +430,8 @@ describe('ws service', () => {
 							storeReferences: [],
 							docChanged: true,
 						});
-						subscriber.subscribe.mockReturnValueOnce({ redisId: '1-2' });
+						// @ts-ignore
+						subscriber.subscribe.mockReturnValueOnce({ id: '1-2', otherId: 'otherId' });
 
 						await openCallback(ws, subscriber, client, redisMessageSubscriber);
 

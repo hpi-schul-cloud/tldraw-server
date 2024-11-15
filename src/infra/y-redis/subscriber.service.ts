@@ -5,9 +5,13 @@
 	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
 	https://github.com/yjs/y-redis
 */
+import { randomUUID } from 'crypto';
+import * as encoding from 'lib0/encoding';
+import * as map from 'lib0/map';
 import { RedisService } from '../redis/redis.service.js';
 import { Api, createApiClient } from './api.service.js';
 import { isSmallerRedisId } from './helper.js';
+import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
 export const running = true;
@@ -17,12 +21,14 @@ export const run = async (subscriber: Subscriber): Promise<void> => {
 		await subscriber.run();
 	}
 };
+const isAwarenessUpdate = (message: Buffer): boolean => message[0] === protocol.messageAwareness;
 
 type SubscriptionHandler = (stream: string, message: Uint8Array[]) => void;
 interface Subscriptions {
 	fs: Set<SubscriptionHandler>;
 	id: string;
 	nextId?: string | null;
+	otherId?: string;
 }
 export const createSubscriber = async (
 	store: DocumentStorage,
@@ -49,17 +55,16 @@ export class Subscriber {
 		}
 	}
 
-	public subscribe(stream: string, f: SubscriptionHandler): { redisId: string } {
-		const sub = this.subscribers.get(stream) ?? { fs: new Set<SubscriptionHandler>(), id: '0', nextId: null };
+	public subscribe(stream: string, f: SubscriptionHandler): Subscriptions {
+		const sub = map.setIfUndefined(this.subscribers, stream, () => ({
+			fs: new Set(),
+			id: '0',
+			nextId: null,
+			otherId: randomUUID(),
+		}));
 		sub.fs.add(f);
 
-		if (!this.subscribers.has(stream)) {
-			this.subscribers.set(stream, sub);
-		}
-
-		return {
-			redisId: sub.id,
-		};
+		return sub;
 	}
 
 	public unsubscribe(stream: string, f: SubscriptionHandler): void {
@@ -83,7 +88,23 @@ export class Subscriber {
 
 		for (const message of messages) {
 			const sub = this.subscribers.get(message.stream);
-			if (sub == null) continue;
+			if (sub == null) {
+				console.log('Subscriber not found for stream', message.stream);
+				continue;
+			}
+			const message0 =
+				message.messages.length === 1
+					? message.messages[0]
+					: encoding.encode((encoder) =>
+							message.messages.forEach((message) => {
+								encoding.writeUint8Array(encoder, message);
+							}),
+						);
+			const message1 = Buffer.from(message0.slice(0, message0.byteLength));
+
+			if (!isAwarenessUpdate(message1)) {
+				console.log('id', sub.id, 'message.lastId', message.lastId, 'nextId', sub.nextId, 'otherId', sub.otherId);
+			}
 			sub.id = message.lastId;
 			if (sub.nextId != null) {
 				sub.id = sub.nextId;

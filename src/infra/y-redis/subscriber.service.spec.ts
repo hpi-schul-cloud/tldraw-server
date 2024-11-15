@@ -90,7 +90,7 @@ describe('SubscriberService', () => {
 				const id = '1';
 				const stream = 'test';
 
-				subscriber.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null });
+				subscriber.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null, otherId: '1' });
 
 				subscriber.ensureSubId(stream, id);
 
@@ -102,7 +102,7 @@ describe('SubscriberService', () => {
 				const id = '3';
 				const stream = 'test';
 
-				subscriber.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null });
+				subscriber.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null, otherId: '1' });
 
 				subscriber.ensureSubId(stream, id);
 

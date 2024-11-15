@@ -1,11 +1,17 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Client } from 'minio';
-import { randomUUID } from 'crypto';
+import { hash, randomUUID } from 'node:crypto';
 import { Stream } from 'stream';
 import * as Y from 'yjs';
 import { Logger } from '../logger/index.js';
 import { DocumentStorage } from '../y-redis/storage.js';
 import { StorageConfig } from './storage.config.js';
+
+const getDocHash = (doc: Uint8Array): string => {
+	const hashId = hash('md5', doc, 'hex');
+
+	return hashId;
+};
 
 export const encodeS3ObjectName = (room: string, docid: string, r = ''): string =>
 	`${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
@@ -38,7 +44,13 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 
 	public async persistDoc(room: string, docname: string, ydoc: Y.Doc): Promise<void> {
 		const objectName = encodeS3ObjectName(room, docname, randomUUID());
-		await this.client.putObject(this.config.S3_BUCKET, objectName, Buffer.from(Y.encodeStateAsUpdateV2(ydoc)));
+
+		const updates = Y.encodeStateAsUpdateV2(ydoc);
+
+		const hashId = getDocHash(updates);
+		this.logger.log('hashId by persist ' + hashId);
+
+		await this.client.putObject(this.config.S3_BUCKET, objectName, Buffer.from(updates));
 	}
 
 	public async retrieveDoc(room: string, docname: string): Promise<{ doc: Uint8Array; references: string[] } | null> {
@@ -69,7 +81,13 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 		updates = updates.filter((update) => update != null);
 		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' updatesLen=' + updates.length);
 
-		return { doc: Y.mergeUpdatesV2(updates), references };
+		const ydoc = Y.mergeUpdatesV2(updates);
+
+		const hashId = getDocHash(ydoc);
+
+		this.logger.log('hashId by retrieve ' + hashId);
+
+		return { doc: ydoc, references };
 	}
 
 	public async retrieveStateVector(room: string, docname: string): Promise<Uint8Array | null> {
