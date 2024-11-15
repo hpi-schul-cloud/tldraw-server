@@ -12,6 +12,19 @@ import { initStorage } from './storage.js';
 const apiHost = env.getConf('api-host') || 'http://localhost:3030';
 const wsPathPrefix = env.getConf('ws-path-prefix') || '';
 
+const getCookie = (request, cookieName) => {
+	const cookie = request.getHeader('cookie');
+	if (!cookie) {
+		return null;
+	}
+	const cookieValue = cookie.split(';').find((c) => c.trim().startsWith(`${cookieName}=`));
+	if (!cookieValue) {
+		return null;
+	}
+
+	return cookieValue.split('=')[1];
+};
+
 class YWebsocketServer {
 	/**
 	 * @param {uws.TemplatedApp} app
@@ -59,8 +72,9 @@ export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store })
 
 const checkAuthz = async (req) => {
 	const room = req.getParameter(0);
-	const headerWsProtocol = req.getHeader('sec-websocket-protocol');
-	const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('yauth')];
+	//const headerWsProtocol = req.getHeader('sec-websocket-protocol');
+	//const [, , token] = /(^|,)yauth-(((?!,).)*)/.exec(headerWsProtocol) ?? [null, null, req.getQuery('yauth')];
+	const token = getCookie(req, 'jwt');
 	if (token == null) {
 		throw new Error('Missing Token');
 	}
