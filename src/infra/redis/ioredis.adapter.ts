@@ -177,8 +177,8 @@ export class IoRedisAdapter implements RedisAdapter {
 		// This issue is not critical, as no data will be lost if this happens.
 		await this.redis
 			.multi()
-			.xtrim(task.stream, 'MINID', lastId - redisMinMessageLifetime)
-			.xadd(this.redisWorkerStreamName, '*', 'compact', task.stream)
+			.xtrim(task.stream, 'MINID', lastId - redisMinMessageLifetime) // trim current messages (https://redis.io/docs/latest/commands/xtrim/)
+			.xadd(this.redisWorkerStreamName, '*', 'compact', task.stream) // new worker entry with current date (https://redis.io/docs/latest/commands/xadd/)
 			.xreadgroup(
 				'GROUP',
 				this.redisWorkerGroupName,
