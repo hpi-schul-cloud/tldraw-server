@@ -41,18 +41,12 @@ class YWebsocketServer {
 export const createYWebsocketServer = async ({ redisPrefix = 'y', port, store }) => {
 	const app = uws.App({});
 
-	await registerYWebsocketServer(
-		app,
-		`${wsPathPrefix}/:room`,
-		store,
-		checkAuthz,
-		{
-			redisPrefix,
-			openWsCallback,
-			closeWsCallback,
-		},
-		redis,
-	);
+	await registerYWebsocketServer(app, `${wsPathPrefix}/:room`, store, checkAuthz, {
+		redisPrefix,
+		openWsCallback,
+		closeWsCallback,
+		ioRedisInstance: redis,
+	});
 
 	await promise.create((resolve, reject) => {
 		app.listen(port, (token) => {
