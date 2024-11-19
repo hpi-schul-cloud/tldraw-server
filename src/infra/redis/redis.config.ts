@@ -8,11 +8,11 @@ export class RedisConfig {
 	public REDIS_CLUSTER_ENABLED!: boolean;
 
 	@IsUrl({ protocols: ['redis'], require_tld: false })
-	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED === false)
+	@ValidateIf((o: RedisConfig) => !o.REDIS_CLUSTER_ENABLED)
 	public REDIS!: string;
 
 	@IsString()
-	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED === true)
+	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED)
 	public REDIS_SENTINEL_SERVICE_NAME!: string;
 
 	@IsString()
@@ -22,6 +22,6 @@ export class RedisConfig {
 	public REDIS_SENTINEL_NAME = 'mymaster';
 
 	@IsString()
-	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED === true)
+	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED)
 	public REDIS_SENTINEL_PASSWORD!: string;
 }

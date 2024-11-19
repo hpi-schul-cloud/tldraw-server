@@ -18,11 +18,6 @@ jobs:
     strategy:
       matrix:
         shard: [1]
-    services:
-      rabbitmq:
-        image: rabbitmq:3
-        ports:
-          - 5672:5672
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -32,6 +27,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
         run: npm ci --prefer-offline --no-audit
+      - name: Start UP MinIO
+        uses: infleet/minio-action@v0.0.1
+        with:
+          port: "9000"
+          version: "latest"
+          username: "miniouser"
+          password: "miniouser"
       - name: test:cov - test all with coverage
         timeout-minutes: 15
         run: export RUN_WITHOUT_JEST_COVERAGE='true' && export NODE_OPTIONS='--max_old_space_size=4096' && ./node_modules/.bin/jest --shard=${{ matrix.shard }}/${{ strategy.job-total }} --coverage --force-exit
