@@ -153,6 +153,10 @@ export const openCallback = async (
 			}
 		}
 		if (user.isClosed) return;
+		// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
+		indexDoc.awareness.destroy();
+		console.log('send initial state', indexDoc.ydoc);
+		console.log('send share', indexDoc.ydoc.share.entries());
 		ws.cork(() => {
 			ws.send(protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)), true, false);
 			ws.send(protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)), true, true);
@@ -165,8 +169,6 @@ export const openCallback = async (
 			}
 		});
 
-		// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
-		indexDoc.awareness.destroy();
 		console.log(
 			'redisLastId vs. userInitialRedisId and otherId',
 			indexDoc.redisLastId,
@@ -247,7 +249,11 @@ export const closeCallback = (
 ): void => {
 	try {
 		const user = ws.getUserData();
-		if (!user.room) return;
+		if (!user.room) {
+			console.log('User has no room', user);
+
+			return;
+		}
 
 		user.awarenessId &&
 			client.addMessage(
