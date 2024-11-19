@@ -8,7 +8,6 @@ import { WebsocketProvider } from 'y-websocket';
 import { Doc, encodeStateAsUpdateV2 } from 'yjs';
 import { ResponsePayloadBuilder } from '../../../../infra//authorization/response.builder.js';
 import { AuthorizationService } from '../../../../infra/authorization/authorization.service.js';
-import { RedisService } from '../../../../infra/redis/redis.service.js';
 import { ServerModule } from '../../server.module.js';
 
 describe('Websocket Api Test', () => {
@@ -27,7 +26,6 @@ describe('Websocket Api Test', () => {
 		app = moduleFixture.createNestApplication();
 		await app.init();
 
-		const redisService = await app.resolve(RedisService);
 		authorizationService = await app.resolve(AuthorizationService);
 	});
 
@@ -57,13 +55,13 @@ describe('Websocket Api Test', () => {
 			return isSynced;
 		});
 
-	const waitUntilDocValueMatches = (ydoc: Doc, key: string, value: number): Promise<void> =>
+	/* 	const waitUntilDocValueMatches = (ydoc: Doc, key: string, value: number): Promise<void> =>
 		promise.until(0, () => {
 			const result = ydoc.getMap().get(key);
 			const isMatch = result === value;
 
 			return isMatch;
-		});
+		}); */
 
 	describe('when clients have permission for room', () => {
 		describe('when two clients connect to the same doc before any changes', () => {
