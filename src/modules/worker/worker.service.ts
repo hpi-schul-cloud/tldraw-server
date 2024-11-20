@@ -87,8 +87,16 @@ export class WorkerService implements OnModuleInit {
 					this.logger.log(
 						'retrieved doc from store. redisLastId=' + redisLastId + ' storeRefs=' + JSON.stringify(storeReferences),
 					);
+
+					if (ydoc.store.pendingStructs !== null) {
+						this.logger.log('doc has pending structs, not persisting');
+
+						return;
+					}
+
 					const lastId = Math.max(parseInt(redisLastId.split('-')[0]), parseInt(task.id.split('-')[0]));
-					if (docChanged) {
+
+					if (docChanged && ydoc.store.pendingStructs === null) {
 						this.logger.log('persisting doc');
 						if (!deletedDocNames.includes(task.stream)) {
 							await this.storageService.persistDoc(room, docid, ydoc);

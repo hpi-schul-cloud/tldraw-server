@@ -149,6 +149,14 @@ export const openCallback = async (
 			}
 		}
 		if (user.isClosed) return;
+
+		if (indexDoc.ydoc.store.pendingStructs !== null) {
+			console.error(`ydoc in room ${user.room} has pending structs`);
+			ws.end(4406, 'ydoc not ready yet');
+
+			return;
+		}
+
 		ws.cork(() => {
 			ws.send(protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)), true, false);
 			ws.send(protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)), true, true);
