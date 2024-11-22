@@ -11,10 +11,10 @@ import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
 export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void => {
+	let awarenessCount = 0;
+	let messageCount = 0;
+	let syncCount = 0;
 	docMessages?.messages.forEach((m) => {
-		let awarenessCount = 0;
-		let messageCount = 0;
-		let syncCount = 0;
 		const decoder = decoding.createDecoder(m);
 		const messageType = decoding.readVarUint(decoder);
 		switch (messageType) {
@@ -34,8 +34,8 @@ export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Do
 				break;
 			}
 		}
-		console.log('awarenessCount', awarenessCount, 'messageCount', messageCount, 'syncCount', syncCount);
 	});
+	console.log('awarenessCount', awarenessCount, 'messageCount', messageCount, 'syncCount', syncCount);
 };
 
 export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
