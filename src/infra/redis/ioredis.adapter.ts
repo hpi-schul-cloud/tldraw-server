@@ -104,13 +104,12 @@ export class IoRedisAdapter implements RedisAdapter {
 		return streamReplyRes;
 	}
 
-	public async readMessagesFromStream(streamName: string): Promise<StreamMessagesReply> {
-		const count = process.env.COUNT ? parseInt(process.env.COUNT) : 1000;
+	public async readMessagesFromStream(streamName: string, count = 1000): Promise<StreamMessagesReply> {
 		const reads = await this.redis.xreadBuffer(
 			'COUNT',
 			count, // Adjust the count as needed
 			'BLOCK',
-			count, // Adjust the block time as needed
+			1000, // Adjust the block time as needed
 			'STREAMS',
 			streamName,
 			'0',

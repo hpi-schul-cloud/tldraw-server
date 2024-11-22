@@ -99,13 +99,14 @@ export class Api {
 		return this.store.retrieveStateVector(room, docid);
 	}
 
-	public async getDoc(room: string, docid: string): Promise<YRedisDoc> {
+	public async getDoc(room: string, docid: string, count = 1000): Promise<YRedisDoc> {
 		const end = MetricsService.methodDurationHistogram.startTimer();
 
+		let response: YRedisDoc;
 		let docChanged = false;
 
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
-		const streamReply = await this.redis.readMessagesFromStream(roomComputed);
+		const streamReply = await this.redis.readMessagesFromStream(roomComputed, count);
 
 		const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
 
@@ -130,13 +131,20 @@ export class Api {
 
 		end();
 
-		return {
+		response = {
 			ydoc,
 			awareness,
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
 		};
+
+		if (ydoc.store.pendingStructs !== null) {
+			console.log(`doc has pending structs ... retry with ${count + 1000} messages`);
+			response = await this.getDoc(room, docid, count + 1000);
+		}
+
+		return response;
 	}
 
 	public async destroy(): Promise<void> {
