@@ -152,9 +152,9 @@ export const openCallback = async (
 
 		if (indexDoc.ydoc.store.pendingStructs !== null) {
 			console.error(`ydoc in room ${user.room} has pending structs`);
-			ws.end(4406, 'ydoc not ready yet');
+			// ws.end(4406, 'ydoc not ready yet');
 
-			return;
+			// return;
 		}
 
 		ws.cork(() => {
