@@ -133,12 +133,14 @@ export class Api {
 		};
 
 		if (ydoc.store.pendingStructs !== null) {
-			console.log(`Document has pending structs ... retry with ${count + 1000} messages.`);
+			console.log('Document has pending structs.');
 			const streamLength = await this.redis.getEntriesLen(roomComputed);
 			if (streamLength < count) {
+				console.log('Pending structs can not be fixed with updates from stream. Deleting all messages from stream.');
 				await this.redis.deleteMessagesFromStream(roomComputed);
 				count = 0;
 			}
+			console.log(`Retry with ${count + 1000} messages.`);
 			response = await this.getDoc(room, docid, count + 1000);
 		}
 
