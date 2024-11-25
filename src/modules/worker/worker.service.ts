@@ -83,9 +83,16 @@ export class WorkerService implements OnModuleInit {
 					const indexDoc = await this.client.getDoc(room, docid);
 
 					if (!indexDoc) {
-						this.logger.warn('Could not get doc from client, deleting doc!');
-						this.redis.deleteDeleteDocEntry(docid);
-						this.storageService.deleteDocument(room, docid);
+						this.logger.warn('Could not get document from client. Deleting document!');
+
+						const deleteEntryId = deletedDocEntries
+							.find((entry) => entry.message.docName === task.stream)
+							?.id.toString();
+
+						if (deleteEntryId) {
+							this.redis.deleteDeleteDocEntry(deleteEntryId);
+							this.storageService.deleteDocument(room, docid);
+						}
 
 						return;
 					}
