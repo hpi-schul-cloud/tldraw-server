@@ -11,31 +11,24 @@ import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
 export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void => {
-	let awarenessCount = 0;
-	let messageCount = 0;
-	let syncCount = 0;
 	docMessages?.messages.forEach((m) => {
 		const decoder = decoding.createDecoder(m);
 		const messageType = decoding.readVarUint(decoder);
 		switch (messageType) {
 			case protocol.messageSync: {
-				messageCount++;
 				// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
 				const syncType = decoding.readVarUint(decoder);
 				if (syncType === protocol.messageSyncUpdate) {
-					syncCount++;
 					applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
 				}
 				break;
 			}
 			case protocol.messageAwareness: {
-				awarenessCount++;
 				applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
 				break;
 			}
 		}
 	});
-	console.log('awarenessCount', awarenessCount, 'messageCount', messageCount, 'syncCount', syncCount);
 };
 
 export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
