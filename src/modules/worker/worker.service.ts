@@ -80,24 +80,7 @@ export class WorkerService implements OnModuleInit {
 					// @todo, make sure that awareness by this.getDoc is eventually destroyed, or doesn't
 					// register a timeout anymore
 					this.logger.log('requesting doc from store');
-					const indexDoc = await this.client.getDoc(room, docid);
-
-					if (!indexDoc) {
-						this.logger.warn('Could not get document from client. Deleting document!');
-
-						const deleteEntryId = deletedDocEntries
-							.find((entry) => entry.message.docName === task.stream)
-							?.id.toString();
-
-						if (deleteEntryId) {
-							this.redis.deleteDeleteDocEntry(deleteEntryId);
-							this.storageService.deleteDocument(room, docid);
-						}
-
-						return;
-					}
-
-					const { ydoc, storeReferences, redisLastId, docChanged, awareness } = indexDoc;
+					const { ydoc, storeReferences, redisLastId, docChanged, awareness } = await this.client.getDoc(room, docid);
 
 					// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
 					awareness.destroy();

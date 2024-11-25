@@ -144,15 +144,12 @@ export const openCallback = async (
 		user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId;
 		const indexDoc = await client.getDoc(user.room, 'index');
 
-		if (!indexDoc) return;
-
 		if (indexDoc.ydoc.store.clients.size === 0) {
 			if (initDocCallback) {
 				initDocCallback(user.room, 'index', client);
 			}
 		}
 		if (user.isClosed) return;
-
 		ws.cork(() => {
 			ws.send(protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)), true, false);
 			ws.send(protocol.encodeSyncStep2(Y.encodeStateAsUpdate(indexDoc.ydoc)), true, true);
