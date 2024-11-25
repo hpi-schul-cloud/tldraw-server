@@ -92,14 +92,12 @@ export class Api {
 		return this.store.retrieveStateVector(room, docid);
 	}
 
-	public async getDoc(room: string, docid: string, count = 1000): Promise<YRedisDoc> {
+	public async getDoc(room: string, docid: string): Promise<YRedisDoc> {
 		const end = MetricsService.methodDurationHistogram.startTimer();
-
-		let response: YRedisDoc;
 		let docChanged = false;
 
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
-		const streamReply = await this.redis.readMessagesFromStream(roomComputed, count);
+		const streamReply = await this.redis.readMessagesFromStream(roomComputed);
 
 		const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
 
@@ -124,7 +122,7 @@ export class Api {
 
 		end();
 
-		response = {
+		const response = {
 			ydoc,
 			awareness,
 			redisLastId: docMessages?.lastId.toString() ?? '0',
@@ -134,14 +132,9 @@ export class Api {
 
 		if (ydoc.store.pendingStructs !== null) {
 			console.log('Document has pending structs.');
-			const streamLength = await this.redis.getEntriesLen(roomComputed);
-			if (streamLength < count) {
-				console.log('Pending structs can not be fixed with updates from stream. Deleting all messages from stream.');
-				await this.redis.deleteMessagesFromStream(roomComputed);
-				count = 0;
-			}
-			console.log(`Retry with ${count + 1000} messages.`);
-			response = await this.getDoc(room, docid, count + 1000);
+
+			//.log('Pending structs can not be fixed with updates from stream. Deleting all messages from stream.');
+			//await this.redis.deleteMessagesFromStream(roomComputed);
 		}
 
 		return response;
