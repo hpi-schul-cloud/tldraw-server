@@ -18,4 +18,5 @@ export interface RedisAdapter {
 	deleteDeleteDocEntry(id: string): Promise<number>;
 	tryClearTask(task: Task): Promise<number>;
 	tryDeduplicateTask(task: Task, lastId: number, redisMinMessageLifetime: number): Promise<void>;
+	deleteMessagesFromStream(room: string): Promise<number>;
 }

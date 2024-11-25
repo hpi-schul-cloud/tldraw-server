@@ -140,13 +140,12 @@ export class Api {
 		};
 
 		if (ydoc.store.pendingStructs !== null) {
-			if (docMessages && docMessages.messages.length < count) {
-				console.warn('Document is beyond redemption and should be deleted!');
-
-				return undefined;
+			console.log(`Document has pending structs ... retry with ${count + 1000} messages.`);
+			const streamLength = await this.redis.getEntriesLen(roomComputed);
+			if (streamLength < count) {
+				await this.redis.deleteMessagesFromStream(roomComputed);
+				count = 0;
 			}
-
-			console.log(`doc has pending structs ... retry with ${count + 1000} messages`);
 			response = await this.getDoc(room, docid, count + 1000);
 		}
 
