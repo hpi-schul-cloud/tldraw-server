@@ -141,7 +141,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	}
 
 	public async getDeletedDocEntries(): Promise<StreamMessageReply[]> {
-		const deletedDocEntries = await this.redis.xrangeBuffer(this.redisDeleteStreamName, '-', '+');
+		const deletedDocEntries = await this.redis.xrange(this.redisDeleteStreamName, '-', '+');
 
 		const transformedDeletedTasks = mapToStreamMessagesReplies(deletedDocEntries);
 
