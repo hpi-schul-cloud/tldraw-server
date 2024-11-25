@@ -92,10 +92,10 @@ export class Api {
 		return this.store.retrieveStateVector(room, docid);
 	}
 
-	public async getDoc(room: string, docid: string, count = 1000): Promise<YRedisDoc | undefined> {
+	public async getDoc(room: string, docid: string, count = 1000): Promise<YRedisDoc> {
 		const end = MetricsService.methodDurationHistogram.startTimer();
 
-		let response: YRedisDoc | undefined;
+		let response: YRedisDoc;
 		let docChanged = false;
 
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
