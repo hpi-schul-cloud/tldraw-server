@@ -143,7 +143,6 @@ export const openCallback = async (
 		ws.subscribe(stream);
 		user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId;
 		const indexDoc = await client.getDoc(user.room, 'index');
-
 		if (indexDoc.ydoc.store.clients.size === 0) {
 			if (initDocCallback) {
 				initDocCallback(user.room, 'index', client);
