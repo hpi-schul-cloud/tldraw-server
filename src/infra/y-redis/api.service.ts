@@ -131,10 +131,7 @@ export class Api {
 		};
 
 		if (ydoc.store.pendingStructs !== null) {
-			console.log('Document has pending structs.');
-
-			//.log('Pending structs can not be fixed with updates from stream. Deleting all messages from stream.');
-			//await this.redis.deleteMessagesFromStream(roomComputed);
+			console.warn(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
 		}
 
 		return response;

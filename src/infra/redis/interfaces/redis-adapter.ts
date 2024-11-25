@@ -12,7 +12,7 @@ export interface RedisAdapter {
 	createGroup(): Promise<void>;
 	quit(): Promise<void>;
 	readStreams(streams: StreamNameClockPair[]): Promise<StreamMessagesReply>;
-	readMessagesFromStream(streamName: string, count?: number): Promise<StreamMessagesReply>;
+	readMessagesFromStream(streamName: string): Promise<StreamMessagesReply>;
 	reclaimTasks(consumerName: string, redisTaskDebounce: number, tryClaimCount: number): Promise<XAutoClaimResponse>;
 	getDeletedDocEntries(): Promise<StreamMessageReply[]>;
 	deleteDeleteDocEntry(id: string): Promise<number>;
