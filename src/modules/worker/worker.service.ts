@@ -80,19 +80,23 @@ export class WorkerService implements OnModuleInit {
 					// @todo, make sure that awareness by this.getDoc is eventually destroyed, or doesn't
 					// register a timeout anymore
 					this.logger.log('requesting doc from store');
-					const { ydoc, storeReferences, redisLastId, docChanged, awareness } = await this.client.getDoc(room, docid);
+					const indexDoc = await this.client.getDoc(room, docid);
+
+					if (!indexDoc) {
+						this.logger.warn('Could not get doc from client, deleting doc!');
+						this.redis.deleteDeleteDocEntry(docid);
+						this.storageService.deleteDocument(room, docid);
+
+						return;
+					}
+
+					const { ydoc, storeReferences, redisLastId, docChanged, awareness } = indexDoc;
 
 					// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
 					awareness.destroy();
 					this.logger.log(
 						'retrieved doc from store. redisLastId=' + redisLastId + ' storeRefs=' + JSON.stringify(storeReferences),
 					);
-
-					if (ydoc.store.pendingStructs !== null) {
-						this.logger.log('doc has pending structs, not persisting');
-
-						return;
-					}
 
 					const lastId = Math.max(parseInt(redisLastId.split('-')[0]), parseInt(task.id.split('-')[0]));
 

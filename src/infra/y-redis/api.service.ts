@@ -99,10 +99,10 @@ export class Api {
 		return this.store.retrieveStateVector(room, docid);
 	}
 
-	public async getDoc(room: string, docid: string, count = 1000): Promise<YRedisDoc> {
+	public async getDoc(room: string, docid: string, count = 1000): Promise<YRedisDoc | undefined> {
 		const end = MetricsService.methodDurationHistogram.startTimer();
 
-		let response: YRedisDoc;
+		let response: YRedisDoc | undefined;
 		let docChanged = false;
 
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
@@ -140,6 +140,12 @@ export class Api {
 		};
 
 		if (ydoc.store.pendingStructs !== null) {
+			if (docMessages && docMessages.messages.length < count) {
+				console.warn('Document is beyond redemption and should be deleted!');
+
+				return undefined;
+			}
+
 			console.log(`doc has pending structs ... retry with ${count + 1000} messages`);
 			response = await this.getDoc(room, docid, count + 1000);
 		}

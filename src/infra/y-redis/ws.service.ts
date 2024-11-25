@@ -143,19 +143,15 @@ export const openCallback = async (
 		ws.subscribe(stream);
 		user.initialRedisSubId = subscriber.subscribe(stream, redisMessageSubscriber).redisId;
 		const indexDoc = await client.getDoc(user.room, 'index');
+
+		if (!indexDoc) return;
+
 		if (indexDoc.ydoc.store.clients.size === 0) {
 			if (initDocCallback) {
 				initDocCallback(user.room, 'index', client);
 			}
 		}
 		if (user.isClosed) return;
-
-		if (indexDoc.ydoc.store.pendingStructs !== null) {
-			console.error(`ydoc in room ${user.room} has pending structs`);
-			// ws.end(4406, 'ydoc not ready yet');
-
-			// return;
-		}
 
 		ws.cork(() => {
 			ws.send(protocol.encodeSyncStep1(Y.encodeStateVector(indexDoc.ydoc)), true, false);
