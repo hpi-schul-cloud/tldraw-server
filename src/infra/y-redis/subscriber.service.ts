@@ -5,6 +5,7 @@
 	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
 	https://github.com/yjs/y-redis
 */
+import * as map from 'lib0/map';
 import { RedisService } from '../redis/redis.service.js';
 import { Api, createApiClient } from './api.service.js';
 import { isSmallerRedisId } from './helper.js';
@@ -50,12 +51,8 @@ export class Subscriber {
 	}
 
 	public subscribe(stream: string, f: SubscriptionHandler): { redisId: string } {
-		const sub = this.subscribers.get(stream) ?? { fs: new Set<SubscriptionHandler>(), id: '0', nextId: null };
+		const sub = map.setIfUndefined(this.subscribers, stream, () => ({ fs: new Set(), id: '0', nextId: null }));
 		sub.fs.add(f);
-
-		if (!this.subscribers.has(stream)) {
-			this.subscribers.set(stream, sub);
-		}
 
 		return {
 			redisId: sub.id,
