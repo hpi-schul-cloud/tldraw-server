@@ -255,7 +255,7 @@ describe(IoRedisAdapter.name, () => {
 			// @ts-ignore
 			const id = readBufferReply[0][0].toString();
 
-			const expectedProps = ['COUNT', 1000, 'BLOCK', 1000, 'STREAMS', computeRedisRoomStreamName, '0'];
+			const expectedProps = ['STREAMS', computeRedisRoomStreamName, '0'];
 
 			const expectedResult = [
 				{
