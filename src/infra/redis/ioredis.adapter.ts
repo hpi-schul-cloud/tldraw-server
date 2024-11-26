@@ -184,10 +184,4 @@ export class IoRedisAdapter implements RedisAdapter {
 			.xdel(this.redisWorkerStreamName, task.id)
 			.exec();
 	}
-
-	public async deleteMessagesFromStream(streamName: string): Promise<number> {
-		const result = await this.redis.xtrim(streamName, 'MAXLEN', 0);
-
-		return result;
-	}
 }
