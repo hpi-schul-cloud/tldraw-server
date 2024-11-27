@@ -1,8 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { Gauge, Histogram, register } from 'prom-client';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { collectDefaultMetrics, Gauge, Histogram, register } from 'prom-client';
+import { MetricConfig } from './metrics.config.js';
 
 @Injectable()
-export class MetricsService {
+export class MetricsService implements OnModuleInit {
+	public constructor(private config: MetricConfig) {}
+
+	public onModuleInit(): void {
+		if (this.config.METRICS_COLLECT_DEFAULT) {
+			collectDefaultMetrics();
+		}
+	}
+
 	public static readonly openConnectionsGauge = new Gauge({
 		name: 'tldraw_open_connections',
 		help: 'Number of open WebSocket connections on tldraw-server.',
