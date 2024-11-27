@@ -4,7 +4,7 @@ import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 import { xAutoClaimRawReplyFactory } from './testing/x-auto-claim-raw-reply.factory.js';
-import { xItemsBufferFactory } from './testing/x-items.factory.js';
+import { xItemsStringFactory } from './testing/x-items.factory.js';
 import { xReadBufferReplyFactory } from './testing/x-read-buffer-reply.factory.js';
 
 describe(IoRedisAdapter.name, () => {
@@ -255,7 +255,7 @@ describe(IoRedisAdapter.name, () => {
 			// @ts-ignore
 			const id = readBufferReply[0][0].toString();
 
-			const expectedProps = ['COUNT', 1000, 'BLOCK', 1000, 'STREAMS', computeRedisRoomStreamName, '0'];
+			const expectedProps = ['STREAMS', computeRedisRoomStreamName, '0'];
 
 			const expectedResult = [
 				{
@@ -358,33 +358,33 @@ describe(IoRedisAdapter.name, () => {
 		const setup = async () => {
 			const { redisAdapter, redis } = await buildParams();
 			const redisDeleteStreamName = `${testPrefix}:delete`;
-			const xrangeBufferSpy = jest.spyOn(redis, 'xrangeBuffer');
+			const xrangeSpy = jest.spyOn(redis, 'xrange');
 
-			const xrangeBufferReply = xItemsBufferFactory.build();
+			const xrangeReply = xItemsStringFactory.build();
 
 			// @ts-ignore
-			xrangeBufferSpy.mockResolvedValue(xrangeBufferReply);
+			xrangeSpy.mockResolvedValue(xrangeReply);
 
-			const [id, fields] = xrangeBufferReply[0];
+			const [id, fields] = xrangeReply[0];
 
 			const expectedProps = [redisDeleteStreamName, '-', '+'];
 
 			const expectedReturn = [
 				{
 					id: id.toString(),
-					message: { message: fields[1] },
+					message: { key: fields[1] },
 				},
 			];
 
-			return { xrangeBufferSpy, redisDeleteStreamName, expectedProps, expectedReturn, redisAdapter };
+			return { xrangeSpy, redisDeleteStreamName, expectedProps, expectedReturn, redisAdapter };
 		};
 
-		it('should call redis xrangeBuffer with correct values', async () => {
-			const { xrangeBufferSpy, expectedProps, redisAdapter } = await setup();
+		it('should call redis xrange with correct values', async () => {
+			const { xrangeSpy, expectedProps, redisAdapter } = await setup();
 
 			await redisAdapter.getDeletedDocEntries();
 
-			expect(xrangeBufferSpy).toHaveBeenCalledWith(...expectedProps);
+			expect(xrangeSpy).toHaveBeenCalledWith(...expectedProps);
 		});
 
 		it('should return correct value', async () => {

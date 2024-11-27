@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HttpRequest } from 'uws';
+import { HttpRequest } from 'uWebSockets.js';
 import { Logger } from '../logger/index.js';
 import {
 	AuthorizationApi,

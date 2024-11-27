@@ -94,7 +94,6 @@ export class Api {
 
 	public async getDoc(room: string, docid: string): Promise<YRedisDoc> {
 		const end = MetricsService.methodDurationHistogram.startTimer();
-
 		let docChanged = false;
 
 		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
@@ -123,13 +122,19 @@ export class Api {
 
 		end();
 
-		return {
+		const response = {
 			ydoc,
 			awareness,
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
 		};
+
+		if (ydoc.store.pendingStructs !== null) {
+			console.warn(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
+		}
+
+		return response;
 	}
 
 	public async destroy(): Promise<void> {

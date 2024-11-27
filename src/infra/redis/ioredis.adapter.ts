@@ -105,15 +105,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	}
 
 	public async readMessagesFromStream(streamName: string): Promise<StreamMessagesReply> {
-		const reads = await this.redis.xreadBuffer(
-			'COUNT',
-			1000, // Adjust the count as needed
-			'BLOCK',
-			1000, // Adjust the block time as needed
-			'STREAMS',
-			streamName,
-			'0',
-		);
+		const reads = await this.redis.xreadBuffer('STREAMS', streamName, '0');
 
 		const streamReplyRes = mapToStreamMessagesReply(reads);
 
@@ -141,7 +133,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	}
 
 	public async getDeletedDocEntries(): Promise<StreamMessageReply[]> {
-		const deletedDocEntries = await this.redis.xrangeBuffer(this.redisDeleteStreamName, '-', '+');
+		const deletedDocEntries = await this.redis.xrange(this.redisDeleteStreamName, '-', '+');
 
 		const transformedDeletedTasks = mapToStreamMessagesReplies(deletedDocEntries);
 

@@ -31,7 +31,7 @@ export const decodeRedisRoomStreamName = (
 	rediskey: string,
 	expectedPrefix: string,
 ): { room: string; docid: string } => {
-	const match = rediskey.match(/^(.*):room:(.*):(.*)$/);
+	const match = /^(.*):room:(.*):(.*)$/.exec(rediskey);
 	if (match == null || match[1] !== expectedPrefix) {
 		throw new Error(
 			`Malformed stream name! prefix="${match?.[1]}" expectedPrefix="${expectedPrefix}", rediskey="${rediskey}"`,

@@ -22,6 +22,21 @@
           defaultStorageClass: "{{ SC_DEFAULT_STORAGE_CLASS_NAME }}"
         replica:
           replicaCount: "{{ TLDRAW_VALKEY_REPLICAS }}"
+          resources:
+            limits:
+              cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
+              memory: "{{ TLDRAW_VALKEY_MEMORY_LIMITS|default('4Gi', true) }}"
+            requests:
+              cpu: "{{ TLDRAW_VALKEY_CPU_REQUESTS|default('100m', true) }}"
+              memory: "{{ TLDRAW_VALKEY_MEMORY_REQUESTS|default('1Gi', true) }}"
+        primary:
+          resources:
+            limits:
+              cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
+              memory: "{{ TLDRAW_VALKEY_MEMORY_LIMITS|default('4Gi', true) }}"
+            requests:
+              cpu: "{{ TLDRAW_VALKEY_CPU_REQUESTS|default('100m', true) }}"
+              memory: "{{ TLDRAW_VALKEY_MEMORY_REQUESTS|default('1Gi', true) }}"
         auth:
           existingSecret: tldraw-valkey-password
           existingSecretPasswordKey: REDIS_SENTINEL_PASSWORD
@@ -45,12 +60,5 @@
           create: false
         # https://github.com/bitnami/charts/issues/9689
         useHostnames: false
-        resources:
-          limits:
-            cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
-            memory: "{{ TLDRAW_VALKEY_MEMORY_LIMITS|default('4Gi', true) }}"
-          requests:
-            cpu: "{{ TLDRAW_VALKEY_CPU_REQUESTS|default('100m', true) }}"
-            memory: "{{ TLDRAW_VALKEY_MEMORY_REQUESTS|default('1Gi', true) }}"
     tags:
       - helm
