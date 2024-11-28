@@ -29,7 +29,7 @@ describe('Redis Service', () => {
 
 				const config = new RedisConfig();
 
-				config.REDIS = sentinelServiceName;
+				config.REDIS_URL = sentinelServiceName;
 				config.REDIS_CLUSTER_ENABLED = true;
 				config.REDIS_SENTINEL_SERVICE_NAME = sentinelServiceName;
 				config.REDIS_PREFIX = redisPrefix;
@@ -95,7 +95,7 @@ describe('Redis Service', () => {
 				const config = new RedisConfig();
 				const redisUrl = 'redis://localhost:6379';
 
-				config.REDIS = redisUrl;
+				config.REDIS_URL = redisUrl;
 
 				const resolveSrv = jest.fn();
 				jest.spyOn(util, 'promisify').mockReturnValueOnce(resolveSrv);

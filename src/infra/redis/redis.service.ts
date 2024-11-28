@@ -29,7 +29,7 @@ export class RedisService {
 	}
 
 	private createNewRedisInstance(): Redis {
-		const redisUrl = this.config.REDIS;
+		const redisUrl = this.config.REDIS_URL;
 		const redisInstance = new Redis(redisUrl);
 
 		return redisInstance;

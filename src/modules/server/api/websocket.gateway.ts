@@ -28,8 +28,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	public async onModuleInit(): Promise<void> {
-		const wsPathPrefix = this.config.WS_PATH_PREFIX;
-		const wsPort = this.config.WS_PORT;
+		const wsPathPrefix = this.config.SERVER_WEBSOCKET_PATH;
+		const wsPort = this.config.SERVER_WEBSOCKET_PORT;
 
 		await registerYWebsocketServer(
 			this.webSocketServer,

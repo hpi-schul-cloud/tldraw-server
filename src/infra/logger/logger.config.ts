@@ -14,9 +14,9 @@ export enum LoggerLogLevel {
 
 export class LoggerConfig {
 	@IsEnum(LoggerLogLevel)
-	public NEST_LOG_LEVEL!: LoggerLogLevel;
+	public LOGGER_LOG_LEVEL!: LoggerLogLevel;
 
 	@IsBoolean()
 	@Transform(({ value }) => value === 'true')
-	public EXIT_ON_ERROR!: boolean;
+	public LOGGER_EXIT_ON_ERROR = true;
 }

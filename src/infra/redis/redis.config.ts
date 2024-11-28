@@ -9,7 +9,7 @@ export class RedisConfig {
 
 	@IsUrl({ protocols: ['redis'], require_tld: false })
 	@ValidateIf((o: RedisConfig) => !o.REDIS_CLUSTER_ENABLED)
-	public REDIS!: string;
+	public REDIS_URL!: string;
 
 	@IsString()
 	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED)

@@ -1,0 +1,5 @@
+TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST : "image/png,image/jpeg,image/gif,image/svg+xml"
+TLDRAW_LOG_LEVEL: "error"
+TLDRAW_METRICS_COLLECT_DEFAULT: "true"
+TLDRAW_SERVER_ASSETS_ENABLED: "true"
+TLDRAW_WEBSOCKET_PATH: "/tldraw-server"

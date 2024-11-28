@@ -46,8 +46,8 @@ describe(WebsocketGateway.name, () => {
 				{
 					provide: ServerConfig,
 					useValue: {
-						WS_PATH_PREFIX: 'tests',
-						WS_PORT: 3345,
+						SERVER_WEBSOCKET_PATH: 'tests',
+						SERVER_WEBSOCKET_PORT: 3345,
 					},
 				},
 			],
