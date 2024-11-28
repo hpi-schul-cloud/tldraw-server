@@ -5,7 +5,7 @@ export default async function globalSetup(): Promise<void> {
 
 	const host = await redisMemoryServer.getHost();
 	const port = await redisMemoryServer.getPort();
-	process.env.REDIS = `redis://${host}:${port}`;
+	process.env.REDIS_URL = `redis://${host}:${port}`;
 	// @ts-ignore
 	global.__REDISINSTANCE = redisMemoryServer;
 }
