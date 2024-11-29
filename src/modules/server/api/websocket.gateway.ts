@@ -6,7 +6,7 @@ import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
 import { registerYWebsocketServer } from '../../../infra/y-redis/ws.service.js';
-import { ServerConfig } from '../server.config.js';
+import { TldrawServerConfig } from '../tldraw-server.config.js';
 
 export const UWS = 'UWS';
 
@@ -17,7 +17,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		private readonly storageService: StorageService,
 		private readonly authorizationService: AuthorizationService,
 		private readonly redisService: RedisService,
-		private readonly config: ServerConfig,
+		private readonly config: TldrawServerConfig,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(WebsocketGateway.name);
@@ -28,8 +28,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	public async onModuleInit(): Promise<void> {
-		const wsPathPrefix = this.config.SERVER_WEBSOCKET_PATH;
-		const wsPort = this.config.SERVER_WEBSOCKET_PORT;
+		const wsPathPrefix = this.config.TLDRAW_WEBSOCKET_PATH;
+		const wsPort = this.config.TLDRAW_WEBSOCKET_PORT;
 
 		await registerYWebsocketServer(
 			this.webSocketServer,

@@ -10,12 +10,12 @@ import { StorageModule } from '../../infra/storage/storage.module.js';
 import { TldrawConfigController } from './api/tldraw-confg.controller.js';
 import { TldrawDocumentController } from './api/tldraw-document.controller.js';
 import { UWS, WebsocketGateway } from './api/websocket.gateway.js';
-import { ServerConfig } from './server.config.js';
 import { TldrawDocumentService } from './service/tldraw-document.service.js';
+import { TldrawServerConfig } from './tldraw-server.config.js';
 
 @Module({
 	imports: [
-		ConfigurationModule.register(ServerConfig),
+		ConfigurationModule.register(TldrawServerConfig),
 		RedisModule,
 		StorageModule,
 		AuthorizationModule,
