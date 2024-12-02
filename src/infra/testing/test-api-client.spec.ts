@@ -52,7 +52,7 @@ describe(TestApiClient.name, () => {
 		const setup = () => {
 			const id = '60f1b9b3b3b3b3b3b3b3b3b3';
 			const useAsApiKey = true;
-			const validApiKey: XApiKeyConfig['ADMIN_API__ALLOWED_API_KEYS'][0] = 'randomString';
+			const validApiKey: XApiKeyConfig['X_API_ALLOWED_KEYS'][0] = 'randomString';
 			const testApiClient = new TestApiClient(app, baseRoute, validApiKey, useAsApiKey);
 
 			return { testApiClient, id };

@@ -9,7 +9,7 @@ import { RedisService } from '../../../infra/redis/redis.service.js';
 import { StorageService } from '../../../infra/storage/storage.service.js';
 import * as WsService from '../../../infra/y-redis/ws.service.js';
 import { registerYWebsocketServer } from '../../../infra/y-redis/ws.service.js';
-import { ServerConfig } from '../server.config.js';
+import { TldrawServerConfig } from '../tldraw-server.config.js';
 import { WebsocketGateway } from './websocket.gateway.js';
 
 describe(WebsocketGateway.name, () => {
@@ -44,10 +44,10 @@ describe(WebsocketGateway.name, () => {
 					useValue: createMock<Logger>(),
 				},
 				{
-					provide: ServerConfig,
+					provide: TldrawServerConfig,
 					useValue: {
-						WS_PATH_PREFIX: 'tests',
-						WS_PORT: 3345,
+						TLDRAW_WEBSOCKET_PATH: 'tests',
+						TLDRAW_WEBSOCKET_PORT: 3345,
 					},
 				},
 			],

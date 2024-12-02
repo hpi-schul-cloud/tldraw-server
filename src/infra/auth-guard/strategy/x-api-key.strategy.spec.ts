@@ -38,7 +38,7 @@ describe('XApiKeyStrategy', () => {
 		describe('when a valid api key is provided', () => {
 			const setup = () => {
 				const CORRECT_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
-				config.ADMIN_API__ALLOWED_API_KEYS = [CORRECT_API_KEY];
+				config.X_API_ALLOWED_KEYS = [CORRECT_API_KEY];
 
 				return { CORRECT_API_KEY, done };
 			};
@@ -52,7 +52,7 @@ describe('XApiKeyStrategy', () => {
 		describe('when a invalid api key is provided', () => {
 			const setup = () => {
 				const INVALID_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4BAD';
-				config.ADMIN_API__ALLOWED_API_KEYS = [INVALID_API_KEY];
+				config.X_API_ALLOWED_KEYS = [INVALID_API_KEY];
 
 				return { INVALID_API_KEY, done };
 			};

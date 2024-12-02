@@ -6,7 +6,7 @@ export class StorageConfig {
 	public S3_ENDPOINT!: string;
 
 	@IsString()
-	public S3_BUCKET = 'ydocs';
+	public S3_BUCKET!: string;
 
 	@IsNumber()
 	@Type(() => Number)

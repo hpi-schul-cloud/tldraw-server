@@ -11,7 +11,7 @@ import { AuthorizationService } from './authorization.service.js';
 		{
 			provide: AuthorizationApi,
 			useFactory: (config: AuthorizationConfig): AuthorizationApi => {
-				const apiHost = config.API_HOST;
+				const apiHost = config.AUTHORIZATION_API_HOST;
 				const configuration = new Configuration({ basePath: `${apiHost}/api/v3` });
 				const authorizationApi = new AuthorizationApi(configuration);
 
