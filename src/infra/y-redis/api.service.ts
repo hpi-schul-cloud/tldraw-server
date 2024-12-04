@@ -39,9 +39,12 @@ export const createApiClient = async (store: DocumentStorage, createRedisInstanc
 	return a;
 };
 
+type CallbackFunction = () => void;
+
 export class Api {
 	public readonly redisPrefix: string;
 	public _destroyed;
+	private destroyedCallback: CallbackFunction;
 
 	public constructor(
 		private readonly store: DocumentStorage,
@@ -50,6 +53,13 @@ export class Api {
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
 		this._destroyed = false;
+		this.destroyedCallback = (): void => {
+			// Empty callback
+		};
+	}
+
+	public registerDestroyedCallback(callback: CallbackFunction): void {
+		this.destroyedCallback = callback;
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
@@ -138,6 +148,7 @@ export class Api {
 	}
 
 	public async destroy(): Promise<void> {
+		this.destroyedCallback();
 		this._destroyed = true;
 		await this.redis.quit();
 	}
