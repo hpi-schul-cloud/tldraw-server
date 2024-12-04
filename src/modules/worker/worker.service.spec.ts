@@ -18,6 +18,7 @@ import { WorkerService } from './worker.service.js';
 describe(WorkerService.name, () => {
 	let service: WorkerService;
 	let redisService: DeepMocked<RedisService>;
+	let client: DeepMocked<Api>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -46,67 +47,106 @@ describe(WorkerService.name, () => {
 			],
 		}).compile();
 
+		client = createMock<Api>();
+		await module.init(); // this is where onModuleInit is called
+
 		service = await module.resolve(WorkerService);
 		redisService = module.get(RedisService);
+
+		await service.onModuleInit();
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		service.stop();
 	});
 
 	it('should be defined', () => {
 		expect(service).toBeDefined();
 	});
 
-	describe('onModuleInit', () => {
-		describe('when _destroyed is false', () => {
+	describe('job', () => {
+		describe('when new service instance is running', () => {
 			const setup = () => {
-				const client = createMock<Api>({ _destroyed: false });
+				service.start();
 				jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
+				const spy = jest.spyOn(service, 'consumeWorkerQueue'); // .mockResolvedValueOnce([]);
 
-				const error = new Error('Error to break while loop!');
-
-				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockRejectedValueOnce(error);
-
-				return { error, consumeWorkerQueueSpy };
+				return { spy };
 			};
 
-			it('should call consumeWorkerQueue', async () => {
-				const { error, consumeWorkerQueueSpy } = setup();
+			it('and stop is called, it should be stopped', () => {
+				setup();
 
-				await expect(service.onModuleInit()).rejects.toThrow(error);
+				service.stop();
 
-				expect(consumeWorkerQueueSpy).toHaveBeenCalled();
+				expect(service.status()).toBe(false);
+			});
+
+			it('and start is called, it should be run', () => {
+				setup();
+
+				service.start();
+
+				expect(service.status()).toBe(true);
+			});
+
+			it('should call consumeWorkerQueue', () => {
+				const spy = setup();
+
+				// await new Promise((resolve) => setTimeout(resolve, 10));
+
+				expect(spy).toHaveBeenCalled();
+			});
+
+			it('should running after calling onModuleInit', () => {
+				setup();
+
+				service.onModuleInit();
+
+				expect(service.status()).toBe(true);
 			});
 		});
 
-		describe('when _destroyed is true', () => {
+		describe('when new service instance is not running', () => {
 			const setup = () => {
-				const client = createMock<Api>({ _destroyed: true });
+				service.stop();
 				jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
+				const spy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValueOnce([]);
 
-				const consumeWorkerQueueSpy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValueOnce([]);
-
-				return { consumeWorkerQueueSpy };
+				return { spy };
 			};
 
-			it('should call not consumeWorkerQueue', async () => {
-				const { consumeWorkerQueueSpy } = setup();
+			it('and start is called, it should be started', () => {
+				setup();
 
-				await service.onModuleInit();
+				service.start();
 
-				expect(consumeWorkerQueueSpy).not.toHaveBeenCalled();
+				expect(service.status()).toBe(true);
+			});
+
+			it('and stop is called, it should stopped', () => {
+				setup();
+
+				service.stop();
+
+				expect(service.status()).toBe(false);
+			});
+
+			it('should not call consumeWorkerQueue', () => {
+				const spy = setup();
+
+				// await new Promise((resolve) => setTimeout(resolve, 10));
+
+				expect(spy).not.toHaveBeenCalled();
 			});
 		});
 	});
 
 	describe('consumeWorkerQueue', () => {
 		describe('when there are no tasks', () => {
-			const setup = async () => {
-				const client = createMock<Api>({ _destroyed: true });
+			const setup = () => {
 				jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
-
-				await service.onModuleInit();
 			};
 
 			it('should return an empty array', async () => {
@@ -122,11 +162,9 @@ describe(WorkerService.name, () => {
 			describe('when stream length is 0', () => {
 				describe('when deletedDocEntries is empty', () => {
 					const setup = async () => {
-						const awareness = createMock<Awareness>();
-						const client = createMock<Api>({ _destroyed: true });
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
-							awareness,
+							awareness: createMock<Awareness>(),
 							redisLastId: '0',
 							storeReferences: null,
 							docChanged: false,
@@ -168,11 +206,9 @@ describe(WorkerService.name, () => {
 
 				describe('when deletedDocEntries contains element', () => {
 					const setup = async () => {
-						const awareness = createMock<Awareness>();
-						const client = createMock<Api>({ _destroyed: true });
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
-							awareness,
+							awareness: createMock<Awareness>(),
 							redisLastId: '0',
 							storeReferences: null,
 							docChanged: false,
@@ -218,11 +254,9 @@ describe(WorkerService.name, () => {
 			describe('when stream length is not 0', () => {
 				describe('when docChanged is false', () => {
 					const setup = async () => {
-						const awareness = createMock<Awareness>();
-						const client = createMock<Api>({ _destroyed: true });
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
-							awareness,
+							awareness: createMock<Awareness>(),
 							redisLastId: '0',
 							storeReferences: null,
 							docChanged: false,
@@ -322,8 +356,6 @@ describe(WorkerService.name, () => {
 					};
 
 					it('should return an array of tasks', async () => {
-						// docChanged = true;
-
 						const { expectedTasks } = await setup();
 
 						const result = await service.consumeWorkerQueue();

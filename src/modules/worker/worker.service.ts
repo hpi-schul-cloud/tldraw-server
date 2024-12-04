@@ -38,16 +38,24 @@ export class WorkerService implements OnModuleInit, Job {
 		this.client.registerDestroyedCallback(() => {
 			this.stop();
 		});
-		this.start();
-
-		while (this.running) {
-			await this.consumeWorkerQueue();
-		}
+		this.start(this.config.WORKER_IDLE_BREAK_MS);
 	}
 
-	public start(): void {
-		this.running = true;
-		this.logger.log(`Start worker process ${this.consumerId}`);
+	public async start(idleBreakTimeInMs = 1): Promise<void> {
+		try {
+			this.running = true;
+
+			while (this.running) {
+				const tasks = await this.consumeWorkerQueue();
+				await this.waitIfNoOpenTask(tasks, idleBreakTimeInMs);
+			}
+
+			this.logger.log(`Start worker process ${this.consumerId}`);
+		} catch (err) {
+			// TODO: Brauchen wir das, oder lassen wir die Applikation mit unhandled abstürzen?
+			this.logger.warn(err);
+			process.exit(1);
+		}
 	}
 
 	public stop(): void {
@@ -57,6 +65,13 @@ export class WorkerService implements OnModuleInit, Job {
 
 	public status(): boolean {
 		return this.running;
+	}
+
+	private async waitIfNoOpenTask(tasks: Task[], waitInMs: number): Promise<void> {
+		if (tasks.length === 0) {
+			this.logger.log(`No tasks available, pausing... ${JSON.stringify({ tasks })}`);
+			await new Promise((resolve) => setTimeout(resolve, waitInMs));
+		}
 	}
 
 	public async consumeWorkerQueue(): Promise<Task[]> {
@@ -76,10 +91,8 @@ export class WorkerService implements OnModuleInit, Job {
 			const stream = m?.message.compact;
 			stream && tasks.push({ stream: stream.toString(), id: m?.id.toString() });
 		});
-		if (tasks.length === 0) {
-			this.logger.log(`No tasks available, pausing... ${JSON.stringify({ tasks })}`);
-			await new Promise((resolve) => setTimeout(resolve, 1000));
 
+		if (tasks.length === 0) {
 			return [];
 		}
 

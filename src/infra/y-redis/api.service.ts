@@ -43,7 +43,7 @@ type CallbackFunction = () => void;
 
 export class Api {
 	public readonly redisPrefix: string;
-	public _destroyed;
+	public _destroyed; // TODO: should be private
 	private destroyedCallback: CallbackFunction;
 
 	public constructor(
