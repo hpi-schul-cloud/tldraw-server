@@ -8,8 +8,14 @@ import { Api, createApiClient } from '../../infra/y-redis/api.service.js';
 import { decodeRedisRoomStreamName } from '../../infra/y-redis/helper.js';
 import { WorkerConfig } from './worker.config.js';
 
+interface Job {
+	status(): boolean;
+	start(): void;
+	stop(): void;
+}
+
 @Injectable()
-export class WorkerService implements OnModuleInit {
+export class WorkerService implements OnModuleInit, Job {
 	private client!: Api;
 	private readonly consumerId = randomUUID();
 	private redis!: RedisAdapter;
@@ -25,21 +31,32 @@ export class WorkerService implements OnModuleInit {
 	}
 
 	public async onModuleInit(): Promise<void> {
+		// TODO: Promise.all? Reihenfolge wichtig?
 		this.client = await createApiClient(this.storageService, this.redisService);
+		this.redis = await this.redisService.createRedisInstance();
+
 		this.client.registerDestroyedCallback(() => {
 			this.stop();
 		});
-		this.redis = await this.redisService.createRedisInstance();
+		this.start();
 
-		this.logger.log(`Created worker process ${this.consumerId}`);
 		while (this.running) {
 			await this.consumeWorkerQueue();
 		}
-		this.logger.log(`Ended worker process ${this.consumerId}`);
+	}
+
+	public start(): void {
+		this.running = true;
+		this.logger.log(`Start worker process ${this.consumerId}`);
 	}
 
 	public stop(): void {
 		this.running = false;
+		this.logger.log(`Ended worker process ${this.consumerId}`);
+	}
+
+	public status(): boolean {
+		return this.running;
 	}
 
 	public async consumeWorkerQueue(): Promise<Task[]> {
