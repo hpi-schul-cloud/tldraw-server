@@ -41,9 +41,9 @@ export class WorkerService implements OnModuleInit, Job {
 			this.stop();
 		});
 		/**
-		 * The promise ist started without await as seperate handled promise chain.
+		 * The promise is started without await as seperate handled promise chain.
 		 */
-		this.start(this.config.WORKER_IDLE_BREAK_MS);
+		this.start(this.config.WORKER_IDLE_BREAK_MS); // TODO BREAK -> PAUSE
 	}
 
 	public async start(idleBreakTimeInMs = 1): Promise<void> {
@@ -86,7 +86,7 @@ export class WorkerService implements OnModuleInit, Job {
 		// Promise all?
 		const deletedDocEntries = await this.redis.getDeletedDocEntries();
 		const streamLength = await this.redis.tryClearTask(task);
-		const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix); // TODO + Naming
+		const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix); // TODO
 
 		if (this.streamIsEmpty(streamLength)) {
 			this.removingRecurringTaskFromQueue(task, deletedDocEntries, roomStreamInfos);
