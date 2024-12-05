@@ -18,7 +18,6 @@ import { WorkerService } from './worker.service.js';
 describe(WorkerService.name, () => {
 	let service: WorkerService;
 	let redisService: DeepMocked<RedisService>;
-	let client: DeepMocked<Api>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -42,14 +41,13 @@ describe(WorkerService.name, () => {
 						WORKER_TRY_CLAIM_COUNT: 1,
 						WORKER_TASK_DEBOUNCE: 1,
 						WORKER_MIN_MESSAGE_LIFETIME: 1,
+						WORKER_IDLE_BREAK_MS: 1,
 					},
 				},
 			],
 		}).compile();
 
-		client = createMock<Api>();
-		await module.init(); // this is where onModuleInit is called
-
+		await module.init(); // this is where onModuleInit is called, do module.resolve the same?
 		service = await module.resolve(WorkerService);
 		redisService = module.get(RedisService);
 
@@ -69,8 +67,8 @@ describe(WorkerService.name, () => {
 		describe('when new service instance is running', () => {
 			const setup = () => {
 				service.start();
-				jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
-				const spy = jest.spyOn(service, 'consumeWorkerQueue'); // .mockResolvedValueOnce([]);
+
+				const spy = jest.spyOn(service, 'consumeWorkerQueue');
 
 				return { spy };
 			};
@@ -91,10 +89,10 @@ describe(WorkerService.name, () => {
 				expect(service.status()).toBe(true);
 			});
 
-			it('should call consumeWorkerQueue', () => {
-				const spy = setup();
+			it('should call consumeWorkerQueue', async () => {
+				const { spy } = setup();
 
-				// await new Promise((resolve) => setTimeout(resolve, 10));
+				await new Promise((resolve) => setTimeout(resolve, 10));
 
 				expect(spy).toHaveBeenCalled();
 			});
@@ -111,8 +109,7 @@ describe(WorkerService.name, () => {
 		describe('when new service instance is not running', () => {
 			const setup = () => {
 				service.stop();
-				jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
-				const spy = jest.spyOn(service, 'consumeWorkerQueue').mockResolvedValueOnce([]);
+				const spy = jest.spyOn(service, 'consumeWorkerQueue');
 
 				return { spy };
 			};
@@ -133,10 +130,10 @@ describe(WorkerService.name, () => {
 				expect(service.status()).toBe(false);
 			});
 
-			it('should not call consumeWorkerQueue', () => {
-				const spy = setup();
+			it('should not call consumeWorkerQueue', async () => {
+				const { spy } = setup();
 
-				// await new Promise((resolve) => setTimeout(resolve, 10));
+				await new Promise((resolve) => setTimeout(resolve, 10));
 
 				expect(spy).not.toHaveBeenCalled();
 			});
@@ -146,7 +143,7 @@ describe(WorkerService.name, () => {
 	describe('consumeWorkerQueue', () => {
 		describe('when there are no tasks', () => {
 			const setup = () => {
-				jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
+				service.start();
 			};
 
 			it('should return an empty array', async () => {
@@ -162,6 +159,7 @@ describe(WorkerService.name, () => {
 			describe('when stream length is 0', () => {
 				describe('when deletedDocEntries is empty', () => {
 					const setup = async () => {
+						const client: DeepMocked<Api> = createMock<Api>();
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
 							awareness: createMock<Awareness>(),
@@ -206,6 +204,7 @@ describe(WorkerService.name, () => {
 
 				describe('when deletedDocEntries contains element', () => {
 					const setup = async () => {
+						const client: DeepMocked<Api> = createMock<Api>();
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
 							awareness: createMock<Awareness>(),
@@ -254,6 +253,7 @@ describe(WorkerService.name, () => {
 			describe('when stream length is not 0', () => {
 				describe('when docChanged is false', () => {
 					const setup = async () => {
+						const client: DeepMocked<Api> = createMock<Api>();
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
 							awareness: createMock<Awareness>(),
@@ -309,11 +309,10 @@ describe(WorkerService.name, () => {
 
 				describe('when docChanged is true', () => {
 					const setup = async () => {
-						const awareness = createMock<Awareness>();
-						const client = createMock<Api>({ _destroyed: true });
+						const client: DeepMocked<Api> = createMock<Api>();
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
-							awareness,
+							awareness: createMock<Awareness>(),
 							redisLastId: '0',
 							storeReferences: null,
 							docChanged: true,
