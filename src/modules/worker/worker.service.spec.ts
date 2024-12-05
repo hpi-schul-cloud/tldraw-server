@@ -159,6 +159,7 @@ describe(WorkerService.name, () => {
 			describe('when stream length is 0', () => {
 				describe('when deletedDocEntries is empty', () => {
 					const setup = async () => {
+						// ClientMock
 						const client: DeepMocked<Api> = createMock<Api>();
 						client.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
@@ -169,6 +170,7 @@ describe(WorkerService.name, () => {
 						});
 						jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
 
+						// RedisAdapterMock
 						const streamMessageReply1 = streamMessageReplyFactory.build();
 						const streamMessageReply2 = streamMessageReplyFactory.build();
 						const streamMessageReply3 = streamMessageReplyFactory.build();
@@ -183,12 +185,14 @@ describe(WorkerService.name, () => {
 
 						redisService.createRedisInstance.mockResolvedValueOnce(redisAdapterMock);
 
+						// Needed to override service.client and service.redis
+						await service.onModuleInit();
+
+						// Test setup
 						const expectedTasks = reclaimedTasks.messages.map((m) => ({
 							stream: m.message.compact.toString(),
 							id: m?.id.toString(),
 						}));
-
-						await service.onModuleInit();
 
 						return { expectedTasks };
 					};
