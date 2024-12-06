@@ -6,18 +6,10 @@
 	https://github.com/yjs/y-redis
 */
 import * as map from 'lib0/map';
-import { RedisService } from '../redis/redis.service.js';
-import { Api, createApiClient } from './api.service.js';
+import { Api } from './api.service.js';
 import { isSmallerRedisId } from './helper.js';
-import { DocumentStorage } from './storage.js';
 
 export const running = true;
-
-export const run = async (subscriber: Subscriber): Promise<void> => {
-	while (running) {
-		await subscriber.run();
-	}
-};
 
 type SubscriptionHandler = (stream: string, message: Uint8Array[]) => void;
 interface Subscriptions {
@@ -25,23 +17,18 @@ interface Subscriptions {
 	id: string;
 	nextId?: string | null;
 }
-export const createSubscriber = async (
-	store: DocumentStorage,
-	createRedisInstance: RedisService,
-): Promise<Subscriber> => {
-	const client = await createApiClient(store, createRedisInstance);
-	const subscriber = new Subscriber(client);
-	// Here we are not using an "await", as it would block further execution
-	// of our code, as the subscriber.run() is an infinite loop.
-	run(subscriber);
-
-	return subscriber;
-};
 
 export class Subscriber {
 	public readonly subscribers = new Map<string, Subscriptions>();
 
 	public constructor(private readonly client: Api) {}
+
+	public async start(): Promise<void> {
+		console.log('Subscriber is running');
+		while (running) {
+			await this.run();
+		}
+	}
 
 	public ensureSubId(stream: string, id: string): void {
 		const sub = this.subscribers.get(stream);

@@ -1,14 +1,14 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { RedisKey } from 'ioredis';
 import { Logger } from '../../infra/logger/index.js';
 import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/interfaces/index.js';
-import { RedisService } from '../../infra/redis/redis.service.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
-import { Api, createApiClient } from '../../infra/y-redis/api.service.js';
-import { WorkerConfig } from './worker.config.js';
-import { RedisKey } from 'ioredis';
-import { YRedisDoc } from '../../infra/y-redis/interfaces/y-redis-doc.js';
+import { Api } from '../../infra/y-redis/api.service.js';
 import { decodeRedisRoomStreamName, RoomStreamInfos } from '../../infra/y-redis/helper.js';
+import { YRedisDoc } from '../../infra/y-redis/interfaces/y-redis-doc.js';
+import { WorkerConfig } from './worker.config.js';
+import { REDIS_FOR_WORKER } from './worker.const.js';
 
 interface Job {
 	status(): boolean;
@@ -18,25 +18,20 @@ interface Job {
 
 @Injectable()
 export class WorkerService implements OnModuleInit, Job {
-	private client!: Api;
 	private readonly consumerId = randomUUID();
-	private redis!: RedisAdapter;
 	private running = true;
 
 	public constructor(
 		private readonly storageService: StorageService,
-		private readonly redisService: RedisService,
+		@Inject(REDIS_FOR_WORKER) private readonly redis: RedisAdapter,
 		private readonly logger: Logger,
 		private readonly config: WorkerConfig,
+		private readonly client: Api,
 	) {
 		this.logger.setContext(WorkerService.name);
 	}
 
-	public async onModuleInit(): Promise<void> {
-		// TODO: Promise.all? Reihenfolge wichtig?
-		this.client = await createApiClient(this.storageService, this.redisService);
-		this.redis = await this.redisService.createRedisInstance();
-
+	public onModuleInit(): void {
 		this.client.registerDestroyedCallback(() => {
 			this.stop();
 		});

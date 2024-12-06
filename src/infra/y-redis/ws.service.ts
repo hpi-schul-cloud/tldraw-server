@@ -8,17 +8,13 @@
 /* eslint-disable max-classes-per-file */
 import * as array from 'lib0/array';
 import * as decoding from 'lib0/decoding';
-import * as encoding from 'lib0/encoding';
-import * as promise from 'lib0/promise';
 import * as uws from 'uWebSockets.js';
 import * as Y from 'yjs';
 import { ResponsePayload } from '../authorization/interfaces/response.payload.js';
-import { RedisService } from '../redis/redis.service.js';
-import { Api, createApiClient } from './api.service.js';
+import { Api } from './api.service.js';
 import { computeRedisRoomStreamName, isSmallerRedisId } from './helper.js';
 import * as protocol from './protocol.js';
-import { DocumentStorage } from './storage.js';
-import { createSubscriber, Subscriber } from './subscriber.service.js';
+import { Subscriber } from './subscriber.service.js';
 
 /**
  * how to sync
@@ -253,67 +249,4 @@ export const closeCallback = (
 	} catch (error) {
 		console.error(error);
 	}
-};
-
-/**
- * @param {uws.TemplatedApp} app
- * @param {uws.RecognizedString} pattern
- * @param {import('./storage.js').AbstractStorage} store
- * @param {function(uws.HttpRequest): Promise<ResponsePayload>} checkAuth
- * @param {Object} conf
- * @param {string} [conf.redisPrefix]
- * @param {(room:string,docname:string,client:api.Api)=>void} [conf.initDocCallback] - this is called when a doc is
- * accessed, but it doesn't exist. You could populate the doc here. However, this function could be
- * called several times, until some content exists. So you need to handle concurrent calls.
- * @param {(ws:uws.WebSocket<User>)=>void} [conf.openWsCallback] - called when a websocket connection is opened
- * @param {(ws:uws.WebSocket<User>,code:number,message:ArrayBuffer)=>void} [conf.closeWsCallback] - called when a websocket connection is closed
- * @param {() => Promise<import('redis').RedisClientType | import('ioredis').Redis>} createRedisInstance
- */
-export const registerYWebsocketServer = async (
-	app: uws.TemplatedApp,
-	pattern: string,
-	store: DocumentStorage,
-	checkAuth: (req: uws.HttpRequest) => Promise<ResponsePayload>,
-	options: {
-		initDocCallback?: (room: string, docname: string, client: Api) => void;
-		openWsCallback?: (ws: uws.WebSocket<User>) => void;
-		closeWsCallback?: (ws: uws.WebSocket<User>, code: number, message: ArrayBuffer) => void;
-	},
-	createRedisInstance: RedisService,
-): Promise<YWebsocketServer> => {
-	const { initDocCallback, openWsCallback, closeWsCallback } = options;
-	const [client, subscriber] = await promise.all([
-		createApiClient(store, createRedisInstance),
-		createSubscriber(store, createRedisInstance),
-	]);
-
-	const redisMessageSubscriber = (stream: string, messages: Uint8Array[]): void => {
-		if (app.numSubscribers(stream) === 0) {
-			subscriber.unsubscribe(stream, redisMessageSubscriber);
-		}
-		const message =
-			messages.length === 1
-				? messages[0]
-				: encoding.encode((encoder) =>
-						messages.forEach((message) => {
-							encoding.writeUint8Array(encoder, message);
-						}),
-					);
-		app.publish(stream, message, true, false);
-	};
-
-	app.ws(pattern, {
-		compression: uws.SHARED_COMPRESSOR,
-		maxPayloadLength: 100 * 1024 * 1024,
-		idleTimeout: 60,
-		sendPingsAutomatically: true,
-		upgrade: (res, req, context) => upgradeCallback(res, req, context, checkAuth),
-		open: (ws: uws.WebSocket<User>) =>
-			openCallback(ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback),
-		message: (ws, messageBuffer) => messageCallback(ws, messageBuffer, client),
-		close: (ws, code, message) =>
-			closeCallback(app, ws, client, subscriber, code, message, redisMessageSubscriber, closeWsCallback),
-	});
-
-	return new YWebsocketServer(app, client, subscriber);
 };

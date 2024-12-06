@@ -1,9 +1,9 @@
+import { OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
-import { RedisService } from '../redis/redis.service.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 import { YRedisDoc } from './interfaces/y-redis-doc.js';
@@ -31,17 +31,9 @@ export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Do
 	});
 };
 
-export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
-	const a = new Api(store, await createRedisInstance.createRedisInstance());
-
-	await a.redis.createGroup();
-
-	return a;
-};
-
 type CallbackFunction = () => void;
 
-export class Api {
+export class Api implements OnModuleInit {
 	public readonly redisPrefix: string;
 	public _destroyed; // TODO: should be private
 	private destroyedCallback: CallbackFunction;
@@ -56,6 +48,9 @@ export class Api {
 		this.destroyedCallback = (): void => {
 			// Empty callback
 		};
+	}
+	public async onModuleInit(): Promise<void> {
+		await this.redis.createGroup();
 	}
 
 	public registerDestroyedCallback(callback: CallbackFunction): void {
