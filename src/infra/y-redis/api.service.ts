@@ -1,9 +1,9 @@
+import { OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
-import { RedisService } from '../redis/redis.service.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 import { YRedisDoc } from './interfaces/y-redis-doc.js';
@@ -31,17 +31,12 @@ export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Do
 	});
 };
 
-export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
-	const a = new Api(store, await createRedisInstance.createRedisInstance());
+type CallbackFunction = () => void;
 
-	await a.redis.createGroup();
-
-	return a;
-};
-
-export class Api {
+export class Api implements OnModuleInit {
 	public readonly redisPrefix: string;
-	public _destroyed;
+	public _destroyed; // TODO: should be private
+	private destroyedCallback: CallbackFunction;
 
 	public constructor(
 		private readonly store: DocumentStorage,
@@ -50,6 +45,16 @@ export class Api {
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
 		this._destroyed = false;
+		this.destroyedCallback = (): void => {
+			// Empty callback
+		};
+	}
+	public async onModuleInit(): Promise<void> {
+		await this.redis.createGroup();
+	}
+
+	public registerDestroyedCallback(callback: CallbackFunction): void {
+		this.destroyedCallback = callback;
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
@@ -138,6 +143,7 @@ export class Api {
 	}
 
 	public async destroy(): Promise<void> {
+		this.destroyedCallback();
 		this._destroyed = true;
 		await this.redis.quit();
 	}

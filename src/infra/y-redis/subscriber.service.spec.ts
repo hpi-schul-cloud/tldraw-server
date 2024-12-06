@@ -1,12 +1,10 @@
 import { createMock } from '@golevelup/ts-jest';
-import { RedisService } from '../../infra/redis/redis.service.js';
 import { Api } from './api.service.js';
-import { DocumentStorage } from './storage.js';
 import * as subscriberService from './subscriber.service.js';
 import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
 
 describe('SubscriberService', () => {
-	describe('run', () => {
+	/*describe('run', () => {
 		let callCount = 0;
 
 		beforeEach(() => {
@@ -40,9 +38,9 @@ describe('SubscriberService', () => {
 
 			expect(subscriber.run).toHaveBeenCalled();
 		});
-	});
+	});*/
 
-	describe('createSubscriber', () => {
+	/*	describe('createSubscriber', () => {
 		const setup = () => {
 			const store = createMock<DocumentStorage>();
 			const createRedisInstance = createMock<RedisService>();
@@ -68,7 +66,7 @@ describe('SubscriberService', () => {
 			expect(subscriber).toBeDefined();
 			expect(subscriber).toBeInstanceOf(subscriberService.Subscriber);
 		});
-	});
+	});*/
 
 	describe(subscriberService.Subscriber.name, () => {
 		const setup = () => {

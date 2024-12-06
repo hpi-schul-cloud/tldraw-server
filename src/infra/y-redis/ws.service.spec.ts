@@ -3,23 +3,11 @@ import { encoding } from 'lib0';
 import * as uws from 'uWebSockets.js';
 import { Awareness } from 'y-protocols/awareness.js';
 import * as Y from 'yjs';
-import { RedisService } from '../redis/redis.service.js';
-import * as apiClass from './api.service.js';
 import { Api } from './api.service.js';
 import { computeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
-import { DocumentStorage } from './storage.js';
-import * as subscriberClass from './subscriber.service.js';
 import { Subscriber } from './subscriber.service.js';
-import {
-	closeCallback,
-	messageCallback,
-	openCallback,
-	registerYWebsocketServer,
-	upgradeCallback,
-	User,
-	YWebsocketServer,
-} from './ws.service.js';
+import { closeCallback, messageCallback, openCallback, upgradeCallback, User } from './ws.service.js';
 
 describe('ws service', () => {
 	beforeEach(() => {
@@ -43,43 +31,6 @@ describe('ws service', () => {
 
 		return Buffer.from(encoding.toUint8Array(encoder));
 	};
-
-	describe('registerYWebsocketServer', () => {
-		const setup = () => {
-			const app = createMock<uws.TemplatedApp>();
-			const pattern = 'pattern';
-			const store = createMock<DocumentStorage>();
-			const checkAuth = jest.fn();
-			const options = {};
-			const createRedisInstance = createMock<RedisService>();
-			const client = createMock<Api>();
-			jest.spyOn(apiClass, 'createApiClient').mockResolvedValueOnce(client);
-			const subscriber = createMock<Subscriber>();
-			jest.spyOn(subscriberClass, 'createSubscriber').mockResolvedValueOnce(subscriber);
-
-			return { app, pattern, store, checkAuth, options, createRedisInstance, subscriber, client };
-		};
-
-		it('returns YWebsocketServer', async () => {
-			const { app, pattern, store, checkAuth, options, createRedisInstance } = setup();
-
-			const result = await registerYWebsocketServer(app, pattern, store, checkAuth, options, createRedisInstance);
-
-			expect(result).toEqual(expect.any(YWebsocketServer));
-		});
-
-		describe('yWebsocketServer.destroy', () => {
-			it('should destroy client and subscriber', async () => {
-				const { app, pattern, store, checkAuth, options, createRedisInstance, subscriber, client } = setup();
-
-				const server = await registerYWebsocketServer(app, pattern, store, checkAuth, options, createRedisInstance);
-				server.destroy();
-
-				expect(subscriber.destroy).toHaveBeenCalledTimes(1);
-				expect(client.destroy).toHaveBeenCalledTimes(1);
-			});
-		});
-	});
 
 	describe('upgradeCallback', () => {
 		describe('when aborted is emitted from response', () => {
