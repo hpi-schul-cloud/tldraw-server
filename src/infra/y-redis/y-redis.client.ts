@@ -31,12 +31,12 @@ export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Do
 	});
 };
 
-type CallbackFunction = () => void;
-
 export class YRedisClient implements OnModuleInit {
 	public readonly redisPrefix: string;
-	public _destroyed; // TODO: should be private
-	private destroyedCallback: CallbackFunction;
+	public _destroyed; // TODO: private?
+	private destroyedCallback = (): void => {
+		// empty
+	};
 
 	public constructor(
 		private readonly store: DocumentStorage, // TODO: Naming?
@@ -45,21 +45,18 @@ export class YRedisClient implements OnModuleInit {
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
 		this._destroyed = false;
-		this.destroyedCallback = (): void => {
-			// Empty callback
-		};
 	}
 	public async onModuleInit(): Promise<void> {
-		await this.redis.createGroup();
+		await this.redis.createGroup(); // TODO: War das nur für worker relevant?
 	}
 
-	public registerDestroyedCallback(callback: CallbackFunction): void {
+	public registerDestroyedCallback(callback: () => void): void {
 		this.destroyedCallback = callback;
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
 		if (streams.length === 0) {
-			await promise.wait(50);
+			await promise.wait(50); // TODO: verschieben zur Schleife
 
 			return [];
 		}
