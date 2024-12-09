@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Awareness } from 'y-protocols/awareness.js';
 import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
-import { RedisAdapter } from '../../infra/redis/interfaces/index.js';
+import { RedisAdapter, StreamMessageReply } from '../../infra/redis/interfaces/index.js';
 import {
 	streamMessageReplyFactory,
 	xAutoClaimResponseFactory,
@@ -13,6 +13,28 @@ import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
+import { YRedisDoc } from 'infra/y-redis/interfaces/y-redis-doc.js';
+
+const mapStreamMessageReplaysToTask = (streamMessageReplys: StreamMessageReply[]) => {
+	const tasks = streamMessageReplys.map((m) => ({
+		stream: m.message.compact.toString(),
+		id: m?.id.toString(),
+	}));
+
+	return tasks;
+};
+
+const createYRedisDocMock = (): YRedisDoc => {
+	const yDocMock = {
+		ydoc: createMock<Doc>(),
+		awareness: createMock<Awareness>(),
+		redisLastId: '0',
+		storeReferences: null,
+		docChanged: true,
+	};
+
+	return yDocMock;
+};
 
 describe(WorkerService.name, () => {
 	let module: TestingModule;
@@ -145,32 +167,19 @@ describe(WorkerService.name, () => {
 			describe('when stream length is 0', () => {
 				describe('when deletedDocEntries is empty', () => {
 					const setup = () => {
-						// ClientMock
-						yRedisClient.getDoc.mockResolvedValue({
-							ydoc: createMock<Doc>(),
-							awareness: createMock<Awareness>(),
-							redisLastId: '0',
-							storeReferences: null,
-							docChanged: false,
-						});
+						const yRedisDocMock = createYRedisDocMock();
+						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
-						// RedisAdapterMock
-						const streamMessageReply1 = streamMessageReplyFactory.build();
-						const streamMessageReply2 = streamMessageReplyFactory.build();
-						const streamMessageReply3 = streamMessageReplyFactory.build();
-
+						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
 						const reclaimedTasks = xAutoClaimResponseFactory.build();
-						reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
+						reclaimedTasks.messages = streamMessageReplys;
+						const deletedDocEntries: StreamMessageReply[] = [];
 
 						redisAdapter.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
-						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce([]);
+						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
 						redisAdapter.tryClearTask.mockResolvedValueOnce(0).mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
-						// Test setup
-						const expectedTasks = reclaimedTasks.messages.map((m) => ({
-							stream: m.message.compact.toString(),
-							id: m?.id.toString(),
-						}));
+						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
 
 						return { expectedTasks };
 					};
@@ -186,31 +195,19 @@ describe(WorkerService.name, () => {
 
 				describe('when deletedDocEntries contains element', () => {
 					const setup = () => {
-						yRedisClient.getDoc.mockResolvedValue({
-							ydoc: createMock<Doc>(),
-							awareness: createMock<Awareness>(),
-							redisLastId: '0',
-							storeReferences: null,
-							docChanged: false,
-						});
+						const yRedisDocMock = createYRedisDocMock();
+						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
-						const streamMessageReply1 = streamMessageReplyFactory.build();
-						const streamMessageReply2 = streamMessageReplyFactory.build();
-						const streamMessageReply3 = streamMessageReplyFactory.build();
-
+						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
 						const reclaimedTasks = xAutoClaimResponseFactory.build();
-						reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
-
-						const deletedDocEntries = [streamMessageReply2];
+						reclaimedTasks.messages = streamMessageReplys;
+						const deletedDocEntries = [streamMessageReplys[2]];
 
 						redisAdapter.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
 						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
 						redisAdapter.tryClearTask.mockResolvedValueOnce(0).mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
-						const expectedTasks = reclaimedTasks.messages.map((m) => ({
-							stream: m.message.compact.toString(),
-							id: m?.id.toString(),
-						}));
+						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
 
 						return { expectedTasks };
 					};
@@ -228,22 +225,13 @@ describe(WorkerService.name, () => {
 			describe('when stream length is not 0', () => {
 				describe('when docChanged is false', () => {
 					const setup = () => {
-						yRedisClient.getDoc.mockResolvedValue({
-							ydoc: createMock<Doc>(),
-							awareness: createMock<Awareness>(),
-							redisLastId: '0',
-							storeReferences: null,
-							docChanged: false,
-						});
+						const yRedisDocMock = createYRedisDocMock();
+						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
-						const streamMessageReply1 = streamMessageReplyFactory.build();
-						const streamMessageReply2 = streamMessageReplyFactory.build();
-						const streamMessageReply3 = streamMessageReplyFactory.build();
-
+						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
 						const reclaimedTasks = xAutoClaimResponseFactory.build();
-						reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
-
-						const deletedDocEntries = [streamMessageReply2];
+						reclaimedTasks.messages = streamMessageReplys;
+						const deletedDocEntries = [streamMessageReplys[2]];
 
 						redisAdapter.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
 						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
@@ -258,10 +246,7 @@ describe(WorkerService.name, () => {
 								return await Promise.resolve(task.stream.length);
 							});
 
-						const expectedTasks = reclaimedTasks.messages.map((m) => ({
-							stream: m.message.compact.toString(),
-							id: m?.id.toString(),
-						}));
+						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
 
 						return { expectedTasks };
 					};
@@ -277,22 +262,13 @@ describe(WorkerService.name, () => {
 
 				describe('when docChanged is true', () => {
 					const setup = () => {
-						yRedisClient.getDoc.mockResolvedValue({
-							ydoc: createMock<Doc>(),
-							awareness: createMock<Awareness>(),
-							redisLastId: '0',
-							storeReferences: null,
-							docChanged: true,
-						});
+						const yRedisDocMock = createYRedisDocMock();
+						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
-						const streamMessageReply1 = streamMessageReplyFactory.build();
-						const streamMessageReply2 = streamMessageReplyFactory.build();
-						const streamMessageReply3 = streamMessageReplyFactory.build();
-
+						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
 						const reclaimedTasks = xAutoClaimResponseFactory.build();
-						reclaimedTasks.messages = [streamMessageReply1, streamMessageReply2, streamMessageReply3];
-
-						const deletedDocEntries = [streamMessageReply2];
+						reclaimedTasks.messages = streamMessageReplys;
+						const deletedDocEntries = [streamMessageReplys[2]];
 
 						redisAdapter.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
 						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
@@ -307,10 +283,7 @@ describe(WorkerService.name, () => {
 								return await Promise.resolve(task.stream.length);
 							});
 
-						const expectedTasks = reclaimedTasks.messages.map((m) => ({
-							stream: m.message.compact.toString(),
-							id: m?.id.toString(),
-						}));
+						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
 
 						return { expectedTasks };
 					};
