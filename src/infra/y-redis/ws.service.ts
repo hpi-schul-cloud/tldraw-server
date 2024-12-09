@@ -43,6 +43,45 @@ export class YWebsocketServer {
 }
 */
 
+// TODO Mapper?
+class YRedisService {
+	// filter out messages that we simply want to propagate to all clients
+	// sync update or sync step 2
+	// awareness update
+	public static setupMessageThatCanBePropagateToAllClientsWithoutPersisting(
+		messageBuffer: ArrayBuffer,
+		yRedisUser: YRedisUser,
+	): Buffer | null {
+		// It is important to copy the data here
+		const message = Buffer.from(messageBuffer.slice(0, messageBuffer.byteLength));
+
+		if (isSyncUpdateOrSyncStep2OrAwarenessUpdate(message)) {
+			if (isAwarenessUpdate(message)) {
+				const decoder = decoding.createDecoder(message);
+				decoding.readVarUint(decoder); // read message type
+				decoding.readVarUint(decoder); // read length of awareness update
+				const alen = decoding.readVarUint(decoder); // number of awareness updates
+				const awId = decoding.readVarUint(decoder);
+				if (alen === 1 && (yRedisUser.awarenessId === null || yRedisUser.awarenessId === awId)) {
+					// only update awareness if len=1
+					yRedisUser.awarenessId = awId;
+					yRedisUser.awarenessLastClock = decoding.readVarUint(decoder);  // !!!TODO!!! modifiziert = setup??
+				}
+			}
+
+			return message;
+		}
+
+		if (message[0] === protocol.messageSync && message[1] === protocol.messageSyncStep1) { // TODO Methode die das bezeichnet
+			// sync step 1
+			// can be safely ignored because we send the full initial state at the beginning
+			return null;
+		}
+
+		throw new Error(`Unexpected message type ${message}`);
+	}
+}
+
 export const upgradeCallback = async (
 	res: uws.HttpResponse,
 	req: uws.HttpRequest,
@@ -153,35 +192,13 @@ export const messageCallback = (
 ): void => {
 	try {
 		const user = ws.getUserData();
-		// don't read any messages from users without write access
+		// don't read any messages from users without write access // TODO authorization check in private Methode
 		if (!user.hasWriteAccess || !user.room) return;
-		// It is important to copy the data here
-		const message = Buffer.from(messageBuffer.slice(0, messageBuffer.byteLength));
 
-		if (
-			// filter out messages that we simply want to propagate to all clients
-			// sync update or sync step 2
-			// awareness update
-			isSyncUpdateOrSyncStep2OrAwarenessUpdate(message)
-		) {
-			if (isAwarenessUpdate(message)) {
-				const decoder = decoding.createDecoder(message);
-				decoding.readVarUint(decoder); // read message type
-				decoding.readVarUint(decoder); // read length of awareness update
-				const alen = decoding.readVarUint(decoder); // number of awareness updates
-				const awId = decoding.readVarUint(decoder);
-				if (alen === 1 && (user.awarenessId === null || user.awarenessId === awId)) {
-					// only update awareness if len=1
-					user.awarenessId = awId;
-					user.awarenessLastClock = decoding.readVarUint(decoder);
-				}
-			}
+		const message = YRedisService.setupMessageThatCanBePropagateToAllClientsWithoutPersisting(messageBuffer, user);
+
+		if (message) {
 			client.addMessage(user.room, 'index', message);
-		} else if (message[0] === protocol.messageSync && message[1] === protocol.messageSyncStep1) {
-			// sync step 1
-			// can be safely ignored because we send the full initial state at the beginning
-		} else {
-			console.error('Unexpected message type', message);
 		}
 	} catch (error) {
 		console.error(error);
