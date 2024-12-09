@@ -1,6 +1,4 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { computeRedisRoomStreamName, isSmallerRedisId } from 'infra/y-redis/helper.js';
-import { YRedisUser } from 'infra/y-redis/y-redis-user.js';
 import { encoding } from 'lib0';
 import {
 	HttpRequest,
@@ -14,7 +12,9 @@ import { AuthorizationService } from '../../../infra/authorization/authorization
 import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
+import { computeRedisRoomStreamName, isSmallerRedisId } from '../../../infra/y-redis/helper.js';
 import { Subscriber } from '../../../infra/y-redis/subscriber.service.js';
+import { YRedisUser } from '../../../infra/y-redis/y-redis-user.js';
 import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
 import { YRedisService } from '../../../infra/y-redis/y-redis.service.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
