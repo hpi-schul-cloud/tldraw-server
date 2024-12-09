@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { RedisKey } from 'ioredis';
 import { Logger } from '../../infra/logger/index.js';
@@ -17,7 +17,7 @@ interface Job {
 }
 
 @Injectable()
-export class WorkerService implements OnModuleInit, Job {
+export class WorkerService implements Job {
 	private readonly consumerId = randomUUID();
 	private running = true;
 
@@ -29,33 +29,20 @@ export class WorkerService implements OnModuleInit, Job {
 		private readonly yRedisClient: YRedisClient,
 	) {
 		this.logger.setContext(WorkerService.name);
-	}
-
-	public onModuleInit(): void {
 		this.yRedisClient.registerDestroyedCallback(() => {
 			this.stop();
 		});
-		/**
-		 * The promise is started without await as seperate handled promise chain.
-		 */
-		this.start(this.config.WORKER_IDLE_BREAK_MS); // TODO BREAK -> PAUSE
 	}
 
-	public async start(idleBreakTimeInMs = 1): Promise<void> {
-		try {
-			this.running = true;
+	public async start(): Promise<void> {
+		this.running = true;
 
-			while (this.running) {
-				const tasks = await this.consumeWorkerQueue();
-				await this.waitIfNoOpenTask(tasks, idleBreakTimeInMs);
-			}
-
-			this.logger.log(`Start worker process ${this.consumerId}`);
-		} catch (error) {
-			this.stop();
-			console.error(error);
-			process.exit(1);
+		while (this.running) {
+			const tasks = await this.consumeWorkerQueue();
+			await this.waitIfNoOpenTask(tasks, this.config.WORKER_IDLE_BREAK_MS);
 		}
+
+		this.logger.log(`Start worker process ${this.consumerId}`);
 	}
 
 	public stop(): void {

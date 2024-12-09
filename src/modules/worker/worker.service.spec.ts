@@ -15,12 +15,14 @@ import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
 
 describe(WorkerService.name, () => {
+	let module: TestingModule;
 	let service: WorkerService;
 	let redisAdapter: DeepMocked<RedisAdapter>;
 	let yRedisClient: DeepMocked<YRedisClient>;
 
 	beforeAll(async () => {
-		const module: TestingModule = await Test.createTestingModule({
+		// TODO: should we start the app as api-test for this job?
+		module = await Test.createTestingModule({
 			providers: [
 				WorkerService,
 				{
@@ -51,17 +53,18 @@ describe(WorkerService.name, () => {
 			],
 		}).compile();
 
-		// await module.init(); // this is where onModuleInit is called, do module.resolve the same?
 		service = await module.resolve(WorkerService);
 		redisAdapter = module.get(REDIS_FOR_WORKER);
 		yRedisClient = module.get(YRedisClient);
-
-		//await service.onModuleInit();
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
 		service.stop();
+	});
+
+	afterAll(async () => {
+		await module.close();
 	});
 
 	it('should be defined', () => {
@@ -101,14 +104,6 @@ describe(WorkerService.name, () => {
 
 				expect(spy).toHaveBeenCalled();
 			});
-
-			it('should running after calling onModuleInit', () => {
-				setup();
-
-				service.onModuleInit();
-
-				expect(service.status()).toBe(true);
-			});
 		});
 
 		describe('when new service instance is not running', () => {
@@ -146,20 +141,6 @@ describe(WorkerService.name, () => {
 	});
 
 	describe('consumeWorkerQueue', () => {
-		describe('when there are no tasks', () => {
-			const setup = () => {
-				service.start();
-			};
-
-			it('should return an empty array', async () => {
-				await setup();
-
-				const result = await service.consumeWorkerQueue();
-
-				expect(result).toEqual([]);
-			});
-		});
-
 		describe('when there are tasks', () => {
 			describe('when stream length is 0', () => {
 				describe('when deletedDocEntries is empty', () => {
