@@ -1,22 +1,22 @@
 import { createMock } from '@golevelup/ts-jest';
 import * as Awareness from 'y-protocols/awareness';
 import * as Y from 'yjs';
-import { RedisFactory } from '../../infra/redis/redis.service.js';
+// import { RedisFactory } from '../redis/redis.service.js';
 import { RedisAdapter } from '../redis/interfaces/index.js';
-import { Api, handleMessageUpdates } from './api.service.js';
+import { YRedisClient, handleMessageUpdates } from './y-redis.client.js';
 import * as helper from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
 import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
 
-describe(Api.name, () => {
+describe(YRedisClient.name, () => {
 	const setupApi = () => {
 		const store = createMock<DocumentStorage>();
 		const redis = createMock<RedisAdapter>({
 			redisPrefix: 'prefix',
 		});
-		const api = new Api(store, redis);
+		const api = new YRedisClient(store, redis);
 
 		return { store, redis, api };
 	};
@@ -331,18 +331,19 @@ describe('handleMessageUpdates', () => {
 	});
 });
 
+// TODO
 describe('createApiClient', () => {
-	const setup = () => {
+	/* const setup = () => { 
 		const store = createMock<DocumentStorage>();
 		const redisService = createMock<RedisFactory>();
 		const redisInstance = createMock<RedisAdapter>();
-		const apiInstance = createMock<Api>({
+		const apiInstance = createMock<YRedisService>({
 			redis: redisInstance,
 		});
 
 		return { store, redisService, redisInstance, apiInstance };
 	};
-
+	*/
 	/*it('should call createRedisInstance.createRedisInstance', async () => {
 		const { store, redisService } = setup();
 

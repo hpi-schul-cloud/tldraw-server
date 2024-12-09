@@ -3,7 +3,7 @@ import { encoding } from 'lib0';
 import * as uws from 'uWebSockets.js';
 import { Awareness } from 'y-protocols/awareness.js';
 import * as Y from 'yjs';
-import { Api } from './api.service.js';
+import { YRedisClient } from './y-redis.client.js';
 import { computeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
 import { Subscriber } from './subscriber.service.js';
@@ -122,7 +122,7 @@ describe('ws service', () => {
 		const buildParams = () => {
 			const ws = createMock<uws.WebSocket<User>>();
 			const subscriber = createMock<Subscriber>();
-			const client = createMock<Api>({ redisPrefix: 'prefix' });
+			const client = createMock<YRedisClient>({ redisPrefix: 'prefix' });
 			const redisMessageSubscriber = jest.fn();
 			const openWsCallback = jest.fn();
 			const initDocCallback = jest.fn();
@@ -451,7 +451,7 @@ describe('ws service', () => {
 	describe('messageCallback', () => {
 		const buildParams = () => {
 			const ws = createMock<uws.WebSocket<User>>();
-			const client = createMock<Api>({ redisPrefix: 'prefix' });
+			const client = createMock<YRedisClient>({ redisPrefix: 'prefix' });
 
 			return { ws, client };
 		};
@@ -809,7 +809,7 @@ describe('ws service', () => {
 	describe('closeCallback', () => {
 		const buildParams = () => {
 			const ws = createMock<uws.WebSocket<User>>();
-			const client = createMock<Api>({ redisPrefix: 'prefix' });
+			const client = createMock<YRedisClient>({ redisPrefix: 'prefix' });
 			const app = createMock<uws.TemplatedApp>();
 			const subscriber = createMock<Subscriber>();
 

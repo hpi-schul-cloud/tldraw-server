@@ -5,7 +5,7 @@ import { TemplatedApp } from 'uWebSockets.js';
 import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
 import { Logger } from '../../../infra/logger/logger.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
-import { Api } from '../../../infra/y-redis/api.service.js';
+import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
 import { Subscriber } from '../../../infra/y-redis/subscriber.service.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
@@ -30,8 +30,8 @@ describe(WebsocketGateway.name, () => {
 					useValue: createMock<Subscriber>(),
 				},
 				{
-					provide: Api,
-					useValue: createMock<Api>(),
+					provide: YRedisClient,
+					useValue: createMock<YRedisClient>(),
 				},
 				{
 					provide: AuthorizationService,

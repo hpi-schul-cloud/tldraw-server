@@ -9,7 +9,7 @@ import {
 	xAutoClaimResponseFactory,
 } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
-import { Api } from '../../infra/y-redis/api.service.js';
+import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
@@ -17,14 +17,15 @@ import { WorkerService } from './worker.service.js';
 describe(WorkerService.name, () => {
 	let service: WorkerService;
 	let redisAdapter: DeepMocked<RedisAdapter>;
+	let yRedisClient: DeepMocked<YRedisClient>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				WorkerService,
 				{
-					provide: Api,
-					useValue: createMock<Api>(),
+					provide: YRedisClient,
+					useValue: createMock<YRedisClient>(),
 				},
 				{
 					provide: StorageService,
@@ -53,6 +54,7 @@ describe(WorkerService.name, () => {
 		// await module.init(); // this is where onModuleInit is called, do module.resolve the same?
 		service = await module.resolve(WorkerService);
 		redisAdapter = module.get(REDIS_FOR_WORKER);
+		yRedisClient = module.get(YRedisClient);
 
 		//await service.onModuleInit();
 	});
@@ -161,10 +163,9 @@ describe(WorkerService.name, () => {
 		describe('when there are tasks', () => {
 			describe('when stream length is 0', () => {
 				describe('when deletedDocEntries is empty', () => {
-					const setup = async () => {
+					const setup = () => {
 						// ClientMock
-						const client: DeepMocked<Api> = createMock<Api>();
-						client.getDoc.mockResolvedValue({
+						yRedisClient.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
 							awareness: createMock<Awareness>(),
 							redisLastId: '0',
@@ -194,7 +195,7 @@ describe(WorkerService.name, () => {
 					};
 
 					it('should return an array of tasks', async () => {
-						const { expectedTasks } = await setup();
+						const { expectedTasks } = setup();
 
 						const result = await service.consumeWorkerQueue();
 
@@ -203,9 +204,8 @@ describe(WorkerService.name, () => {
 				});
 
 				describe('when deletedDocEntries contains element', () => {
-					const setup = async () => {
-						const client: DeepMocked<Api> = createMock<Api>();
-						client.getDoc.mockResolvedValue({
+					const setup = () => {
+						yRedisClient.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
 							awareness: createMock<Awareness>(),
 							redisLastId: '0',
@@ -235,7 +235,7 @@ describe(WorkerService.name, () => {
 					};
 
 					it('should return an array of tasks', async () => {
-						const { expectedTasks } = await setup();
+						const { expectedTasks } = setup();
 
 						const result = await service.consumeWorkerQueue();
 
@@ -244,11 +244,10 @@ describe(WorkerService.name, () => {
 				});
 			});
 
-			describe.skip('when stream length is not 0', () => {
+			describe('when stream length is not 0', () => {
 				describe('when docChanged is false', () => {
-					const setup = async () => {
-						const client: DeepMocked<Api> = createMock<Api>();
-						client.getDoc.mockResolvedValue({
+					const setup = () => {
+						yRedisClient.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
 							awareness: createMock<Awareness>(),
 							redisLastId: '0',
@@ -287,7 +286,7 @@ describe(WorkerService.name, () => {
 					};
 
 					it('should return an array of tasks', async () => {
-						const { expectedTasks } = await setup();
+						const { expectedTasks } = setup();
 
 						const result = await service.consumeWorkerQueue();
 
@@ -296,9 +295,8 @@ describe(WorkerService.name, () => {
 				});
 
 				describe('when docChanged is true', () => {
-					const setup = async () => {
-						const client: DeepMocked<Api> = createMock<Api>();
-						client.getDoc.mockResolvedValue({
+					const setup = () => {
+						yRedisClient.getDoc.mockResolvedValue({
 							ydoc: createMock<Doc>(),
 							awareness: createMock<Awareness>(),
 							redisLastId: '0',
@@ -337,7 +335,7 @@ describe(WorkerService.name, () => {
 					};
 
 					it('should return an array of tasks', async () => {
-						const { expectedTasks } = await setup();
+						const { expectedTasks } = setup();
 
 						const result = await service.consumeWorkerQueue();
 

@@ -5,7 +5,7 @@ import { AuthorizationService } from '../../../infra/authorization/authorization
 import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
-import { Api } from '../../../infra/y-redis/api.service.js';
+import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
 import { Subscriber } from '../../../infra/y-redis/subscriber.service.js';
 import {
 	closeCallback,
@@ -22,7 +22,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	public constructor(
 		@Inject(UWS) private readonly webSocketServer: TemplatedApp,
 		private readonly subscriberService: Subscriber,
-		private readonly client: Api,
+		private readonly yRedisClient: YRedisClient,
 		private readonly authorizationService: AuthorizationService,
 		@Inject(REDIS_FOR_SUBSCRIBE_OF_DELETION) private readonly redisAdapter: RedisAdapter,
 		private readonly config: TldrawServerConfig,
@@ -48,15 +48,15 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			sendPingsAutomatically: true,
 			upgrade: (res, req, context) => upgradeCallback(res, req, context, checkAuth),
 			open: (ws: WebSocket<User>) =>
-				openCallback(ws, this.subscriberService, this.client, this.redisMessageSubscriber, () =>
+				openCallback(ws, this.subscriberService, this.yRedisClient, this.redisMessageSubscriber, () =>
 					MetricsService.openConnectionsGauge.inc(),
 				),
-			message: (ws, messageBuffer) => messageCallback(ws, messageBuffer, this.client),
+			message: (ws, messageBuffer) => messageCallback(ws, messageBuffer, this.yRedisClient),
 			close: (ws, code, message) =>
 				closeCallback(
 					this.webSocketServer,
 					ws,
-					this.client,
+					this.yRedisClient,
 					this.subscriberService,
 					code,
 					message,

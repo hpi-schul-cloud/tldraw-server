@@ -11,7 +11,7 @@ import * as decoding from 'lib0/decoding';
 import * as uws from 'uWebSockets.js';
 import * as Y from 'yjs';
 import { ResponsePayload } from '../authorization/interfaces/response.payload.js';
-import { Api } from './api.service.js';
+import { YRedisClient } from './y-redis.client.js';
 import { computeRedisRoomStreamName, isSmallerRedisId } from './helper.js';
 import * as protocol from './protocol.js';
 import { Subscriber } from './subscriber.service.js';
@@ -31,7 +31,7 @@ import { Subscriber } from './subscriber.service.js';
 export class YWebsocketServer {
 	public constructor(
 		public readonly app: uws.TemplatedApp,
-		public readonly client: Api,
+		public readonly client: YRedisClient,
 		public readonly subscriber: Subscriber,
 	) {}
 
@@ -111,10 +111,10 @@ export const upgradeCallback = async (
 export const openCallback = async (
 	ws: uws.WebSocket<User>,
 	subscriber: Subscriber,
-	client: Api,
+	client: YRedisClient,
 	redisMessageSubscriber: (stream: string, messages: Uint8Array[]) => void,
 	openWsCallback?: (ws: uws.WebSocket<User>) => void,
-	initDocCallback?: (room: string, docname: string, client: Api) => void,
+	initDocCallback?: (room: string, docname: string, client: YRedisClient) => void,
 ): Promise<void> => {
 	try {
 		const user = ws.getUserData();
@@ -177,7 +177,7 @@ const isSyncUpdateOrSyncStep2OrAwarenessUpdate = (message: Buffer): boolean =>
 		(message[1] === protocol.messageSyncUpdate || message[1] === protocol.messageSyncStep2)) ||
 	isAwarenessUpdate(message);
 
-export const messageCallback = (ws: uws.WebSocket<User>, messageBuffer: ArrayBuffer, client: Api): void => {
+export const messageCallback = (ws: uws.WebSocket<User>, messageBuffer: ArrayBuffer, client: YRedisClient): void => {
 	try {
 		const user = ws.getUserData();
 		// don't read any messages from users without write access
@@ -219,7 +219,7 @@ export const messageCallback = (ws: uws.WebSocket<User>, messageBuffer: ArrayBuf
 export const closeCallback = (
 	app: uws.TemplatedApp,
 	ws: uws.WebSocket<User>,
-	client: Api,
+	client: YRedisClient,
 	subscriber: Subscriber,
 	code: number,
 	message: ArrayBuffer,

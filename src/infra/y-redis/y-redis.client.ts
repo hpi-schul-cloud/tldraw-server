@@ -33,13 +33,13 @@ export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Do
 
 type CallbackFunction = () => void;
 
-export class Api implements OnModuleInit {
+export class YRedisClient implements OnModuleInit {
 	public readonly redisPrefix: string;
 	public _destroyed; // TODO: should be private
 	private destroyedCallback: CallbackFunction;
 
 	public constructor(
-		private readonly store: DocumentStorage,
+		private readonly store: DocumentStorage, // TODO: Naming?
 		public readonly redis: RedisAdapter,
 	) {
 		this.store = store;

@@ -1,5 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
-import { Api } from './api.service.js';
+import { YRedisClient } from './y-redis.client.js';
 import * as subscriberService from './subscriber.service.js';
 import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
 
@@ -70,10 +70,10 @@ describe('SubscriberService', () => {
 
 	describe(subscriberService.Subscriber.name, () => {
 		const setup = () => {
-			const api = createMock<Api>();
-			const subscriber = new subscriberService.Subscriber(api);
+			const yRedisClient = createMock<YRedisClient>();
+			const subscriber = new subscriberService.Subscriber(yRedisClient); // TODO
 
-			return { subscriber, api };
+			return { subscriber, yRedisClient };
 		};
 
 		it('should be defined', () => {
@@ -205,30 +205,30 @@ describe('SubscriberService', () => {
 
 		describe('destroy', () => {
 			it('should call client destroy', async () => {
-				const { subscriber, api } = setup();
+				const { subscriber, yRedisClient } = setup();
 
 				await subscriber.destroy();
 
-				expect(api.destroy).toHaveBeenCalled();
+				expect(yRedisClient.destroy).toHaveBeenCalled();
 			});
 		});
 
 		describe('run', () => {
 			const setupRun = () => {
-				const { api, subscriber } = setup();
+				const { yRedisClient, subscriber } = setup();
 				const subscriptionHandler = jest.fn();
 
 				subscriber.subscribe('test', subscriptionHandler);
 
-				return { api, subscriber, subscriptionHandler };
+				return { yRedisClient, subscriber, subscriptionHandler };
 			};
 
 			it('should call client getMessages', async () => {
-				const { api, subscriber } = setupRun();
+				const { yRedisClient, subscriber } = setupRun();
 
 				await subscriber.run();
 
-				expect(api.getMessages).toHaveBeenCalledWith(
+				expect(yRedisClient.getMessages).toHaveBeenCalledWith(
 					expect.arrayContaining([
 						{
 							key: expect.any(String),
@@ -239,10 +239,10 @@ describe('SubscriberService', () => {
 			});
 
 			it('should call subscription handler', async () => {
-				const { api, subscriber } = setupRun();
+				const { yRedisClient, subscriber } = setupRun();
 				const messages = yRedisMessageFactory.buildList(3, { stream: 'test' });
 				const spyGetSubscribers = jest.spyOn(subscriber.subscribers, 'get');
-				api.getMessages.mockResolvedValueOnce(messages);
+				yRedisClient.getMessages.mockResolvedValueOnce(messages);
 
 				await subscriber.run();
 
@@ -250,9 +250,9 @@ describe('SubscriberService', () => {
 			});
 
 			it('should call subscription handler', async () => {
-				const { api, subscriber, subscriptionHandler } = setupRun();
+				const { yRedisClient, subscriber, subscriptionHandler } = setupRun();
 				const messages = yRedisMessageFactory.buildList(3, { stream: 'test' });
-				api.getMessages.mockResolvedValue(messages);
+				yRedisClient.getMessages.mockResolvedValue(messages);
 
 				await subscriber.run();
 
@@ -262,9 +262,9 @@ describe('SubscriberService', () => {
 			});
 
 			it('should skip subscription handler', async () => {
-				const { api, subscriber, subscriptionHandler } = setupRun();
+				const { yRedisClient, subscriber, subscriptionHandler } = setupRun();
 				const messages = yRedisMessageFactory.buildList(3, { stream: 'skip' });
-				api.getMessages.mockResolvedValue(messages);
+				yRedisClient.getMessages.mockResolvedValue(messages);
 
 				await subscriber.run();
 
@@ -273,12 +273,12 @@ describe('SubscriberService', () => {
 
 			describe('when nextId is not null', () => {
 				const setupRun = () => {
-					const { api, subscriber } = setup();
+					const { yRedisClient, subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
 					subscriber.subscribe('test', subscriptionHandler);
 					const messages = yRedisMessageFactory.build({ stream: 'test' });
-					api.getMessages.mockResolvedValue([messages]);
+					yRedisClient.getMessages.mockResolvedValue([messages]);
 
 					const testSubscriber = subscriber.subscribers.get('test');
 					if (testSubscriber) {
@@ -290,7 +290,7 @@ describe('SubscriberService', () => {
 						id: '1',
 					};
 
-					return { api, subscriber, testSubscriber, expectedMessages };
+					return { yRedisClient, subscriber, testSubscriber, expectedMessages };
 				};
 
 				it('should set id and nextId ', async () => {

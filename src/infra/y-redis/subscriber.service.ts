@@ -6,7 +6,7 @@
 	https://github.com/yjs/y-redis
 */
 import * as map from 'lib0/map';
-import { Api } from './api.service.js';
+import { YRedisClient } from './y-redis.client.js';
 import { isSmallerRedisId } from './helper.js';
 
 export const running = true;
@@ -21,7 +21,7 @@ interface Subscriptions {
 export class Subscriber {
 	public readonly subscribers = new Map<string, Subscriptions>();
 
-	public constructor(private readonly client: Api) {}
+	public constructor(private readonly yRedisClient: YRedisClient) {}
 
 	public async start(): Promise<void> {
 		console.log('Subscriber is running');
@@ -57,11 +57,11 @@ export class Subscriber {
 	}
 
 	public async destroy(): Promise<void> {
-		await this.client.destroy();
+		await this.yRedisClient.destroy();
 	}
 
 	public async run(): Promise<void> {
-		const messages = await this.client.getMessages(
+		const messages = await this.yRedisClient.getMessages(
 			Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id })),
 		);
 

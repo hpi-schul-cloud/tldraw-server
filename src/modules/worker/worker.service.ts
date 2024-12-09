@@ -4,7 +4,7 @@ import { RedisKey } from 'ioredis';
 import { Logger } from '../../infra/logger/index.js';
 import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/interfaces/index.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
-import { Api } from '../../infra/y-redis/api.service.js';
+import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
 import { decodeRedisRoomStreamName, RoomStreamInfos } from '../../infra/y-redis/helper.js';
 import { YRedisDoc } from '../../infra/y-redis/interfaces/y-redis-doc.js';
 import { WorkerConfig } from './worker.config.js';
@@ -26,13 +26,13 @@ export class WorkerService implements OnModuleInit, Job {
 		@Inject(REDIS_FOR_WORKER) private readonly redis: RedisAdapter,
 		private readonly logger: Logger,
 		private readonly config: WorkerConfig,
-		private readonly client: Api,
+		private readonly yRedisClient: YRedisClient,
 	) {
 		this.logger.setContext(WorkerService.name);
 	}
 
 	public onModuleInit(): void {
-		this.client.registerDestroyedCallback(() => {
+		this.yRedisClient.registerDestroyedCallback(() => {
 			this.stop();
 		});
 		/**
@@ -96,7 +96,7 @@ export class WorkerService implements OnModuleInit, Job {
 		task: Task,
 	): Promise<void> {
 		this.logger.log('requesting doc from store');
-		const yRedisDoc = await this.client.getDoc(roomStreamInfos.room, roomStreamInfos.docid); // TODO
+		const yRedisDoc = await this.yRedisClient.getDoc(roomStreamInfos.room, roomStreamInfos.docid); // TODO
 
 		// @todo, make sure that awareness by this.getDoc is eventually destroyed, or doesn't
 		// register a timeout anymore
