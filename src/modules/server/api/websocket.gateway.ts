@@ -7,15 +7,10 @@ import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
 import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
 import { Subscriber } from '../../../infra/y-redis/subscriber.service.js';
-import {
-	closeCallback,
-	messageCallback,
-	openCallback,
-	upgradeCallback,
-	YRedisUser,
-} from '../../../infra/y-redis/ws.service.js';
+import { closeCallback, messageCallback, openCallback, upgradeCallback } from '../../../infra/y-redis/ws.service.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
+import { YRedisUser } from 'infra/y-redis/y-redis-user.js';
 
 @Injectable()
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {

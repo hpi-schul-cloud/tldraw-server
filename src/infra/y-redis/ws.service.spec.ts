@@ -7,7 +7,8 @@ import { YRedisClient } from './y-redis.client.js';
 import { computeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
 import { Subscriber } from './subscriber.service.js';
-import { closeCallback, messageCallback, openCallback, upgradeCallback, YRedisUser } from './ws.service.js';
+import { closeCallback, messageCallback, openCallback, upgradeCallback } from './ws.service.js';
+import { YRedisUser } from './y-redis-user.js';
 
 describe('ws service', () => {
 	beforeEach(() => {
