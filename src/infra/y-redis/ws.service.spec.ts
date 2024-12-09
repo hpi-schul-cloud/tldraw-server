@@ -7,7 +7,7 @@ import { YRedisClient } from './y-redis.client.js';
 import { computeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
 import { Subscriber } from './subscriber.service.js';
-import { closeCallback, messageCallback, openCallback, upgradeCallback, User } from './ws.service.js';
+import { closeCallback, messageCallback, openCallback, upgradeCallback, YRedisUser } from './ws.service.js';
 
 describe('ws service', () => {
 	beforeEach(() => {
@@ -120,7 +120,7 @@ describe('ws service', () => {
 
 	describe('openCallback', () => {
 		const buildParams = () => {
-			const ws = createMock<uws.WebSocket<User>>();
+			const ws = createMock<uws.WebSocket<YRedisUser>>();
 			const subscriber = createMock<Subscriber>();
 			const client = createMock<YRedisClient>({ redisPrefix: 'prefix' });
 			const redisMessageSubscriber = jest.fn();
@@ -144,7 +144,7 @@ describe('ws service', () => {
 
 				const code = 111;
 				const reason = 'reason';
-				const user = createMock<User>({ error: { code, reason } });
+				const user = createMock<YRedisUser>({ error: { code, reason } });
 				ws.getUserData.mockReturnValue(user);
 
 				return { ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback, code, reason };
@@ -172,7 +172,7 @@ describe('ws service', () => {
 			const setup = () => {
 				const { ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback } = buildParams();
 
-				const user = createMock<User>({ room: null, error: null });
+				const user = createMock<YRedisUser>({ room: null, error: null });
 				ws.getUserData.mockReturnValue(user);
 
 				return { ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback };
@@ -199,7 +199,7 @@ describe('ws service', () => {
 			const setup = () => {
 				const { ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback } = buildParams();
 
-				const user = createMock<User>({ userid: null, error: null });
+				const user = createMock<YRedisUser>({ userid: null, error: null });
 				ws.getUserData.mockReturnValue(user);
 
 				return { ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback };
@@ -226,7 +226,7 @@ describe('ws service', () => {
 			const setup = () => {
 				const { ws, subscriber, client, redisMessageSubscriber, openWsCallback, initDocCallback } = buildParams();
 
-				const user = createMock<User>({ error: null, room: 'room', isClosed: false });
+				const user = createMock<YRedisUser>({ error: null, room: 'room', isClosed: false });
 				ws.getUserData.mockReturnValue(user);
 
 				const redisStream = computeRedisRoomStreamName(user.room ?? '', 'index', client.redisPrefix);
@@ -432,7 +432,7 @@ describe('ws service', () => {
 			const setup = () => {
 				const { ws, subscriber, client, redisMessageSubscriber } = buildParams();
 
-				const user = createMock<User>({ error: null, room: 'room', isClosed: true });
+				const user = createMock<YRedisUser>({ error: null, room: 'room', isClosed: true });
 				ws.getUserData.mockReturnValue(user);
 
 				return { ws, subscriber, client, redisMessageSubscriber };
@@ -450,7 +450,7 @@ describe('ws service', () => {
 
 	describe('messageCallback', () => {
 		const buildParams = () => {
-			const ws = createMock<uws.WebSocket<User>>();
+			const ws = createMock<uws.WebSocket<YRedisUser>>();
 			const client = createMock<YRedisClient>({ redisPrefix: 'prefix' });
 
 			return { ws, client };
@@ -488,7 +488,7 @@ describe('ws service', () => {
 				describe('when message is awareness update and users awarenessid is null', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: true,
 							room: 'room',
 							awarenessId: null,
@@ -527,7 +527,7 @@ describe('ws service', () => {
 				describe('when message is awareness update and users awarenessid is messages awarenessid', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: true,
 							room: 'room',
 							awarenessId: 75,
@@ -566,7 +566,7 @@ describe('ws service', () => {
 				describe('when message is sync update', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: true,
 							room: 'room',
 							awarenessId: null,
@@ -605,7 +605,7 @@ describe('ws service', () => {
 				describe('when message is sync step 2 update', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: true,
 							room: 'room',
 							awarenessId: null,
@@ -644,7 +644,7 @@ describe('ws service', () => {
 				describe('when message is sync step 1 update', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: true,
 							room: 'room',
 							awarenessId: null,
@@ -683,7 +683,7 @@ describe('ws service', () => {
 				describe('when message is of unknown type', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: true,
 							room: 'room',
 							awarenessId: null,
@@ -724,7 +724,7 @@ describe('ws service', () => {
 				describe('when message is awareness update', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: true,
 							room: null,
 							awarenessId: null,
@@ -767,7 +767,7 @@ describe('ws service', () => {
 				describe('when message is awareness update', () => {
 					const setup = () => {
 						const { ws, client } = buildParams();
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							hasWriteAccess: false,
 							room: 'room',
 							awarenessId: null,
@@ -808,7 +808,7 @@ describe('ws service', () => {
 
 	describe('closeCallback', () => {
 		const buildParams = () => {
-			const ws = createMock<uws.WebSocket<User>>();
+			const ws = createMock<uws.WebSocket<YRedisUser>>();
 			const client = createMock<YRedisClient>({ redisPrefix: 'prefix' });
 			const app = createMock<uws.TemplatedApp>();
 			const subscriber = createMock<Subscriber>();
@@ -850,7 +850,7 @@ describe('ws service', () => {
 						const { ws, client, app, subscriber } = buildParams();
 						app.numSubscribers.mockReturnValue(0);
 
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							room: 'room',
 							awarenessId: 22,
 							awarenessLastClock: 1,
@@ -914,7 +914,7 @@ describe('ws service', () => {
 					const setup = () => {
 						const { ws, client, app, subscriber } = buildParams();
 						app.numSubscribers.mockReturnValue(1);
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							room: 'room',
 							awarenessId: 22,
 							awarenessLastClock: 1,
@@ -949,7 +949,7 @@ describe('ws service', () => {
 					const setup = () => {
 						const { ws, client, app, subscriber } = buildParams();
 						app.numSubscribers.mockReturnValueOnce(0);
-						const user = createMock<User>({
+						const user = createMock<YRedisUser>({
 							room: 'room',
 							awarenessId: null,
 							awarenessLastClock: 1,
@@ -985,7 +985,7 @@ describe('ws service', () => {
 				const { ws, client, app, subscriber } = buildParams();
 				app.numSubscribers.mockReturnValue(0);
 
-				const user = createMock<User>({
+				const user = createMock<YRedisUser>({
 					room: null,
 					awarenessId: 22,
 					awarenessLastClock: 1,

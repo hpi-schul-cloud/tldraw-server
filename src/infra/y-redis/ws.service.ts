@@ -43,7 +43,7 @@ export class YWebsocketServer {
 
 let _idCnt = 0;
 
-export class User {
+export class YRedisUser {
 	public subs: Set<string>;
 	public id: number;
 	public awarenessId: number | null;
@@ -67,7 +67,7 @@ export class User {
 		/**
 		 * This is just an identifier to keep track of the user for logging purposes.
 		 */
-		this.id = _idCnt++;
+		this.id = _idCnt++; // TODO
 		this.awarenessId = null;
 		this.awarenessLastClock = 0;
 		this.isClosed = false;
@@ -93,7 +93,7 @@ export const upgradeCallback = async (
 		if (aborted) return;
 		res.cork(() => {
 			res.upgrade(
-				new User(room, hasWriteAccess, userid, error),
+				new YRedisUser(room, hasWriteAccess, userid, error),
 				headerWsKey,
 				headerWsProtocol,
 				headerWsExtensions,
@@ -109,11 +109,11 @@ export const upgradeCallback = async (
 };
 
 export const openCallback = async (
-	ws: uws.WebSocket<User>,
+	ws: uws.WebSocket<YRedisUser>,
 	subscriber: Subscriber,
 	client: YRedisClient,
 	redisMessageSubscriber: (stream: string, messages: Uint8Array[]) => void,
-	openWsCallback?: (ws: uws.WebSocket<User>) => void,
+	openWsCallback?: (ws: uws.WebSocket<YRedisUser>) => void,
 	initDocCallback?: (room: string, docname: string, client: YRedisClient) => void,
 ): Promise<void> => {
 	try {
@@ -177,7 +177,11 @@ const isSyncUpdateOrSyncStep2OrAwarenessUpdate = (message: Buffer): boolean =>
 		(message[1] === protocol.messageSyncUpdate || message[1] === protocol.messageSyncStep2)) ||
 	isAwarenessUpdate(message);
 
-export const messageCallback = (ws: uws.WebSocket<User>, messageBuffer: ArrayBuffer, client: YRedisClient): void => {
+export const messageCallback = (
+	ws: uws.WebSocket<YRedisUser>,
+	messageBuffer: ArrayBuffer,
+	client: YRedisClient,
+): void => {
 	try {
 		const user = ws.getUserData();
 		// don't read any messages from users without write access
@@ -218,13 +222,13 @@ export const messageCallback = (ws: uws.WebSocket<User>, messageBuffer: ArrayBuf
 
 export const closeCallback = (
 	app: uws.TemplatedApp,
-	ws: uws.WebSocket<User>,
+	ws: uws.WebSocket<YRedisUser>,
 	client: YRedisClient,
 	subscriber: Subscriber,
 	code: number,
 	message: ArrayBuffer,
 	redisMessageSubscriber: (stream: string, messages: Uint8Array[]) => void,
-	closeWsCallback?: (ws: uws.WebSocket<User>, code: number, message: ArrayBuffer) => void,
+	closeWsCallback?: (ws: uws.WebSocket<YRedisUser>, code: number, message: ArrayBuffer) => void,
 ): void => {
 	try {
 		const user = ws.getUserData();

@@ -12,7 +12,7 @@ import {
 	messageCallback,
 	openCallback,
 	upgradeCallback,
-	User,
+	YRedisUser,
 } from '../../../infra/y-redis/ws.service.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
@@ -47,7 +47,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			idleTimeout: 60,
 			sendPingsAutomatically: true,
 			upgrade: (res, req, context) => upgradeCallback(res, req, context, checkAuth),
-			open: (ws: WebSocket<User>) =>
+			open: (ws: WebSocket<YRedisUser>) =>
 				openCallback(ws, this.subscriberService, this.yRedisClient, this.redisMessageSubscriber, () =>
 					MetricsService.openConnectionsGauge.inc(),
 				),
