@@ -1,9 +1,9 @@
+import { OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
-import { RedisService } from '../redis/redis.service.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 import { YRedisDoc } from './interfaces/y-redis-doc.js';
@@ -31,30 +31,32 @@ export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Do
 	});
 };
 
-export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
-	const a = new Api(store, await createRedisInstance.createRedisInstance());
-
-	await a.redis.createGroup();
-
-	return a;
-};
-
-export class Api {
+export class YRedisClient implements OnModuleInit {
 	public readonly redisPrefix: string;
-	public _destroyed;
+	public _destroyed; // TODO: private?
+	private destroyedCallback = (): void => {
+		// empty
+	};
 
 	public constructor(
-		private readonly store: DocumentStorage,
+		private readonly store: DocumentStorage, // TODO: Naming?
 		public readonly redis: RedisAdapter,
 	) {
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
 		this._destroyed = false;
 	}
+	public async onModuleInit(): Promise<void> {
+		await this.redis.createGroup(); // TODO: War das nur für worker relevant?
+	}
+
+	public registerDestroyedCallback(callback: () => void): void {
+		this.destroyedCallback = callback;
+	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
 		if (streams.length === 0) {
-			await promise.wait(50);
+			await promise.wait(50); // TODO: verschieben zur Schleife
 
 			return [];
 		}
@@ -122,12 +124,14 @@ export class Api {
 
 		end();
 
+		// TODO class
 		const response = {
 			ydoc,
 			awareness,
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
+			getAwarenessStateSize: (): number => awareness.states.size,
 		};
 
 		if (ydoc.store.pendingStructs !== null) {
@@ -138,6 +142,7 @@ export class Api {
 	}
 
 	public async destroy(): Promise<void> {
+		this.destroyedCallback();
 		this._destroyed = true;
 		await this.redis.quit();
 	}

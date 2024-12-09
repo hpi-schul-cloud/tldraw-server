@@ -7,16 +7,20 @@ import { ConfigurationModule } from '../../infra/configuration/configuration.mod
 import { LoggerModule } from '../../infra/logger/logger.module.js';
 import { RedisModule } from '../../infra/redis/index.js';
 import { StorageModule } from '../../infra/storage/storage.module.js';
+import { YRedisModule } from '../../infra/y-redis/y-redis.module.js';
 import { TldrawConfigController } from './api/tldraw-confg.controller.js';
 import { TldrawDocumentController } from './api/tldraw-document.controller.js';
-import { UWS, WebsocketGateway } from './api/websocket.gateway.js';
+import { WebsocketGateway } from './api/websocket.gateway.js';
+import { REDIS_FOR_DELETION, REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from './server.const.js';
 import { TldrawDocumentService } from './service/tldraw-document.service.js';
 import { TldrawServerConfig } from './tldraw-server.config.js';
 
 @Module({
 	imports: [
 		ConfigurationModule.register(TldrawServerConfig),
-		RedisModule,
+		YRedisModule.forRoot(),
+		RedisModule.registerFor(REDIS_FOR_DELETION),
+		RedisModule.registerFor(REDIS_FOR_SUBSCRIBE_OF_DELETION),
 		StorageModule,
 		AuthorizationModule,
 		LoggerModule,

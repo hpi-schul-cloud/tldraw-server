@@ -4,7 +4,7 @@ import * as util from 'util';
 import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
-import { RedisService } from './redis.service.js';
+import { RedisFactory } from './redis.service.js';
 
 jest.mock('ioredis', () => {
 	return {
@@ -50,7 +50,7 @@ describe('Redis Service', () => {
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
 				const logger = createMock<Logger>();
-				const service = new RedisService(config, logger);
+				const service = new RedisFactory(config, logger);
 
 				const expectedProps = {
 					sentinels: [
@@ -105,7 +105,7 @@ describe('Redis Service', () => {
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
 				const logger = createMock<Logger>();
-				const service = new RedisService(config, logger);
+				const service = new RedisFactory(config, logger);
 
 				const expectedProps = redisUrl;
 

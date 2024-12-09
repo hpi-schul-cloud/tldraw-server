@@ -27,10 +27,11 @@ export const isSmallerRedisId = (a: string, b: string): boolean => {
 export const computeRedisRoomStreamName = (room: string, docid: string, prefix: string): string =>
 	`${prefix}:room:${encodeURIComponent(room)}:${encodeURIComponent(docid)}`;
 
-export const decodeRedisRoomStreamName = (
-	rediskey: string,
-	expectedPrefix: string,
-): { room: string; docid: string } => {
+export interface RoomStreamInfos {
+	room: string;
+	docid: string;
+}
+export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: string): RoomStreamInfos => {
 	const match = /^(.*):room:(.*):(.*)$/.exec(rediskey);
 	if (match == null || match[1] !== expectedPrefix) {
 		throw new Error(
