@@ -19,7 +19,14 @@ import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
 import { YRedisService } from '../../../infra/y-redis/y-redis.service.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
-import { YRedisDoc } from 'infra/y-redis/interfaces/y-redis-doc.js';
+import { YRedisDoc } from '../../../infra/y-redis/interfaces/y-redis-doc.js';
+import { YRedisUserFactory } from 'infra/y-redis/y-redis-user.factory.js';
+
+interface RequestHeaderInfos {
+	headerWsExtensions: string;
+	headerWsKey: string;
+	headerWsProtocol: string;
+}
 
 @Injectable()
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
@@ -69,31 +76,38 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 	private async upgradeCallback(res: HttpResponse, req: HttpRequest, context: us_socket_context_t): Promise<void> {
 		try {
-			const headerWsKey = req.getHeader('sec-websocket-key');
-			const headerWsProtocol = req.getHeader('sec-websocket-protocol');
-			const headerWsExtensions = req.getHeader('sec-websocket-extensions');
 			let aborted = false;
 			res.onAborted(() => {
 				aborted = true;
 			});
-			// @TODO: create factory method for YRedisUser
-			const { hasWriteAccess, room, userid, error } = await this.authorizationService.hasPermission(req);
+
+			// TODO: Das throwed nicht ! Was macht das aborted?
+			const authPayload = await this.authorizationService.hasPermission(req);
 			if (aborted) return;
+
 			res.cork(() => {
-				res.upgrade(
-					new YRedisUser(room, hasWriteAccess, userid, error),
-					headerWsKey,
-					headerWsProtocol,
-					headerWsExtensions,
-					context,
-				);
+				const yRedisUser = YRedisUserFactory.build(authPayload);
+				const { headerWsKey, headerWsProtocol, headerWsExtensions } = this.extractHeaderInfos(req);
+				res.upgrade(yRedisUser, headerWsKey, headerWsProtocol, headerWsExtensions, context);
 			});
 		} catch (error) {
 			res.cork(() => {
 				res.writeStatus('500 Internal Server Error').end('Internal Server Error');
 			});
-			console.error(error);
+			console.error(error); // TODO: this.logger.error nur das interface erlaubt es gerade nicht
 		}
+	}
+
+	private extractHeaderInfos(req: HttpRequest): RequestHeaderInfos {
+		const headerWsKey = req.getHeader('sec-websocket-key');
+		const headerWsProtocol = req.getHeader('sec-websocket-protocol');
+		const headerWsExtensions = req.getHeader('sec-websocket-extensions');
+
+		return {
+			headerWsExtensions,
+			headerWsKey,
+			headerWsProtocol,
+		};
 	}
 
 	private async openCallback(ws: WebSocket<YRedisUser>): Promise<void> {
@@ -120,23 +134,23 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 			user.initialRedisSubId = this.subscriberService.subscribe(stream, this.redisMessageSubscriber).redisId;
 
-			const indexDoc = await this.yRedisClient.getDoc(user.room, 'index');
+			const yRedisDoc = await this.yRedisClient.getDoc(user.room, 'index');
 
 			if (user.isClosed) return;
 			ws.cork(() => {
-				ws.send(this.yRedisService.encodeSyncStep1StateVectorMessage(indexDoc.ydoc), true, false);
-				ws.send(this.yRedisService.encodeSyncStep2StateAsUpdateMessage(indexDoc.ydoc), true, true);
-				if (indexDoc.getAwarenessStateSize() > 0) {
-					ws.send(this.yRedisService.encodeAwarenessUpdateMessage(indexDoc.awareness), true, true);
+				ws.send(this.yRedisService.encodeSyncStep1StateVectorMessage(yRedisDoc.ydoc), true, false);
+				ws.send(this.yRedisService.encodeSyncStep2StateAsUpdateMessage(yRedisDoc.ydoc), true, true);
+				if (yRedisDoc.getAwarenessStateSize() > 0) {
+					ws.send(this.yRedisService.encodeAwarenessUpdateMessage(yRedisDoc.awareness), true, true);
 				}
 			});
 
-			this.destroyAwarenessToAvoidMemoryLeak(indexDoc);
+			this.destroyAwarenessToAvoidMemoryLeak(yRedisDoc);
 
-			if (isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)) {
+			if (isSmallerRedisId(yRedisDoc.redisLastId, user.initialRedisSubId)) {
 				// our subscription is newer than the content that we received from the api
 				// need to renew subscription id and make sure that we catch the latest content.
-				this.subscriberService.ensureSubId(stream, indexDoc.redisLastId);
+				this.subscriberService.ensureSubId(stream, yRedisDoc.redisLastId);
 			}
 		} catch (error) {
 			console.error(error);
