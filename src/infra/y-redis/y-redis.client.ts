@@ -134,8 +134,7 @@ export class YRedisClient implements OnModuleInit {
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
-			storeClientSize: (): number => ydoc.store.clients.size,
-			awarenessStateSize: (): number => awareness.states.size,
+			getAwarenessStateSize: (): number => awareness.states.size,
 		};
 
 		if (ydoc.store.pendingStructs !== null) {

@@ -19,6 +19,7 @@ import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
 import { YRedisService } from '../../../infra/y-redis/y-redis.service.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
+import { YRedisDoc } from 'infra/y-redis/interfaces/y-redis-doc.js';
 
 @Injectable()
 export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
@@ -125,14 +126,12 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			ws.cork(() => {
 				ws.send(this.yRedisService.encodeSyncStep1StateVectorMessage(indexDoc.ydoc), true, false);
 				ws.send(this.yRedisService.encodeSyncStep2StateAsUpdateMessage(indexDoc.ydoc), true, true);
-				// @TODO:
-				if (indexDoc.awareness.states.size > 0) {
+				if (indexDoc.getAwarenessStateSize() > 0) {
 					ws.send(this.yRedisService.encodeAwarenessUpdateMessage(indexDoc.awareness), true, true);
 				}
 			});
 
-			// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
-			indexDoc.awareness.destroy();
+			this.destroyAwarenessToAvoidMemoryLeak(indexDoc);
 
 			if (isSmallerRedisId(indexDoc.redisLastId, user.initialRedisSubId)) {
 				// our subscription is newer than the content that we received from the api
@@ -143,6 +142,11 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			console.error(error);
 			ws.end(1011);
 		}
+	}
+
+	private destroyAwarenessToAvoidMemoryLeak(indexDoc: YRedisDoc): void {
+		// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
+		indexDoc.awareness.destroy();
 	}
 
 	private readonly redisMessageSubscriber = (stream: string, messages: Uint8Array[]): void => {
@@ -161,10 +165,20 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		this.webSocketServer.publish(stream, message, true, false);
 	};
 
+	/* do not work ...but why?
+	private updateMessageEncoding(messages: Uint8Array): void {
+		encoding.encode((encoder) =>
+			messages.forEach((message) => {
+				encoding.writeUint8Array(encoder, message);
+			}),
+		);
+	}
+	*/
 	private messageCallback(ws: WebSocket<YRedisUser>, messageBuffer: ArrayBuffer): void {
 		try {
 			const user = ws.getUserData();
-			// don't read any messages from users without write access // TODO authorization check in private Methode
+
+			// don't read any messages from users without write access // TODO authorization check in private Methode, ts macht Probleme, das return hier sieht merkwürdig aus, warum kein throw?
 			if (!user.hasWriteAccess || !user.room) return;
 
 			const message = this.yRedisService.filterMessageForPropagation(messageBuffer, user);
@@ -185,21 +199,24 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 			if (user.awarenessId) {
 				const awarenessMessage = this.yRedisService.createAwarenessUserDisconnectedMessage(user);
-
 				this.yRedisClient.addMessage(user.room, 'index', awarenessMessage);
 			}
 
-			// @TODO: refactor this to use a method in the WebsocketGateway class???
-			user.isClosed = true;
-			user.subs.forEach((topic) => {
-				if (this.webSocketServer.numSubscribers(topic) === 0) {
-					this.subscriberService.unsubscribe(topic, this.redisMessageSubscriber);
-				}
-			});
+			this.unsubscribeUser(user);
 
 			MetricsService.openConnectionsGauge.dec();
 		} catch (error) {
 			console.error(error);
+			// TODO: und jetzt wie räumen wir auf?
 		}
+	}
+
+	private unsubscribeUser(user: YRedisUser): void {
+		user.isClosed = true;
+		user.subs.forEach((topic) => {
+			if (this.webSocketServer.numSubscribers(topic) === 0) {
+				this.subscriberService.unsubscribe(topic, this.redisMessageSubscriber);
+			}
+		});
 	}
 }

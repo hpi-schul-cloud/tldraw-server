@@ -1,11 +1,3 @@
-/* This file contains the implementation of the functions,
-    which was copied from the y-redis repository.
-	Adopting this code allows us to integrate proven and
-	optimized logic into the current project.
-	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
-	https://github.com/yjs/y-redis
-*/
-/* eslint-disable max-classes-per-file */
 import { Injectable } from '@nestjs/common';
 import * as array from 'lib0/array';
 import * as decoding from 'lib0/decoding';
