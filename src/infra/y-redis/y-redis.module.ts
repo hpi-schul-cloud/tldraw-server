@@ -3,9 +3,10 @@ import { RedisAdapter } from 'infra/redis/interfaces/redis-adapter.js';
 import { RedisModule } from '../redis/redis.module.js';
 import { StorageModule } from '../storage/storage.module.js';
 import { StorageService } from '../storage/storage.service.js';
-import { YRedisClient } from './y-redis.client.js';
 import { Subscriber } from './subscriber.service.js';
+import { YRedisClient } from './y-redis.client.js';
 import { API_FOR_SUBSCRIBER, REDIS_FOR_API, REDIS_FOR_SUBSCRIBER } from './y-redis.const.js';
+import { YRedisService } from './y-redis.service.js';
 
 @Module({})
 export class YRedisModule {
@@ -14,6 +15,7 @@ export class YRedisModule {
 			module: YRedisModule,
 			imports: [RedisModule.registerFor(REDIS_FOR_SUBSCRIBER), RedisModule.registerFor(REDIS_FOR_API), StorageModule],
 			providers: [
+				YRedisService,
 				{
 					provide: YRedisClient,
 					useFactory: (redisAdapter: RedisAdapter, storageService: StorageService): YRedisClient => {
@@ -42,7 +44,7 @@ export class YRedisModule {
 					inject: [API_FOR_SUBSCRIBER],
 				},
 			],
-			exports: [Subscriber, YRedisClient],
+			exports: [Subscriber, YRedisClient, YRedisService],
 		};
 	}
 }

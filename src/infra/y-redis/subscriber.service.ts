@@ -6,8 +6,8 @@
 	https://github.com/yjs/y-redis
 */
 import * as map from 'lib0/map';
-import { YRedisClient } from './y-redis.client.js';
 import { isSmallerRedisId } from './helper.js';
+import { YRedisClient } from './y-redis.client.js';
 
 export const running = true;
 
@@ -24,7 +24,6 @@ export class Subscriber {
 	public constructor(private readonly yRedisClient: YRedisClient) {}
 
 	public async start(): Promise<void> {
-		console.log('Subscriber is running');
 		while (running) {
 			await this.run();
 		}

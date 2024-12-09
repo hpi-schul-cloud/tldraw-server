@@ -3,12 +3,12 @@ import { encoding } from 'lib0';
 import * as uws from 'uWebSockets.js';
 import { Awareness } from 'y-protocols/awareness.js';
 import * as Y from 'yjs';
-import { YRedisClient } from './y-redis.client.js';
 import { computeRedisRoomStreamName } from './helper.js';
 import * as protocol from './protocol.js';
 import { Subscriber } from './subscriber.service.js';
-import { closeCallback, messageCallback, openCallback, upgradeCallback } from './ws.service.js';
 import { YRedisUser } from './y-redis-user.js';
+import { YRedisClient } from './y-redis.client.js';
+import { closeCallback, messageCallback, openCallback, upgradeCallback } from './y-redis.service.js';
 
 describe('ws service', () => {
 	beforeEach(() => {
