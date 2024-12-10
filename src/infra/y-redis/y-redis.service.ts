@@ -5,6 +5,7 @@ import { Awareness } from 'y-protocols/awareness.js';
 import { Doc, encodeStateAsUpdate, encodeStateVector } from 'yjs';
 import * as protocol from './protocol.js';
 import { YRedisUser } from './y-redis-user.js';
+import { encoding } from 'lib0';
 
 @Injectable()
 export class YRedisService {
@@ -64,6 +65,22 @@ export class YRedisService {
 		const message = protocol.encodeAwarenessUpdate(awareness, array.from(awareness.states.keys()));
 
 		return message;
+	}
+
+	public mergeMessagesToMessage(messages: Uint8Array[]): Uint8Array {
+		const mergedMessage = messages.length === 1 ? messages[0] : this.useEncodingToMergeMessages(messages);
+
+		return mergedMessage;
+	}
+
+	private useEncodingToMergeMessages(messages: Uint8Array[]): Uint8Array {
+		const mergedMessage = encoding.encode((encoder) =>
+			messages.forEach((message) => {
+				encoding.writeUint8Array(encoder, message);
+			}),
+		);
+
+		return mergedMessage;
 	}
 
 	private copyMessageBuffer(messageBuffer: ArrayBuffer): ArrayBuffer {

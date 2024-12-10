@@ -1,5 +1,4 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { encoding } from 'lib0';
 import {
 	HttpRequest,
 	HttpResponse,
@@ -136,7 +135,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			user.subs.add(stream);
 			ws.subscribe(stream);
 
-			user.initialRedisSubId = this.subscriberService.subscribe(stream, this.redisMessageSubscriber).redisId;
+			const { redisId } = this.subscriberService.subscribe(stream, this.redisMessageSubscriber);
+			user.initialRedisSubId = redisId;
 
 			const yRedisDoc = await this.yRedisClient.getDoc(user.room, 'index');
 
@@ -168,30 +168,18 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	private readonly redisMessageSubscriber = (stream: string, messages: Uint8Array[]): void => {
-		if (this.webSocketServer.numSubscribers(stream) === 0) {
+		if (!this.isSubscriberAvailable(stream)) {
 			this.subscriberService.unsubscribe(stream, this.redisMessageSubscriber);
 		}
 
-		const message =
-			messages.length === 1
-				? messages[0]
-				: encoding.encode((encoder) =>
-						messages.forEach((message) => {
-							encoding.writeUint8Array(encoder, message);
-						}),
-					);
+		const message = this.yRedisService.mergeMessagesToMessage(messages);
 		this.webSocketServer.publish(stream, message, true, false);
 	};
 
-	/* do not work ...but why?
-	private updateMessageEncoding(messages: Uint8Array): void {
-		encoding.encode((encoder) =>
-			messages.forEach((message) => {
-				encoding.writeUint8Array(encoder, message);
-			}),
-		);
+	private isSubscriberAvailable(stream: string): boolean {
+		return this.webSocketServer.numSubscribers(stream) > 0;
 	}
-	*/
+
 	private messageCallback(ws: WebSocket<YRedisUser>, messageBuffer: ArrayBuffer): void {
 		try {
 			const user = ws.getUserData();
