@@ -65,25 +65,27 @@ export class WorkerService implements Job {
 	}
 
 	private async processTask(task: Task): Promise<void> {
-		// Promise all?
-		const deletedDocEntries = await this.redis.getDeletedDocEntries();
-		const streamLength = await this.redis.tryClearTask(task);
-		const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix); // TODO
+		const [deletedDocEntries, streamLength] = await Promise.all([
+			this.redis.getDeletedDocEntries(),
+			this.redis.tryClearTask(task),
+		]);
 
-		if (this.streamIsEmpty(streamLength)) {
-			this.removingRecurringTaskFromQueue(task, deletedDocEntries, roomStreamInfos);
-		} else {
-			this.processUpdateChanges(roomStreamInfos, deletedDocEntries, task);
+		try {
+			// TODO: It is importend to check if we need a await at this place.
+			if (this.streamIsEmpty(streamLength)) {
+				this.removingRecurringTaskFromQueue(task, deletedDocEntries);
+			} else {
+				this.processUpdateChanges(deletedDocEntries, task);
+			}
+		} catch (error: unknown) {
+			this.logger.warning({ error, deletedDocEntries, task, message: 'processTask' });
 		}
 	}
 
-	private async processUpdateChanges(
-		roomStreamInfos: RoomStreamInfos,
-		deletedDocEntries: StreamMessageReply[],
-		task: Task,
-	): Promise<void> {
+	private async processUpdateChanges(deletedDocEntries: StreamMessageReply[], task: Task): Promise<void> {
 		this.logger.log('requesting doc from store');
-		const yRedisDoc = await this.yRedisClient.getDoc(roomStreamInfos.room, roomStreamInfos.docid); // TODO
+		const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
+		const yRedisDoc = await this.yRedisClient.getDoc(roomStreamInfos.room, roomStreamInfos.docid); // todo ?
 
 		// @todo, make sure that awareness by this.getDoc is eventually destroyed, or doesn't
 		// register a timeout anymore
@@ -93,7 +95,7 @@ export class WorkerService implements Job {
 
 		const deletedDocNames = this.extractDocNamesFromStreamMessageReply(deletedDocEntries);
 		if (this.docChangedButNotDeleted(yRedisDoc, deletedDocNames, task)) {
-			await this.storageService.persistDoc(roomStreamInfos.room, roomStreamInfos.docid, yRedisDoc.ydoc); // TODO
+			await this.storageService.persistDoc(roomStreamInfos.room, roomStreamInfos.docid, yRedisDoc.ydoc);
 		}
 
 		await Promise.all([
@@ -126,11 +128,7 @@ export class WorkerService implements Job {
 		yRedisDoc.awareness.destroy();
 	}
 
-	private removingRecurringTaskFromQueue(
-		task: Task,
-		deletedDocEntries: StreamMessageReply[],
-		roomStreamInfos: RoomStreamInfos,
-	): void {
+	private async removingRecurringTaskFromQueue(task: Task, deletedDocEntries: StreamMessageReply[]): Promise<void> {
 		this.logger.log(
 			`Stream still empty, removing recurring task from queue ${JSON.stringify({ stream: task.stream })}`,
 		);
@@ -138,8 +136,11 @@ export class WorkerService implements Job {
 		const deleteEntryId = deletedDocEntries.find((entry) => entry.message.docName === task.stream)?.id.toString();
 
 		if (deleteEntryId) {
-			this.redis.deleteDeleteDocEntry(deleteEntryId);
-			this.storageService.deleteDocument(roomStreamInfos.room, roomStreamInfos.docid);
+			const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
+			await Promise.all([
+				this.redis.deleteDeleteDocEntry(deleteEntryId),
+				this.storageService.deleteDocument(roomStreamInfos.room, roomStreamInfos.docid),
+			]);
 		}
 	}
 
@@ -148,7 +149,7 @@ export class WorkerService implements Job {
 
 		if (this.isDocumentChangedAndReferencesAvaible(yRedisDoc)) {
 			const storeReferences = this.castToStringArray(yRedisDoc.storeReferences);
-			promise = this.storageService.deleteReferences(roomStreamInfos.room, roomStreamInfos.docid, storeReferences); // TODO
+			promise = this.storageService.deleteReferences(roomStreamInfos.room, roomStreamInfos.docid, storeReferences);
 		}
 
 		return promise;
