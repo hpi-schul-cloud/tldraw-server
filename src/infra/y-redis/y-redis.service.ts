@@ -6,9 +6,38 @@ import { Doc, encodeStateAsUpdate, encodeStateVector } from 'yjs';
 import * as protocol from './protocol.js';
 import { YRedisUser } from './y-redis-user.js';
 import { encoding } from 'lib0';
+import { Subscriber, SubscriptionHandler } from './subscriber.service.js';
+import { isSmallerRedisId } from './helper.js';
+import { YRedisDoc } from './interfaces/y-redis-doc.js';
 
 @Injectable()
 export class YRedisService {
+	public constructor(private readonly subscriberService: Subscriber) {}
+
+	public async start(): Promise<void> {
+		await this.subscriberService.start();
+	}
+
+	// subscriber wrappers
+	public subscribe(stream: string, callback: SubscriptionHandler): { redisId: string } {
+		const { redisId } = this.subscriberService.subscribe(stream, callback);
+
+		return { redisId };
+	}
+
+	public unsubscribe(streamName: string, callback: SubscriptionHandler): void {
+		this.subscriberService.unsubscribe(streamName, callback);
+	}
+
+	public ensureLatestContentSubscription(yRedisDoc: YRedisDoc, yRedisUser: YRedisUser, streamName: string): void {
+		if (isSmallerRedisId(yRedisDoc.redisLastId, yRedisUser.initialRedisSubId)) {
+			// our subscription is newer than the content that we received from the y-redis-client
+			// need to renew subscription id and make sure that we catch the latest content.
+			this.subscriberService.ensureSubId(streamName, yRedisDoc.redisLastId);
+		}
+	}
+
+	// state helper
 	public filterMessageForPropagation(messageBuffer: ArrayBuffer, yRedisUser: YRedisUser): Buffer | null {
 		const messageBufferCopy = this.copyMessageBuffer(messageBuffer);
 		const message = Buffer.from(messageBufferCopy);
@@ -43,12 +72,6 @@ export class YRedisService {
 		return awarenessMessage;
 	}
 
-	public createYRedisUser(userProps: YRedisUser): YRedisUser {
-		const yRedisUser = new YRedisUser(userProps.room, userProps.hasWriteAccess, userProps.userid, userProps.error);
-
-		return yRedisUser;
-	}
-
 	public encodeSyncStep1StateVectorMessage(yDoc: Doc): Uint8Array {
 		const message = protocol.encodeSyncStep1(encodeStateVector(yDoc));
 
@@ -73,6 +96,7 @@ export class YRedisService {
 		return mergedMessage;
 	}
 
+	// private
 	private useEncodingToMergeMessages(messages: Uint8Array[]): Uint8Array {
 		const mergedMessage = encoding.encode((encoder) =>
 			messages.forEach((message) => {

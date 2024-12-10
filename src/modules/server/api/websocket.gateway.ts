@@ -11,9 +11,8 @@ import { AuthorizationService } from '../../../infra/authorization/authorization
 import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
-import { computeRedisRoomStreamName, isSmallerRedisId } from '../../../infra/y-redis/helper.js';
+import { computeRedisRoomStreamName } from '../../../infra/y-redis/helper.js';
 import { YRedisDoc } from '../../../infra/y-redis/interfaces/y-redis-doc.js';
-import { Subscriber } from '../../../infra/y-redis/subscriber.service.js';
 import { YRedisUserFactory } from '../../../infra/y-redis/y-redis-user.factory.js';
 import { YRedisUser } from '../../../infra/y-redis/y-redis-user.js';
 import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
@@ -40,7 +39,6 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	public constructor(
 		@Inject(UWS) private readonly webSocketServer: TemplatedApp,
 		private readonly yRedisService: YRedisService,
-		private readonly subscriberService: Subscriber,
 		private readonly yRedisClient: YRedisClient,
 		private readonly authorizationService: AuthorizationService,
 		@Inject(REDIS_FOR_SUBSCRIBE_OF_DELETION) private readonly redisAdapter: RedisAdapter,
@@ -55,7 +53,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	public onModuleInit(): void {
-		this.subscriberService.start();
+		this.yRedisService.start();
 
 		this.webSocketServer.ws(`${this.config.TLDRAW_WEBSOCKET_PATH}/:room`, {
 			compression: SHARED_COMPRESSOR,
@@ -139,7 +137,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			user.subs.add(stream);
 			ws.subscribe(stream);
 
-			const { redisId } = this.subscriberService.subscribe(stream, this.redisMessageSubscriber);
+			const { redisId } = this.yRedisService.subscribe(stream, this.redisMessageSubscriber);
 			user.initialRedisSubId = redisId;
 
 			const yRedisDoc = await this.yRedisClient.getDoc(user.room, 'index');
@@ -156,11 +154,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 			this.destroyAwarenessToAvoidMemoryLeak(yRedisDoc);
 
-			if (isSmallerRedisId(yRedisDoc.redisLastId, user.initialRedisSubId)) {
-				// our subscription is newer than the content that we received from the api
-				// need to renew subscription id and make sure that we catch the latest content.
-				this.subscriberService.ensureSubId(stream, yRedisDoc.redisLastId);
-			}
+			this.yRedisService.ensureLatestContentSubscription(yRedisDoc, user, stream);
 		} catch (error) {
 			this.logger.warning(error);
 			ws.end(WebSocketErrorCodes.InternalError);
@@ -174,7 +168,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 	private readonly redisMessageSubscriber = (stream: string, messages: Uint8Array[]): void => {
 		if (!this.isSubscriberAvailable(stream)) {
-			this.subscriberService.unsubscribe(stream, this.redisMessageSubscriber);
+			this.yRedisService.unsubscribe(stream, this.redisMessageSubscriber);
 		}
 
 		const message = this.yRedisService.mergeMessagesToMessage(messages);
@@ -226,7 +220,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		user.isClosed = true;
 		user.subs.forEach((topic) => {
 			if (this.webSocketServer.numSubscribers(topic) === 0) {
-				this.subscriberService.unsubscribe(topic, this.redisMessageSubscriber);
+				this.yRedisService.unsubscribe(topic, this.redisMessageSubscriber);
 			}
 		});
 	}

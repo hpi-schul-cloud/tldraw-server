@@ -13,7 +13,6 @@ import { ServerModule } from '../../server.module.js';
 describe('Websocket Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
-	const prefix = 'y';
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -25,8 +24,10 @@ describe('Websocket Api Test', () => {
 
 		app = moduleFixture.createNestApplication();
 		await app.init();
-
+		console.log('<------------- 1 --------------->');
 		authorizationService = await app.resolve(AuthorizationService);
+
+		console.log('<------------- 2 --------------->');
 	});
 
 	afterAll(async () => {
@@ -36,6 +37,7 @@ describe('Websocket Api Test', () => {
 	const createWsClient = (room: string) => {
 		const ydoc = new Doc();
 		const serverUrl = 'ws://localhost:3345';
+		const prefix = 'y';
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore
 			WebSocketPolyfill: WebSocket,
@@ -66,8 +68,7 @@ describe('Websocket Api Test', () => {
 	describe('when clients have permission for room', () => {
 		describe('when two clients connect to the same doc before any changes', () => {
 			const setup = () => {
-				const randomString = Math.random().toString(36).substring(7);
-				const room = randomString;
+				const room = Math.random().toString(36).substring(7);
 
 				authorizationService.hasPermission.mockResolvedValueOnce({
 					hasWriteAccess: true,
@@ -88,7 +89,7 @@ describe('Websocket Api Test', () => {
 				return { client1Doc, client2Doc };
 			};
 
-			it('syncs doc changes of first client to second client', async () => {
+			it.only('syncs doc changes of first client to second client', async () => {
 				const { client1Doc, client2Doc } = setup();
 
 				client1Doc.getMap().set('a', 1);

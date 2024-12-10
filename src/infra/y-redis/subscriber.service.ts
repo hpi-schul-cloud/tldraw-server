@@ -11,7 +11,7 @@ import { YRedisClient } from './y-redis.client.js';
 
 export const running = true;
 
-type SubscriptionHandler = (stream: string, message: Uint8Array[]) => void;
+export type SubscriptionHandler = (stream: string, message: Uint8Array[]) => void;
 interface Subscriptions {
 	fs: Set<SubscriptionHandler>;
 	id: string;
