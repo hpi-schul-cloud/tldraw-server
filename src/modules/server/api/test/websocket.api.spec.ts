@@ -10,6 +10,11 @@ import { ResponsePayloadBuilder } from '../../../../infra//authorization/respons
 import { AuthorizationService } from '../../../../infra/authorization/authorization.service.js';
 import { ServerModule } from '../../server.module.js';
 
+/**
+ * You must start minio locally and set in .env.test the values:
+ * S3_ACCESS_KEY=
+ * S3_SECRET_KEY=
+ */
 describe('Websocket Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
@@ -24,10 +29,7 @@ describe('Websocket Api Test', () => {
 
 		app = moduleFixture.createNestApplication();
 		await app.init();
-		console.log('<------------- 1 --------------->');
 		authorizationService = await app.resolve(AuthorizationService);
-
-		console.log('<------------- 2 --------------->');
 	});
 
 	afterAll(async () => {
@@ -89,7 +91,7 @@ describe('Websocket Api Test', () => {
 				return { client1Doc, client2Doc };
 			};
 
-			it.only('syncs doc changes of first client to second client', async () => {
+			it('syncs doc changes of first client to second client', async () => {
 				const { client1Doc, client2Doc } = setup();
 
 				client1Doc.getMap().set('a', 1);

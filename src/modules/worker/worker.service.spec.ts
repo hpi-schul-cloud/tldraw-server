@@ -24,6 +24,7 @@ const mapStreamMessageReplaysToTask = (streamMessageReplys: StreamMessageReply[]
 	return tasks;
 };
 
+// TODO: Factory is missing, but need also introduce for production code.
 const createYRedisDocMock = (): YRedisDoc => {
 	const yDocMock = {
 		ydoc: createMock<Doc>(),
@@ -31,6 +32,7 @@ const createYRedisDocMock = (): YRedisDoc => {
 		redisLastId: '0',
 		storeReferences: null,
 		docChanged: true,
+		streamName: '',
 		getAwarenessStateSize: () => 1,
 	};
 
