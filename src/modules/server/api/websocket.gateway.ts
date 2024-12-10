@@ -27,9 +27,12 @@ interface RequestHeaderInfos {
 	headerWsProtocol: string;
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
 enum WebSocketErrorCodes {
 	InternalError = 1011,
 	PolicyViolation = 1008,
+	TldrawPolicyViolation = 4401,
+	TldrawInternalError = 4500,
 }
 
 @Injectable()
@@ -117,8 +120,9 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		try {
 			const user = ws.getUserData();
 			if (user.error != null) {
-				const { code, reason } = user.error;
-				ws.end(code, reason);
+				const { code: authorizationRequestErrorCode, reason } = user.error;
+				this.logger.warning(`Error: ${authorizationRequestErrorCode} - ${reason}`);
+				ws.end(authorizationRequestErrorCode, reason);
 
 				return;
 			}
@@ -141,6 +145,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			const yRedisDoc = await this.yRedisClient.getDoc(user.room, 'index');
 
 			if (user.isClosed) return;
+
 			ws.cork(() => {
 				ws.send(this.yRedisService.encodeSyncStep1StateVectorMessage(yRedisDoc.ydoc), true, false);
 				ws.send(this.yRedisService.encodeSyncStep2StateAsUpdateMessage(yRedisDoc.ydoc), true, true);
