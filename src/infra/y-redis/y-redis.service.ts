@@ -14,11 +14,11 @@ import { YRedisDoc } from './interfaces/y-redis-doc.js';
 export class YRedisService {
 	public constructor(private readonly subscriberService: Subscriber) {}
 
+	// subscriber wrappers
 	public async start(): Promise<void> {
 		await this.subscriberService.start();
 	}
 
-	// subscriber wrappers
 	public subscribe(stream: string, callback: SubscriptionHandler): { redisId: string } {
 		const { redisId } = this.subscriberService.subscribe(stream, callback);
 
@@ -29,11 +29,11 @@ export class YRedisService {
 		this.subscriberService.unsubscribe(streamName, callback);
 	}
 
-	public ensureLatestContentSubscription(yRedisDoc: YRedisDoc, yRedisUser: YRedisUser, streamName: string): void {
+	public ensureLatestContentSubscription(yRedisDoc: YRedisDoc, yRedisUser: YRedisUser): void {
 		if (isSmallerRedisId(yRedisDoc.redisLastId, yRedisUser.initialRedisSubId)) {
 			// our subscription is newer than the content that we received from the y-redis-client
 			// need to renew subscription id and make sure that we catch the latest content.
-			this.subscriberService.ensureSubId(streamName, yRedisDoc.redisLastId);
+			this.subscriberService.ensureSubId(yRedisDoc.streamName, yRedisDoc.redisLastId);
 		}
 	}
 

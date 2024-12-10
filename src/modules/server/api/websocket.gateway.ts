@@ -11,7 +11,6 @@ import { AuthorizationService } from '../../../infra/authorization/authorization
 import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
-import { computeRedisRoomStreamName } from '../../../infra/y-redis/helper.js';
 import { YRedisDoc } from '../../../infra/y-redis/interfaces/y-redis-doc.js';
 import { YRedisUserFactory } from '../../../infra/y-redis/y-redis-user.factory.js';
 import { YRedisUser } from '../../../infra/y-redis/y-redis-user.js';
@@ -133,14 +132,12 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 			MetricsService.openConnectionsGauge.inc();
 
-			const stream = computeRedisRoomStreamName(user.room, 'index', this.yRedisClient.redisPrefix);
-			user.subs.add(stream);
-			ws.subscribe(stream);
-
-			const { redisId } = this.yRedisService.subscribe(stream, this.redisMessageSubscriber);
-			user.initialRedisSubId = redisId;
-
 			const yRedisDoc = await this.yRedisClient.getDoc(user.room, 'index');
+			user.subs.add(yRedisDoc.streamName);
+			ws.subscribe(yRedisDoc.streamName);
+
+			const { redisId } = this.yRedisService.subscribe(yRedisDoc.streamName, this.redisMessageSubscriber);
+			user.initialRedisSubId = redisId;
 
 			if (user.isClosed) return;
 
@@ -154,7 +151,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 			this.destroyAwarenessToAvoidMemoryLeak(yRedisDoc);
 
-			this.yRedisService.ensureLatestContentSubscription(yRedisDoc, user, stream);
+			this.yRedisService.ensureLatestContentSubscription(yRedisDoc, user);
 		} catch (error) {
 			this.logger.warning(error);
 			ws.end(WebSocketErrorCodes.InternalError);

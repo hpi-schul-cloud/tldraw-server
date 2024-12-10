@@ -101,8 +101,8 @@ export class YRedisClient implements OnModuleInit {
 		const end = MetricsService.methodDurationHistogram.startTimer();
 		let docChanged = false;
 
-		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
-		const streamReply = await this.redis.readMessagesFromStream(roomComputed);
+		const streamName = computeRedisRoomStreamName(room, docid, this.redisPrefix);
+		const streamReply = await this.redis.readMessagesFromStream(streamName);
 
 		const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
 
@@ -134,6 +134,7 @@ export class YRedisClient implements OnModuleInit {
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
+			streamName,
 			getAwarenessStateSize: (): number => awareness.states.size,
 		};
 

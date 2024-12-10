@@ -7,5 +7,6 @@ export interface YRedisDoc {
 	redisLastId: string;
 	storeReferences: string[] | null;
 	docChanged: boolean;
+	streamName: string;
 	getAwarenessStateSize(): number;
 }
