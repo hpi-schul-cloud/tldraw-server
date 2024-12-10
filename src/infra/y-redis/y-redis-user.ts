@@ -29,4 +29,8 @@ export class YRedisUser {
 		this.awarenessLastClock = 0;
 		this.isClosed = false;
 	}
+
+	public hasError(): boolean {
+		return this.error !== null;
+	}
 }

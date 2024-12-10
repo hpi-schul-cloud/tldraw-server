@@ -1,11 +1,7 @@
 import { RedisKey } from 'ioredis';
 import { array, map } from 'lib0';
 import { TypeGuard } from '../../infra/redis/guards/type.guard.js';
-import {
-	StreamMessageReply,
-	StreamMessagesReply,
-	StreamMessagesSingleReply,
-} from '../../infra/redis/interfaces/index.js';
+import { StreamMessageReply, StreamMessagesReply } from '../../infra/redis/interfaces/index.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,
@@ -42,7 +38,7 @@ export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: stri
 	return { room: decodeURIComponent(match[2]), docid: decodeURIComponent(match[3]) };
 };
 
-const getIdFromLastStreamMessageReply = (docStreamReplay: StreamMessagesSingleReply): RedisKey | undefined => {
+const getIdFromLastStreamMessageReply = (docStreamReplay: StreamMessagesReply): RedisKey | undefined => {
 	let id = undefined;
 	if (TypeGuard.isArrayWithElements(docStreamReplay.messages)) {
 		id = array.last(docStreamReplay.messages).id;
@@ -59,7 +55,7 @@ const castRedisKeyToUnit8Array = (redisKey: RedisKey): Uint8Array => {
 };
 
 export const extractMessagesFromStreamReply = (
-	streamReply: StreamMessagesReply,
+	streamReply: StreamMessagesReply[],
 	prefix: string,
 ): Map<string, Map<string, YRedisMessage>> => {
 	const messages = new Map<string, Map<string, YRedisMessage>>();

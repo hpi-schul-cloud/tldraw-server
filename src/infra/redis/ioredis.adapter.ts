@@ -88,7 +88,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		await this.redis.quit();
 	}
 
-	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamMessagesReply> {
+	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamMessagesReply[]> {
 		const reads = await this.redis.xreadBuffer(
 			'COUNT',
 			1000,
@@ -104,7 +104,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		return streamReplyRes;
 	}
 
-	public async readMessagesFromStream(streamName: string): Promise<StreamMessagesReply> {
+	public async readMessagesFromStream(streamName: string): Promise<StreamMessagesReply[]> {
 		const reads = await this.redis.xreadBuffer('STREAMS', streamName, '0');
 
 		const streamReplyRes = mapToStreamMessagesReply(reads);

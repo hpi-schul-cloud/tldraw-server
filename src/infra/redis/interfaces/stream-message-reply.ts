@@ -12,12 +12,7 @@ export interface StreamMessageReply {
 	message: Record<keyof Message, RedisKey>;
 }
 
-export interface StreamMessagesSingleReply {
+export interface StreamMessagesReply {
 	name: string;
 	messages: StreamMessageReply[] | null;
 }
-
-export type StreamMessagesReply = {
-	name: string;
-	messages: StreamMessageReply[] | null;
-}[];
