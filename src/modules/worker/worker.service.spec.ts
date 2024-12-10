@@ -9,11 +9,11 @@ import {
 	xAutoClaimResponseFactory,
 } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
+import { YRedisDoc } from '../../infra/y-redis/interfaces/y-redis-doc.js';
 import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
-import { YRedisDoc } from 'infra/y-redis/interfaces/y-redis-doc.js';
 
 const mapStreamMessageReplaysToTask = (streamMessageReplys: StreamMessageReply[]) => {
 	const tasks = streamMessageReplys.map((m) => ({
@@ -31,6 +31,7 @@ const createYRedisDocMock = (): YRedisDoc => {
 		redisLastId: '0',
 		storeReferences: null,
 		docChanged: true,
+		getAwarenessStateSize: () => 1,
 	};
 
 	return yDocMock;

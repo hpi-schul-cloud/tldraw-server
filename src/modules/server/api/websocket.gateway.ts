@@ -13,14 +13,14 @@ import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
 import { computeRedisRoomStreamName, isSmallerRedisId } from '../../../infra/y-redis/helper.js';
+import { YRedisDoc } from '../../../infra/y-redis/interfaces/y-redis-doc.js';
 import { Subscriber } from '../../../infra/y-redis/subscriber.service.js';
+import { YRedisUserFactory } from '../../../infra/y-redis/y-redis-user.factory.js';
 import { YRedisUser } from '../../../infra/y-redis/y-redis-user.js';
 import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
 import { YRedisService } from '../../../infra/y-redis/y-redis.service.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
-import { YRedisDoc } from '../../../infra/y-redis/interfaces/y-redis-doc.js';
-import { YRedisUserFactory } from 'infra/y-redis/y-redis-user.factory.js';
 
 interface RequestHeaderInfos {
 	headerWsExtensions: string;
@@ -80,6 +80,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	private async upgradeCallback(res: HttpResponse, req: HttpRequest, context: us_socket_context_t): Promise<void> {
 		try {
 			let aborted = false;
+			const { headerWsKey, headerWsProtocol, headerWsExtensions } = this.extractHeaderInfos(req);
+
 			res.onAborted(() => {
 				aborted = true;
 			});
@@ -90,14 +92,13 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 			res.cork(() => {
 				const yRedisUser = YRedisUserFactory.build(authPayload);
-				const { headerWsKey, headerWsProtocol, headerWsExtensions } = this.extractHeaderInfos(req);
 				res.upgrade(yRedisUser, headerWsKey, headerWsProtocol, headerWsExtensions, context);
 			});
 		} catch (error) {
 			res.cork(() => {
 				res.writeStatus('500 Internal Server Error').end('Internal Server Error');
 			});
-			console.error(error); // TODO: this.logger.error nur das interface erlaubt es gerade nicht
+			this.logger.warning(error); // TODO: this.logger.error nur das interface erlaubt es gerade nicht
 		}
 	}
 
@@ -156,7 +157,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 				this.subscriberService.ensureSubId(stream, yRedisDoc.redisLastId);
 			}
 		} catch (error) {
-			console.error(error);
+			this.logger.warning(error);
 			ws.end(WebSocketErrorCodes.InternalError);
 		}
 	}
@@ -204,7 +205,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 				this.yRedisClient.addMessage(user.room, 'index', message);
 			}
 		} catch (error) {
-			console.error(error);
+			this.logger.warning(error);
 			ws.end(WebSocketErrorCodes.InternalError);
 		}
 	}
@@ -223,8 +224,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 			MetricsService.openConnectionsGauge.dec();
 		} catch (error) {
-			console.error(error);
-			// TODO: und jetzt wie räumen wir auf?
+			this.logger.warning(error);
+			ws.end(WebSocketErrorCodes.InternalError);
 		}
 	}
 

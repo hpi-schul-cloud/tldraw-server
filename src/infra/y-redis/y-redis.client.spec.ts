@@ -2,13 +2,14 @@ import { createMock } from '@golevelup/ts-jest';
 import * as Awareness from 'y-protocols/awareness';
 import * as Y from 'yjs';
 // import { RedisFactory } from '../redis/redis.service.js';
+import { Logger } from '../logger/logger.js';
 import { RedisAdapter } from '../redis/interfaces/index.js';
-import { YRedisClient, handleMessageUpdates } from './y-redis.client.js';
 import * as helper from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
 import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
+import { YRedisClient, handleMessageUpdates } from './y-redis.client.js';
 
 describe(YRedisClient.name, () => {
 	const setupApi = () => {
@@ -16,7 +17,8 @@ describe(YRedisClient.name, () => {
 		const redis = createMock<RedisAdapter>({
 			redisPrefix: 'prefix',
 		});
-		const api = new YRedisClient(store, redis);
+		const logger = createMock<Logger>();
+		const api = new YRedisClient(store, redis, logger);
 
 		return { store, redis, api };
 	};

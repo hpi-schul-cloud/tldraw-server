@@ -55,7 +55,7 @@ describe('Logger', () => {
 	describe('WHEN warn logging', () => {
 		it('should call winstonLogger.warning', () => {
 			const error = new Error('custom error');
-			service.warn(error.message, error.stack);
+			service.warning(error.message, error.stack);
 			expect(winstonLogger.warning).toHaveBeenCalled();
 		});
 	});
