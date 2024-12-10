@@ -2,6 +2,7 @@ import { OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
+import { Logger } from '../logger/logger.js';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
@@ -41,7 +42,9 @@ export class YRedisClient implements OnModuleInit {
 	public constructor(
 		private readonly store: DocumentStorage, // TODO: Naming?
 		public readonly redis: RedisAdapter,
+		private readonly logger: Logger,
 	) {
+		this.logger.setContext(YRedisClient.name);
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
 		this._destroyed = false;
@@ -135,7 +138,7 @@ export class YRedisClient implements OnModuleInit {
 		};
 
 		if (ydoc.store.pendingStructs !== null) {
-			console.warn(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
+			this.logger.warning(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
 		}
 
 		return response;

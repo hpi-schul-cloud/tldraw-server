@@ -1,5 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { RedisAdapter } from 'infra/redis/interfaces/redis-adapter.js';
+import { Logger } from '../logger/logger.js';
+import { LoggerModule } from '../logger/logger.module.js';
+import { RedisAdapter } from '../redis/interfaces/redis-adapter.js';
 import { RedisModule } from '../redis/redis.module.js';
 import { StorageModule } from '../storage/storage.module.js';
 import { StorageService } from '../storage/storage.service.js';
@@ -13,26 +15,31 @@ export class YRedisModule {
 	public static forRoot(): DynamicModule {
 		return {
 			module: YRedisModule,
-			imports: [RedisModule.registerFor(REDIS_FOR_SUBSCRIBER), RedisModule.registerFor(REDIS_FOR_API), StorageModule],
+			imports: [
+				RedisModule.registerFor(REDIS_FOR_SUBSCRIBER),
+				RedisModule.registerFor(REDIS_FOR_API),
+				StorageModule,
+				LoggerModule,
+			],
 			providers: [
 				YRedisService,
 				{
 					provide: YRedisClient,
-					useFactory: (redisAdapter: RedisAdapter, storageService: StorageService): YRedisClient => {
-						const yRedisClient = new YRedisClient(storageService, redisAdapter);
+					useFactory: (redisAdapter: RedisAdapter, storageService: StorageService, logger: Logger): YRedisClient => {
+						const yRedisClient = new YRedisClient(storageService, redisAdapter, logger);
 
 						return yRedisClient;
 					},
-					inject: [REDIS_FOR_API, StorageService],
+					inject: [REDIS_FOR_API, StorageService, Logger],
 				},
 				{
 					provide: API_FOR_SUBSCRIBER,
-					useFactory: (redisAdapter: RedisAdapter, storageService: StorageService): YRedisClient => {
-						const yRedisClient = new YRedisClient(storageService, redisAdapter);
+					useFactory: (redisAdapter: RedisAdapter, storageService: StorageService, logger: Logger): YRedisClient => {
+						const yRedisClient = new YRedisClient(storageService, redisAdapter, logger);
 
 						return yRedisClient;
 					},
-					inject: [REDIS_FOR_SUBSCRIBER, StorageService],
+					inject: [REDIS_FOR_SUBSCRIBER, StorageService, Logger],
 				},
 				{
 					provide: Subscriber,
