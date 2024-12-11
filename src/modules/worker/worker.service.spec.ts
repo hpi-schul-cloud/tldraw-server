@@ -44,6 +44,7 @@ describe(WorkerService.name, () => {
 	let service: WorkerService;
 	let redisAdapter: DeepMocked<RedisAdapter>;
 	let yRedisClient: DeepMocked<YRedisClient>;
+	let storageService: DeepMocked<StorageService>;
 
 	beforeAll(async () => {
 		// TODO: should we start the app as api-test for this job?
@@ -81,6 +82,7 @@ describe(WorkerService.name, () => {
 		service = await module.resolve(WorkerService);
 		redisAdapter = module.get(REDIS_FOR_WORKER);
 		yRedisClient = module.get(YRedisClient);
+		storageService = module.get(StorageService);
 	});
 
 	afterEach(() => {
@@ -114,12 +116,22 @@ describe(WorkerService.name, () => {
 				expect(service.status()).toBe(false);
 			});
 
-			it('and start is called, it should be run', () => {
+			it('and start is called, it should run', () => {
 				setup();
 
 				service.start();
 
 				expect(service.status()).toBe(true);
+			});
+
+			it('it should register stop function as destroy callback in yRedisClient', () => {
+				setup();
+
+				expect(yRedisClient.registerDestroyedCallback).toHaveBeenCalledTimes(1);
+
+				yRedisClient.registerDestroyedCallback.mock.calls[0][0]();
+
+				expect(service.status()).toBe(false);
 			});
 
 			it('should call consumeWorkerQueue', async () => {
@@ -264,39 +276,105 @@ describe(WorkerService.name, () => {
 				});
 
 				describe('when docChanged is true', () => {
-					const setup = () => {
-						const yRedisDocMock = createYRedisDocMock();
-						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
+					describe('when storeReferences is null', () => {
+						const setup = () => {
+							const yRedisDocMock = createYRedisDocMock();
+							yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
-						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
-						const reclaimedTasks = xAutoClaimResponseFactory.build();
-						reclaimedTasks.messages = streamMessageReplys;
-						const deletedDocEntries = [streamMessageReplys[2]];
+							const streamMessageReplys = streamMessageReplyFactory.buildList(3);
+							const reclaimedTasks = xAutoClaimResponseFactory.build();
+							reclaimedTasks.messages = streamMessageReplys;
+							const deletedDocEntries = [streamMessageReplys[2]];
 
-						redisAdapter.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
-						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
-						redisAdapter.tryClearTask
-							.mockImplementationOnce(async (task) => {
-								return await Promise.resolve(task.stream.length);
-							})
-							.mockImplementationOnce(async (task) => {
-								return await Promise.resolve(task.stream.length);
-							})
-							.mockImplementationOnce(async (task) => {
-								return await Promise.resolve(task.stream.length);
-							});
+							redisAdapter.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
+							redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
+							redisAdapter.tryClearTask
+								.mockImplementationOnce(async (task) => {
+									return await Promise.resolve(task.stream.length);
+								})
+								.mockImplementationOnce(async (task) => {
+									return await Promise.resolve(task.stream.length);
+								})
+								.mockImplementationOnce(async (task) => {
+									return await Promise.resolve(task.stream.length);
+								});
 
-						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
+							const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
 
-						return { expectedTasks };
-					};
+							return { expectedTasks };
+						};
 
-					it('should return an array of tasks', async () => {
-						const { expectedTasks } = setup();
+						it('should return an array of tasks', async () => {
+							const { expectedTasks } = setup();
 
-						const result = await service.consumeWorkerQueue();
+							const result = await service.consumeWorkerQueue();
 
-						expect(result).toEqual(expectedTasks);
+							expect(result).toEqual(expectedTasks);
+						});
+					});
+
+					describe('when storeReferences is defined', () => {
+						const setup = () => {
+							const storeReferences = ['storeReference1', 'storeReference2'];
+							const yRedisDocMock = {
+								ydoc: createMock<Doc>(),
+								awareness: createMock<Awareness>(),
+								redisLastId: '0',
+								storeReferences,
+								docChanged: true,
+								streamName: '',
+								getAwarenessStateSize: () => 1,
+							};
+							yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
+
+							const streamMessageReplys = streamMessageReplyFactory.buildList(3);
+							const reclaimedTasks = xAutoClaimResponseFactory.build();
+							reclaimedTasks.messages = streamMessageReplys;
+							const deletedDocEntries = [streamMessageReplys[2]];
+
+							redisAdapter.reclaimTasks.mockResolvedValueOnce(reclaimedTasks);
+							redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
+							redisAdapter.tryClearTask
+								.mockImplementationOnce(async (task) => {
+									return await Promise.resolve(task.stream.length);
+								})
+								.mockImplementationOnce(async (task) => {
+									return await Promise.resolve(task.stream.length);
+								})
+								.mockImplementationOnce(async (task) => {
+									return await Promise.resolve(task.stream.length);
+								});
+
+							const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
+
+							return { expectedTasks, storeReferences };
+						};
+
+						it('should return an array of tasks and delete references', async () => {
+							const { expectedTasks, storeReferences } = setup();
+
+							const result = await service.consumeWorkerQueue();
+
+							expect(result).toEqual(expectedTasks);
+							expect(storageService.deleteReferences).toHaveBeenNthCalledWith(
+								1,
+								'room',
+								expect.stringContaining('docid-'),
+								storeReferences,
+							);
+							expect(storageService.deleteReferences).toHaveBeenNthCalledWith(
+								2,
+								'room',
+								expect.stringContaining('docid-'),
+								storeReferences,
+							);
+							expect(storageService.deleteReferences).toHaveBeenNthCalledWith(
+								3,
+								'room',
+								expect.stringContaining('docid-'),
+								storeReferences,
+							);
+						});
 					});
 				});
 			});
