@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
@@ -7,13 +6,12 @@ import { RedisAdapter } from './interfaces/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 
-@Injectable()
-export class RedisService {
+export class RedisFactory {
 	public constructor(
 		private readonly config: RedisConfig,
 		private readonly logger: Logger,
 	) {
-		this.logger.setContext(RedisService.name);
+		this.logger.setContext(RedisFactory.name);
 	}
 
 	public async createRedisInstance(): Promise<RedisAdapter> {

@@ -1,2 +1,2 @@
-export * from './metrics.module.js';
-export * from './metrics.service.js';
+export { MetricsModule } from './metrics.module.js';
+export { MetricsService } from './metrics.service.js';

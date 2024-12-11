@@ -10,10 +10,14 @@ import { ResponsePayloadBuilder } from '../../../../infra//authorization/respons
 import { AuthorizationService } from '../../../../infra/authorization/authorization.service.js';
 import { ServerModule } from '../../server.module.js';
 
+/**
+ * You must start minio locally and set in .env.test the values:
+ * S3_ACCESS_KEY=
+ * S3_SECRET_KEY=
+ */
 describe('Websocket Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
-	const prefix = 'y';
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -25,7 +29,6 @@ describe('Websocket Api Test', () => {
 
 		app = moduleFixture.createNestApplication();
 		await app.init();
-
 		authorizationService = await app.resolve(AuthorizationService);
 	});
 
@@ -36,6 +39,7 @@ describe('Websocket Api Test', () => {
 	const createWsClient = (room: string) => {
 		const ydoc = new Doc();
 		const serverUrl = 'ws://localhost:3345';
+		const prefix = 'y';
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore
 			WebSocketPolyfill: WebSocket,
@@ -66,8 +70,7 @@ describe('Websocket Api Test', () => {
 	describe('when clients have permission for room', () => {
 		describe('when two clients connect to the same doc before any changes', () => {
 			const setup = () => {
-				const randomString = Math.random().toString(36).substring(7);
-				const room = randomString;
+				const room = Math.random().toString(36).substring(7);
 
 				authorizationService.hasPermission.mockResolvedValueOnce({
 					hasWriteAccess: true,

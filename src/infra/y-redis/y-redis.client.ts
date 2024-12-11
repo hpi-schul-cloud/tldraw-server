@@ -1,60 +1,44 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
+import { Logger } from '../logger/logger.js';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
-import { RedisService } from '../redis/redis.service.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 import { YRedisDoc } from './interfaces/y-redis-doc.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
-export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void => {
-	docMessages?.messages.forEach((m) => {
-		const decoder = decoding.createDecoder(m);
-		const messageType = decoding.readVarUint(decoder);
-		switch (messageType) {
-			case protocol.messageSync: {
-				// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
-				const syncType = decoding.readVarUint(decoder);
-				if (syncType === protocol.messageSyncUpdate) {
-					applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
-				}
-				break;
-			}
-			case protocol.messageAwareness: {
-				applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
-				break;
-			}
-		}
-	});
-};
-
-export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
-	const a = new Api(store, await createRedisInstance.createRedisInstance());
-
-	await a.redis.createGroup();
-
-	return a;
-};
-
-export class Api {
+@Injectable()
+export class YRedisClient implements OnModuleInit {
 	public readonly redisPrefix: string;
-	public _destroyed;
+	private destroyedCallback = (): void => {
+		return;
+	};
 
 	public constructor(
-		private readonly store: DocumentStorage,
+		private readonly store: DocumentStorage, // TODO: Naming?
 		public readonly redis: RedisAdapter,
+		private readonly logger: Logger,
 	) {
+		this.logger.setContext(YRedisClient.name);
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
-		this._destroyed = false;
+	}
+
+	public async onModuleInit(): Promise<void> {
+		await this.redis.createGroup();
+	}
+
+	public registerDestroyedCallback(callback: () => void): void {
+		this.destroyedCallback = callback;
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
 		if (streams.length === 0) {
-			await promise.wait(50);
+			await promise.wait(50); // TODO: verschieben zur Schleife
 
 			return [];
 		}
@@ -96,8 +80,8 @@ export class Api {
 		const end = MetricsService.methodDurationHistogram.startTimer();
 		let docChanged = false;
 
-		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
-		const streamReply = await this.redis.readMessagesFromStream(roomComputed);
+		const streamName = computeRedisRoomStreamName(room, docid, this.redisPrefix);
+		const streamReply = await this.redis.readMessagesFromStream(streamName);
 
 		const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
 
@@ -117,28 +101,52 @@ export class Api {
 		});
 
 		ydoc.transact(() => {
-			handleMessageUpdates(docMessages, ydoc, awareness);
+			this.handleMessageUpdates(docMessages, ydoc, awareness);
 		});
 
 		end();
 
+		// TODO class
 		const response = {
 			ydoc,
 			awareness,
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
+			streamName,
+			getAwarenessStateSize: (): number => awareness.states.size,
 		};
 
 		if (ydoc.store.pendingStructs !== null) {
-			console.warn(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
+			this.logger.warning(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
 		}
 
 		return response;
 	}
 
 	public async destroy(): Promise<void> {
-		this._destroyed = true;
+		this.destroyedCallback();
 		await this.redis.quit();
+	}
+
+	private handleMessageUpdates(docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void {
+		docMessages?.messages.forEach((m) => {
+			const decoder = decoding.createDecoder(m);
+			const messageType = decoding.readVarUint(decoder);
+			switch (messageType) {
+				case protocol.messageSync: {
+					// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
+					const syncType = decoding.readVarUint(decoder);
+					if (syncType === protocol.messageSyncUpdate) {
+						applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
+					}
+					break;
+				}
+				case protocol.messageAwareness: {
+					applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
+					break;
+				}
+			}
+		});
 	}
 }

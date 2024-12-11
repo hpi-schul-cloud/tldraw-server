@@ -42,7 +42,7 @@ export function mapToStreamMessagesReplies(messages: XItems | unknown): StreamMe
 	return result;
 }
 
-export function mapToStreamMessagesReply(streamReply: XReadBufferReply | unknown): StreamMessagesReply {
+export function mapToStreamMessagesReply(streamReply: XReadBufferReply | unknown): StreamMessagesReply[] {
 	if (streamReply === null) {
 		return [];
 	}
