@@ -5,7 +5,7 @@ import { RedisAdapter } from '../redis/interfaces/redis-adapter.js';
 import { RedisModule } from '../redis/redis.module.js';
 import { StorageModule } from '../storage/storage.module.js';
 import { StorageService } from '../storage/storage.service.js';
-import { Subscriber } from './subscriber.service.js';
+import { SubscriberService } from './subscriber.service.js';
 import { YRedisClient } from './y-redis.client.js';
 import { API_FOR_SUBSCRIBER, REDIS_FOR_API, REDIS_FOR_SUBSCRIBER } from './y-redis.const.js';
 import { YRedisService } from './y-redis.service.js';
@@ -42,16 +42,16 @@ export class YRedisModule {
 					inject: [REDIS_FOR_SUBSCRIBER, StorageService, Logger],
 				},
 				{
-					provide: Subscriber,
-					useFactory: (yRedisClient: YRedisClient): Subscriber => {
-						const subscriber = new Subscriber(yRedisClient);
+					provide: SubscriberService,
+					useFactory: (yRedisClient: YRedisClient): SubscriberService => {
+						const subscriber = new SubscriberService(yRedisClient);
 
 						return subscriber;
 					},
 					inject: [API_FOR_SUBSCRIBER],
 				},
 			],
-			exports: [Subscriber, YRedisClient, YRedisService],
+			exports: [SubscriberService, YRedisClient, YRedisService],
 		};
 	}
 }

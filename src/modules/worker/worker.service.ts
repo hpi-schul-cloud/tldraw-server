@@ -36,6 +36,7 @@ export class WorkerService implements Job {
 
 	public async start(): Promise<void> {
 		this.running = true;
+		await this.redis.createGroup();
 
 		while (this.running) {
 			const tasks = await this.consumeWorkerQueue();

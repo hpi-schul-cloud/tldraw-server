@@ -5,6 +5,7 @@
 	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
 	https://github.com/yjs/y-redis
 */
+import { Injectable } from '@nestjs/common';
 import * as map from 'lib0/map';
 import { isSmallerRedisId } from './helper.js';
 import { YRedisClient } from './y-redis.client.js';
@@ -18,7 +19,8 @@ interface Subscriptions {
 	nextId?: string | null;
 }
 
-export class Subscriber {
+@Injectable()
+export class SubscriberService {
 	public readonly subscribers = new Map<string, Subscriptions>();
 
 	public constructor(private readonly yRedisClient: YRedisClient) {}

@@ -1,4 +1,4 @@
-import { OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
@@ -11,32 +11,11 @@ import { YRedisDoc } from './interfaces/y-redis-doc.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
-export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void => {
-	docMessages?.messages.forEach((m) => {
-		const decoder = decoding.createDecoder(m);
-		const messageType = decoding.readVarUint(decoder);
-		switch (messageType) {
-			case protocol.messageSync: {
-				// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
-				const syncType = decoding.readVarUint(decoder);
-				if (syncType === protocol.messageSyncUpdate) {
-					applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
-				}
-				break;
-			}
-			case protocol.messageAwareness: {
-				applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
-				break;
-			}
-		}
-	});
-};
-
-export class YRedisClient implements OnModuleInit {
+@Injectable()
+export class YRedisClient {
 	public readonly redisPrefix: string;
-	public _destroyed; // TODO: private?
 	private destroyedCallback = (): void => {
-		// empty
+		return;
 	};
 
 	public constructor(
@@ -47,10 +26,6 @@ export class YRedisClient implements OnModuleInit {
 		this.logger.setContext(YRedisClient.name);
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
-		this._destroyed = false;
-	}
-	public async onModuleInit(): Promise<void> {
-		await this.redis.createGroup(); // TODO: War das nur für worker relevant?
 	}
 
 	public registerDestroyedCallback(callback: () => void): void {
@@ -122,7 +97,7 @@ export class YRedisClient implements OnModuleInit {
 		});
 
 		ydoc.transact(() => {
-			handleMessageUpdates(docMessages, ydoc, awareness);
+			this.handleMessageUpdates(docMessages, ydoc, awareness);
 		});
 
 		end();
@@ -147,7 +122,27 @@ export class YRedisClient implements OnModuleInit {
 
 	public async destroy(): Promise<void> {
 		this.destroyedCallback();
-		this._destroyed = true;
 		await this.redis.quit();
+	}
+
+	private handleMessageUpdates(docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void {
+		docMessages?.messages.forEach((m) => {
+			const decoder = decoding.createDecoder(m);
+			const messageType = decoding.readVarUint(decoder);
+			switch (messageType) {
+				case protocol.messageSync: {
+					// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
+					const syncType = decoding.readVarUint(decoder);
+					if (syncType === protocol.messageSyncUpdate) {
+						applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
+					}
+					break;
+				}
+				case protocol.messageAwareness: {
+					applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
+					break;
+				}
+			}
+		});
 	}
 }

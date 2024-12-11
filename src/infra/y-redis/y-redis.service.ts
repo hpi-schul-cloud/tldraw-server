@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { encoding } from 'lib0';
 import * as array from 'lib0/array';
 import * as decoding from 'lib0/decoding';
 import { Awareness } from 'y-protocols/awareness.js';
 import { Doc, encodeStateAsUpdate, encodeStateVector } from 'yjs';
-import * as protocol from './protocol.js';
-import { YRedisUser } from './y-redis-user.js';
-import { encoding } from 'lib0';
-import { Subscriber, SubscriptionHandler } from './subscriber.service.js';
 import { isSmallerRedisId } from './helper.js';
 import { YRedisDoc } from './interfaces/y-redis-doc.js';
+import * as protocol from './protocol.js';
+import { SubscriberService, SubscriptionHandler } from './subscriber.service.js';
+import { YRedisUser } from './y-redis-user.js';
 
 @Injectable()
 export class YRedisService {
-	public constructor(private readonly subscriberService: Subscriber) {}
+	public constructor(private readonly subscriberService: SubscriberService) {}
 
 	// subscriber wrappers
 	public async start(): Promise<void> {

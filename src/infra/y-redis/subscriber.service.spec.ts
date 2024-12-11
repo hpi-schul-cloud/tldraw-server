@@ -1,176 +1,118 @@
-import { createMock } from '@golevelup/ts-jest';
-import { YRedisClient } from './y-redis.client.js';
-import * as subscriberService from './subscriber.service.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Test, TestingModule } from '@nestjs/testing';
+import { SubscriberService } from './subscriber.service.js';
 import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
+import { YRedisClient } from './y-redis.client.js';
 
 describe('SubscriberService', () => {
-	/*describe('run', () => {
-		let callCount = 0;
+	describe(SubscriberService.name, () => {
+		let module: TestingModule;
+		let service: SubscriberService;
+		let yRedisClient: DeepMocked<YRedisClient>;
 
-		beforeEach(() => {
-			callCount = 0;
+		beforeEach(async () => {
+			module = await Test.createTestingModule({
+				providers: [
+					SubscriberService,
+					{
+						provide: YRedisClient,
+						useValue: createMock<YRedisClient>(),
+					},
+				],
+			}).compile();
+
+			service = module.get<SubscriberService>(SubscriberService);
+			yRedisClient = module.get(YRedisClient);
 		});
 
-		const setup = () => {
-			const subscriber = createMock<subscriberService.Subscriber>({
-				run: jest.fn(),
-			});
-
-			Object.defineProperty(subscriberService, 'running', {
-				get: () => {
-					if (callCount === 0) {
-						callCount++;
-
-						return true;
-					}
-
-					return false;
-				},
-			});
-
-			return { subscriber };
-		};
-
-		it('should call subscriber.run', async () => {
-			const { subscriber } = setup();
-
-			await subscriberService.run(subscriber);
-
-			expect(subscriber.run).toHaveBeenCalled();
+		afterEach(() => {
+			jest.restoreAllMocks();
 		});
-	});*/
-
-	/*	describe('createSubscriber', () => {
-		const setup = () => {
-			const store = createMock<DocumentStorage>();
-			const createRedisInstance = createMock<RedisService>();
-
-			const runSpy = jest.spyOn(subscriberService, 'run').mockResolvedValue();
-
-			return { store, createRedisInstance, runSpy };
-		};
-
-		it('should call run', async () => {
-			const { store, createRedisInstance, runSpy } = setup();
-
-			await subscriberService.createSubscriber(store, createRedisInstance);
-
-			expect(runSpy).toHaveBeenCalled();
-		});
-
-		it('should return subscriber', async () => {
-			const { store, createRedisInstance } = setup();
-
-			const subscriber = await subscriberService.createSubscriber(store, createRedisInstance);
-
-			expect(subscriber).toBeDefined();
-			expect(subscriber).toBeInstanceOf(subscriberService.Subscriber);
-		});
-	});*/
-
-	describe(subscriberService.Subscriber.name, () => {
-		const setup = () => {
-			const yRedisClient = createMock<YRedisClient>();
-			const subscriber = new subscriberService.Subscriber(yRedisClient); // TODO
-
-			return { subscriber, yRedisClient };
-		};
 
 		it('should be defined', () => {
-			const { subscriber } = setup();
-
-			expect(subscriber).toBeDefined();
+			expect(service).toBeDefined();
 		});
 
 		describe('ensureSubId', () => {
 			it('should update nextId when id is smaller', () => {
-				const { subscriber } = setup();
 				const id = '1';
 				const stream = 'test';
 
-				subscriber.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null });
+				service.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null });
 
-				subscriber.ensureSubId(stream, id);
+				service.ensureSubId(stream, id);
 
-				expect(subscriber.subscribers.get(stream)?.nextId).toEqual(id);
+				expect(service.subscribers.get(stream)?.nextId).toEqual(id);
 			});
 
 			it('should not update nextId when id is not smaller', () => {
-				const { subscriber } = setup();
 				const id = '3';
 				const stream = 'test';
 
-				subscriber.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null });
+				service.subscribers.set(stream, { fs: new Set(), id: '2', nextId: null });
 
-				subscriber.ensureSubId(stream, id);
+				service.ensureSubId(stream, id);
 
-				expect(subscriber.subscribers.get(stream)?.nextId).toBeNull();
+				expect(service.subscribers.get(stream)?.nextId).toBeNull();
 			});
 		});
 
 		describe('subscribe', () => {
 			describe('when stream is not present', () => {
 				it('should add stream to subscribers', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.size).toEqual(1);
+					expect(service.subscribers.size).toEqual(1);
 				});
 
 				it('should add subscription handler to stream', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.get('test')?.fs.size).toEqual(1);
+					expect(service.subscribers.get('test')?.fs.size).toEqual(1);
 				});
 
-				it('should have many subscriber', () => {
-					const { subscriber } = setup();
+				it('should have many service', () => {
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.size).toEqual(1);
-					subscriber.subscribe('test1', subscriptionHandler);
-					expect(subscriber.subscribers.size).toEqual(2);
+					expect(service.subscribers.size).toEqual(1);
+					service.subscribe('test1', subscriptionHandler);
+					expect(service.subscribers.size).toEqual(2);
 				});
 
 				it('should add stream to subscribers with next id as null', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.get('test')?.nextId).toBeNull();
+					expect(service.subscribers.get('test')?.nextId).toBeNull();
 				});
 
 				it('should add stream to subscribers with id as 0', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.get('test')?.id).toEqual('0');
+					expect(service.subscribers.get('test')?.id).toEqual('0');
 				});
 
 				it('should add stream to subscribers with subscription handler', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.get('test')?.fs.has(subscriptionHandler)).toBeTruthy();
+					expect(service.subscribers.get('test')?.fs.has(subscriptionHandler)).toBeTruthy();
 				});
 
 				it('should return correctly result', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					const result = subscriber.subscribe('test', subscriptionHandler);
+					const result = service.subscribe('test', subscriptionHandler);
 
 					expect(result).toEqual({ redisId: '0' });
 				});
@@ -180,34 +122,30 @@ describe('SubscriberService', () => {
 		describe('unsubscribe', () => {
 			describe('when stream is present', () => {
 				it('should remove just once subscription handler from stream', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 					const subscriptionHandler1 = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
-					subscriber.subscribe('test', subscriptionHandler1);
-					subscriber.unsubscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler1);
+					service.unsubscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.get('test')?.fs.size).toEqual(1);
+					expect(service.subscribers.get('test')?.fs.size).toEqual(1);
 				});
 
 				it('should remove stream from subscribers when fs size is 0', () => {
-					const { subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
-					subscriber.unsubscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
+					service.unsubscribe('test', subscriptionHandler);
 
-					expect(subscriber.subscribers.size).toEqual(0);
+					expect(service.subscribers.size).toEqual(0);
 				});
 			});
 		});
 
 		describe('destroy', () => {
 			it('should call client destroy', async () => {
-				const { subscriber, yRedisClient } = setup();
-
-				await subscriber.destroy();
+				await service.destroy();
 
 				expect(yRedisClient.destroy).toHaveBeenCalled();
 			});
@@ -215,18 +153,19 @@ describe('SubscriberService', () => {
 
 		describe('run', () => {
 			const setupRun = () => {
-				const { yRedisClient, subscriber } = setup();
 				const subscriptionHandler = jest.fn();
 
-				subscriber.subscribe('test', subscriptionHandler);
+				service.subscribe('test', subscriptionHandler);
+				const messages = yRedisMessageFactory.build({ stream: 'test' });
+				yRedisClient.getMessages.mockResolvedValue([messages]);
 
-				return { yRedisClient, subscriber, subscriptionHandler };
+				return { subscriptionHandler };
 			};
 
 			it('should call client getMessages', async () => {
-				const { yRedisClient, subscriber } = setupRun();
+				setupRun();
 
-				await subscriber.run();
+				await service.run();
 
 				expect(yRedisClient.getMessages).toHaveBeenCalledWith(
 					expect.arrayContaining([
@@ -239,22 +178,22 @@ describe('SubscriberService', () => {
 			});
 
 			it('should call subscription handler', async () => {
-				const { yRedisClient, subscriber } = setupRun();
+				setupRun();
 				const messages = yRedisMessageFactory.buildList(3, { stream: 'test' });
-				const spyGetSubscribers = jest.spyOn(subscriber.subscribers, 'get');
+				const spyGetSubscribers = jest.spyOn(service.subscribers, 'get');
 				yRedisClient.getMessages.mockResolvedValueOnce(messages);
 
-				await subscriber.run();
+				await service.run();
 
 				expect(spyGetSubscribers).toHaveBeenCalledTimes(3);
 			});
 
 			it('should call subscription handler', async () => {
-				const { yRedisClient, subscriber, subscriptionHandler } = setupRun();
+				const { subscriptionHandler } = setupRun();
 				const messages = yRedisMessageFactory.buildList(3, { stream: 'test' });
 				yRedisClient.getMessages.mockResolvedValue(messages);
 
-				await subscriber.run();
+				await service.run();
 
 				expect(subscriptionHandler).toHaveBeenCalledWith(messages[0].stream, messages[0].messages);
 				expect(subscriptionHandler).toHaveBeenCalledWith(messages[1].stream, messages[1].messages);
@@ -262,25 +201,24 @@ describe('SubscriberService', () => {
 			});
 
 			it('should skip subscription handler', async () => {
-				const { yRedisClient, subscriber, subscriptionHandler } = setupRun();
+				const { subscriptionHandler } = setupRun();
 				const messages = yRedisMessageFactory.buildList(3, { stream: 'skip' });
 				yRedisClient.getMessages.mockResolvedValue(messages);
 
-				await subscriber.run();
+				await service.run();
 
 				expect(subscriptionHandler).not.toHaveBeenCalled();
 			});
 
 			describe('when nextId is not null', () => {
 				const setupRun = () => {
-					const { yRedisClient, subscriber } = setup();
 					const subscriptionHandler = jest.fn();
 
-					subscriber.subscribe('test', subscriptionHandler);
+					service.subscribe('test', subscriptionHandler);
 					const messages = yRedisMessageFactory.build({ stream: 'test' });
 					yRedisClient.getMessages.mockResolvedValue([messages]);
 
-					const testSubscriber = subscriber.subscribers.get('test');
+					const testSubscriber = service.subscribers.get('test');
 					if (testSubscriber) {
 						testSubscriber.nextId = '1';
 					}
@@ -290,13 +228,13 @@ describe('SubscriberService', () => {
 						id: '1',
 					};
 
-					return { yRedisClient, subscriber, testSubscriber, expectedMessages };
+					return { yRedisClient, service, testSubscriber, expectedMessages };
 				};
 
 				it('should set id and nextId ', async () => {
-					const { subscriber, testSubscriber, expectedMessages } = setupRun();
+					const { service, testSubscriber, expectedMessages } = setupRun();
 
-					await subscriber.run();
+					await service.run();
 
 					expect(testSubscriber).toEqual(expect.objectContaining(expectedMessages));
 				});
