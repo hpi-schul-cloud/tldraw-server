@@ -18,7 +18,7 @@ import { TldrawServerConfig } from './tldraw-server.config.js';
 @Module({
 	imports: [
 		ConfigurationModule.register(TldrawServerConfig),
-		YRedisModule.forRoot(),
+		YRedisModule.forServer(),
 		RedisModule.registerFor(REDIS_FOR_DELETION),
 		RedisModule.registerFor(REDIS_FOR_SUBSCRIBE_OF_DELETION),
 		StorageModule,

@@ -14,7 +14,7 @@ import { WorkerService } from './worker.service.js';
 		RedisModule.registerFor(REDIS_FOR_WORKER),
 		StorageModule,
 		LoggerModule,
-		YRedisModule.forRoot(),
+		YRedisModule.forWorker(),
 	],
 	providers: [WorkerService],
 })
