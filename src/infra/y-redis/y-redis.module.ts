@@ -12,7 +12,7 @@ import { YRedisService } from './y-redis.service.js';
 
 @Module({})
 export class YRedisModule {
-	public static forRoot(): DynamicModule {
+	public static forServer(): DynamicModule {
 		return {
 			module: YRedisModule,
 			imports: [
@@ -51,7 +51,26 @@ export class YRedisModule {
 					inject: [API_FOR_SUBSCRIBER],
 				},
 			],
-			exports: [SubscriberService, YRedisClient, YRedisService],
+			exports: [YRedisClient, YRedisService],
+		};
+	}
+
+	public static forWorker(): DynamicModule {
+		return {
+			module: YRedisModule,
+			imports: [RedisModule.registerFor(REDIS_FOR_API), StorageModule, LoggerModule],
+			providers: [
+				{
+					provide: YRedisClient,
+					useFactory: (redisAdapter: RedisAdapter, storageService: StorageService, logger: Logger): YRedisClient => {
+						const yRedisClient = new YRedisClient(storageService, redisAdapter, logger);
+
+						return yRedisClient;
+					},
+					inject: [REDIS_FOR_API, StorageService, Logger],
+				},
+			],
+			exports: [YRedisClient],
 		};
 	}
 }
