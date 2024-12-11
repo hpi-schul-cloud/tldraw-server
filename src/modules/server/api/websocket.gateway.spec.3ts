@@ -70,22 +70,6 @@ describe(WebsocketGateway.name, () => {
 	});
 
 	describe('onModuleInit', () => {
-		it('should call registerYWebsocketServer', async () => {
-			await service.onModuleInit();
-
-			/*expect(registerYWebsocketServer).toHaveBeenCalledWith(
-				webSocketServer,
-				'tests/:room',
-				storageService,
-				expect.any(Function),
-				{
-					openWsCallback: expect.any(Function),
-					closeWsCallback: expect.any(Function),
-				},
-				redisAdapter,
-			);*/
-		});
-
 		it('should increment openConnectionsGauge on openWsCallback', async () => {
 			const openConnectionsGaugeIncSpy = jest.spyOn(MetricsService.openConnectionsGauge, 'inc');
 
