@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
@@ -12,7 +12,7 @@ import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
 
 @Injectable()
-export class YRedisClient {
+export class YRedisClient implements OnModuleInit {
 	public readonly redisPrefix: string;
 	private destroyedCallback = (): void => {
 		return;
@@ -26,6 +26,10 @@ export class YRedisClient {
 		this.logger.setContext(YRedisClient.name);
 		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
+	}
+
+	public async onModuleInit(): Promise<void> {
+		await this.redis.createGroup();
 	}
 
 	public registerDestroyedCallback(callback: () => void): void {
