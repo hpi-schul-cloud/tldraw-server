@@ -90,8 +90,8 @@ export class WorkerService implements Job {
 		// @todo, make sure that awareness by this.getDoc is eventually destroyed, or doesn't
 		// register a timeout anymore
 		this.destroyAwarenessToAvoidMemoryLeaks(yRedisDoc);
-		this.retrievedFromStoreLog(yRedisDoc);
-		const lastId = this.createLastId(yRedisDoc, task);
+		this.logDoc(yRedisDoc);
+		const lastId = this.determineLastId(yRedisDoc, task);
 
 		const deletedDocNames = this.extractDocNamesFromStreamMessageReply(deletedDocEntries);
 		if (this.docChangedButNotDeleted(yRedisDoc, deletedDocNames, task)) {
@@ -103,7 +103,7 @@ export class WorkerService implements Job {
 			this.deleteStorageReferencesIfExist(yRedisDoc, roomStreamInfos),
 		]);
 
-		this.streamLog(task, lastId - this.config.WORKER_MIN_MESSAGE_LIFETIME);
+		this.logStream(task, lastId - this.config.WORKER_MIN_MESSAGE_LIFETIME);
 	}
 
 	private async waitIfNoOpenTask(tasks: Task[], waitInMs: number): Promise<void> {
@@ -170,7 +170,7 @@ export class WorkerService implements Job {
 		return tasks;
 	}
 
-	private createLastId(yRedisDoc: YRedisDoc, task: Task): number {
+	private determineLastId(yRedisDoc: YRedisDoc, task: Task): number {
 		const lastId = Math.max(parseInt(yRedisDoc.redisLastId.split('-')[0]), parseInt(task.id.split('-')[0]));
 
 		return lastId;
@@ -205,7 +205,7 @@ export class WorkerService implements Job {
 	}
 
 	// logs
-	private retrievedFromStoreLog(yRedisDoc: YRedisDoc): void {
+	private logDoc(yRedisDoc: YRedisDoc): void {
 		this.logger.log(
 			'retrieved doc from store. redisLastId=' +
 				yRedisDoc.redisLastId +
@@ -214,7 +214,7 @@ export class WorkerService implements Job {
 		);
 	}
 
-	private streamLog(task: Task, newLastId: number): void {
+	private logStream(task: Task, newLastId: number): void {
 		this.logger.log(
 			`Compacted stream
 			${JSON.stringify({
