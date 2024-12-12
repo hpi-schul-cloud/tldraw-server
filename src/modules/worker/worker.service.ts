@@ -5,7 +5,7 @@ import { Logger } from '../../infra/logger/index.js';
 import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/interfaces/index.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
 import { decodeRedisRoomStreamName, RoomStreamInfos } from '../../infra/y-redis/helper.js';
-import { YRedisDoc } from '../../infra/y-redis/interfaces/y-redis-doc.js';
+import { YRedisDoc } from '../../infra/y-redis/y-redis-doc.js';
 import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';

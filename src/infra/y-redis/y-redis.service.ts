@@ -5,9 +5,9 @@ import * as decoding from 'lib0/decoding';
 import { Awareness } from 'y-protocols/awareness.js';
 import { Doc, encodeStateAsUpdate, encodeStateVector } from 'yjs';
 import { isSmallerRedisId } from './helper.js';
-import { YRedisDoc } from './interfaces/y-redis-doc.js';
 import * as protocol from './protocol.js';
 import { SubscriberService, SubscriptionHandler } from './subscriber.service.js';
+import { YRedisDoc } from './y-redis-doc.js';
 import { YRedisUser } from './y-redis-user.js';
 
 @Injectable()

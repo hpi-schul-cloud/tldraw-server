@@ -7,9 +7,10 @@ import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
-import { YRedisDoc } from './interfaces/y-redis-doc.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
+import { YRedisDocFactory } from './y-redis-doc.factory.js';
+import { YRedisDoc } from './y-redis-doc.js';
 
 @Injectable()
 export class YRedisClient implements OnModuleInit {
@@ -107,15 +108,14 @@ export class YRedisClient implements OnModuleInit {
 		end();
 
 		// TODO class
-		const response = {
+		const response = YRedisDocFactory.build({
 			ydoc,
 			awareness,
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
 			streamName,
-			getAwarenessStateSize: (): number => awareness.states.size,
-		};
+		});
 
 		if (ydoc.store.pendingStructs !== null) {
 			this.logger.warning(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);

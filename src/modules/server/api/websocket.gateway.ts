@@ -11,7 +11,7 @@ import { AuthorizationService } from '../../../infra/authorization/authorization
 import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/metrics.service.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
-import { YRedisDoc } from '../../../infra/y-redis/interfaces/y-redis-doc.js';
+import { YRedisDoc } from '../../../infra/y-redis/y-redis-doc.js';
 import { YRedisUserFactory } from '../../../infra/y-redis/y-redis-user.factory.js';
 import { YRedisUser } from '../../../infra/y-redis/y-redis-user.js';
 import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
@@ -125,7 +125,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 
 			if (user.room === null || user.userid === null) {
-				ws.end(WebSocketErrorCodes.PolicyViolation);
+				ws.end(WebSocketErrorCodes.PolicyViolation, 'Missing room or userid');
 
 				return;
 			}
@@ -154,7 +154,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			this.yRedisService.ensureLatestContentSubscription(yRedisDoc, user);
 		} catch (error) {
 			this.logger.warning(error);
-			ws.end(WebSocketErrorCodes.InternalError);
+			ws.end(WebSocketErrorCodes.InternalError, 'Internal Server Error');
 		}
 	}
 

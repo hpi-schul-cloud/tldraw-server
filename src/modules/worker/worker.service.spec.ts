@@ -1,6 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Awareness } from 'y-protocols/awareness.js';
+import { Awareness } from 'y-protocols/awareness';
 import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
 import { RedisAdapter, StreamMessageReply } from '../../infra/redis/interfaces/index.js';
@@ -9,7 +9,7 @@ import {
 	xAutoClaimResponseFactory,
 } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
-import { YRedisDoc } from '../../infra/y-redis/interfaces/y-redis-doc.js';
+import { yRedisDocFactory } from '../../infra/y-redis/testing/y-redis-doc.factory.js';
 import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
@@ -22,21 +22,6 @@ const mapStreamMessageReplaysToTask = (streamMessageReplys: StreamMessageReply[]
 	}));
 
 	return tasks;
-};
-
-// TODO: Factory is missing, but need also introduce for production code.
-const createYRedisDocMock = (): YRedisDoc => {
-	const yDocMock = {
-		ydoc: createMock<Doc>(),
-		awareness: createMock<Awareness>(),
-		redisLastId: '0',
-		storeReferences: null,
-		docChanged: true,
-		streamName: '',
-		getAwarenessStateSize: () => 1,
-	};
-
-	return yDocMock;
 };
 
 describe(WorkerService.name, () => {
@@ -182,7 +167,7 @@ describe(WorkerService.name, () => {
 			describe('when stream length is 0', () => {
 				describe('when deletedDocEntries is empty', () => {
 					const setup = () => {
-						const yRedisDocMock = createYRedisDocMock();
+						const yRedisDocMock = yRedisDocFactory.build();
 						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
 						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
@@ -210,7 +195,7 @@ describe(WorkerService.name, () => {
 
 				describe('when deletedDocEntries contains element', () => {
 					const setup = () => {
-						const yRedisDocMock = createYRedisDocMock();
+						const yRedisDocMock = yRedisDocFactory.build();
 						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
 						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
@@ -240,7 +225,7 @@ describe(WorkerService.name, () => {
 			describe('when stream length is not 0', () => {
 				describe('when docChanged is false', () => {
 					const setup = () => {
-						const yRedisDocMock = createYRedisDocMock();
+						const yRedisDocMock = yRedisDocFactory.build();
 						yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
 						const streamMessageReplys = streamMessageReplyFactory.buildList(3);
@@ -278,7 +263,7 @@ describe(WorkerService.name, () => {
 				describe('when docChanged is true', () => {
 					describe('when storeReferences is null', () => {
 						const setup = () => {
-							const yRedisDocMock = createYRedisDocMock();
+							const yRedisDocMock = yRedisDocFactory.build();
 							yRedisClient.getDoc.mockResolvedValue(yRedisDocMock);
 
 							const streamMessageReplys = streamMessageReplyFactory.buildList(3);

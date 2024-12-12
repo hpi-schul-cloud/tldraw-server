@@ -10,11 +10,6 @@ import { ResponsePayloadBuilder } from '../../../../infra//authorization/respons
 import { AuthorizationService } from '../../../../infra/authorization/authorization.service.js';
 import { ServerModule } from '../../server.module.js';
 
-/**
- * You must start minio locally and set in .env.test the values:
- * S3_ACCESS_KEY=
- * S3_SECRET_KEY=
- */
 describe('Websocket Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
@@ -226,6 +221,40 @@ describe('Websocket Api Test', () => {
 				expect(error.reason).toBe('Unauthorized');
 				// @ts-ignore
 				expect(error.code).toBe(4401);
+			});
+		});
+
+		describe('when client connects and has not a room', () => {
+			const setup = () => {
+				const randomString = Math.random().toString(36).substring(7);
+				const room = randomString;
+
+				const response = ResponsePayloadBuilder.build(null, 'userId');
+				authorizationService.hasPermission.mockResolvedValue(response);
+
+				const { ydoc: client1Doc, provider } = createWsClient(room);
+
+				return { client1Doc, provider };
+			};
+
+			it('syncs doc changes of first client to second client', async () => {
+				const { provider } = setup();
+
+				let error: CloseEvent;
+				if (provider.ws) {
+					provider.ws.onclose = (event: Event) => {
+						error = event as CloseEvent;
+					};
+				}
+
+				await promise.until(0, () => {
+					return error as unknown as boolean;
+				});
+
+				// @ts-ignore
+				expect(error.reason).toBe('Missing room or userid');
+				// @ts-ignore
+				expect(error.code).toBe(1008);
 			});
 		});
 	});

@@ -1,13 +1,17 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Factory } from 'fishery';
-import { Awareness } from 'y-protocols/awareness.js';
+import { Awareness } from 'y-protocols/awareness';
 import { Doc } from 'yjs';
-import { YRedisDoc } from '../interfaces/y-redis-doc.js';
+import { YRedisDoc } from '../y-redis-doc.js';
 
 export const yRedisDocFactory = Factory.define<YRedisDoc>(({ sequence }) => {
 	return {
 		ydoc: createMock<Doc>(),
-		awareness: createMock<Awareness>(),
+		awareness: createMock<Awareness>({
+			destroy: () => {
+				return;
+			},
+		}),
 		redisLastId: `last-id-${sequence}`,
 		storeReferences: null,
 		docChanged: false,
