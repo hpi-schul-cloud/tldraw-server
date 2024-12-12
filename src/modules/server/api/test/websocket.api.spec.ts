@@ -9,10 +9,12 @@ import { Doc, encodeStateAsUpdateV2 } from 'yjs';
 import { ResponsePayloadBuilder } from '../../../../infra//authorization/response.builder.js';
 import { AuthorizationService } from '../../../../infra/authorization/authorization.service.js';
 import { ServerModule } from '../../server.module.js';
+import { TldrawServerConfig } from '../../tldraw-server.config.js';
 
 describe('Websocket Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
+	let tldrawServerConfig: TldrawServerConfig;
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -25,6 +27,7 @@ describe('Websocket Api Test', () => {
 		app = moduleFixture.createNestApplication();
 		await app.init();
 		authorizationService = await app.resolve(AuthorizationService);
+		tldrawServerConfig = await app.resolve(TldrawServerConfig);
 	});
 
 	afterAll(async () => {
@@ -33,7 +36,7 @@ describe('Websocket Api Test', () => {
 
 	const createWsClient = (room: string) => {
 		const ydoc = new Doc();
-		const serverUrl = 'ws://localhost:3345';
+		const serverUrl = tldrawServerConfig.TLDRAW_WEBSOCKET_URL;
 		const prefix = 'y';
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore
@@ -258,4 +261,39 @@ describe('Websocket Api Test', () => {
 			});
 		});
 	});
+
+	/*describe('when openCallback catch an error', () => {
+		const setup = () => {
+			const randomString = Math.random().toString(36).substring(7);
+			const room = randomString;
+
+			const response = ResponsePayloadBuilder.build(room, 'userId');
+			authorizationService.hasPermission.mockResolvedValue(response);
+
+			const { ydoc: client1Doc, provider } = createWsClient(room);
+
+			return { client1Doc, provider };
+		};
+
+		it('syncs doc changes of first client to second client', async () => {
+			const { provider } = setup();
+
+			let error: CloseEvent;
+			if (provider.ws) {
+				provider.ws.onclose = (event: Event) => {
+					error = event as CloseEvent;
+				};
+			}
+			//spyOn(provider.ws, 'end').and.callThrough();
+
+			await promise.until(0, () => {
+				return error as unknown as boolean;
+			});
+
+			// @ts-ignore
+			//expect(error.reason).toBe('Internal Server Error');
+			// @ts-ignore
+			expect(error.code).toBe(1011);
+		});
+	});*/
 });
