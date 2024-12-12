@@ -6,7 +6,7 @@
       state: "{{ 'present' if WITH_BRANCH_MONGO_DB_MANAGEMENT is defined and WITH_BRANCH_MONGO_DB_MANAGEMENT|bool else 'absent'}}"
     when:
      - EXTERNAL_SECRETS_OPERATOR is defined and EXTERNAL_SECRETS_OPERATOR|bool
-     - WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+     - WITH_TLDRAW is defined and WITH_TLDRAW|bool
     tags:
      - 1password
 
@@ -17,7 +17,7 @@
       template: onepassword.yml.j2
     when:
      - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
-     - WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+     - WITH_TLDRAW is defined and WITH_TLDRAW|bool
     tags:
       - 1password
 
@@ -28,7 +28,7 @@
       template: configmap.yml.j2
     when:
       - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
-      - WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+      - WITH_TLDRAW is defined and WITH_TLDRAW|bool
     tags:
       - configmap
 
@@ -37,7 +37,7 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: deployment.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+      state: "{{ 'present' if WITH_TLDRAW else 'absent'}}"
     tags:
       - deployment
 
@@ -46,7 +46,7 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: worker-deployment.yml.j2
-      state: "{{ 'present' if WITH_TLDRAW2 else 'absent'}}"
+      state: "{{ 'present' if WITH_TLDRAW else 'absent'}}"
     tags:
       - deployment
 
@@ -55,7 +55,7 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: server-svc.yml.j2
-    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
     tags:
       - service
 
@@ -64,7 +64,7 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: pod-monitor.yml.j2
-    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
     tags:
       - prometheus
 
@@ -74,6 +74,6 @@
       namespace: "{{ NAMESPACE }}"
       template: ingress.yml.j2
       apply: yes
-    when: WITH_TLDRAW2 is defined and WITH_TLDRAW2|bool
+    when: WITH_TLDRAW is defined and WITH_TLDRAW|bool
     tags:
       - ingress

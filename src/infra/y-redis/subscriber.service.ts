@@ -70,7 +70,7 @@ export class SubscriberService {
 	}
 
 	public async run(): Promise<StreamNameClockPair[]> {
-		const streams = Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id }));
+		const streams = this.getSubscriberStreams();
 
 		if (streams.length === 0) {
 			return streams;
@@ -88,6 +88,13 @@ export class SubscriberService {
 			}
 			sub.fs.forEach((f) => f(message.stream, message.messages));
 		}
+
+		return streams;
+	}
+
+	private getSubscriberStreams(): StreamNameClockPair[] {
+		const subscribers = Array.from(this.subscribers.entries());
+		const streams = subscribers.map(([stream, s]) => ({ key: stream, id: s.id }));
 
 		return streams;
 	}
