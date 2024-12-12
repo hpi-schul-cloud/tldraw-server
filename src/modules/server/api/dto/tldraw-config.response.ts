@@ -24,7 +24,7 @@ export class TldrawPublicConfigResponse {
 	public TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST: string[];
 
 	@ApiProperty()
-	public TLDRAW_NOT_AUTHENTICATED_REDIRECT_URL: string;
+	public TLDRAW_NOT_AUTHENTICATED_REDIRECT_URL?: string;
 
 	@ApiProperty()
 	public TLDRAW_WEBSOCKET_URL: string;
