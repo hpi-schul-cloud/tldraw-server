@@ -100,7 +100,7 @@ export class WorkerService implements Job {
 
 		await Promise.all([
 			this.redis.tryDeduplicateTask(task, lastId, this.config.WORKER_MIN_MESSAGE_LIFETIME),
-			this.deleteStorageReferencesIfExists(yRedisDoc, roomStreamInfos),
+			this.deleteStorageReferencesIfExist(yRedisDoc, roomStreamInfos),
 		]);
 
 		this.streamLog(task, lastId - this.config.WORKER_MIN_MESSAGE_LIFETIME);
@@ -144,7 +144,7 @@ export class WorkerService implements Job {
 		}
 	}
 
-	private deleteStorageReferencesIfExists(yRedisDoc: YRedisDoc, roomStreamInfos: RoomStreamInfos): Promise<void> {
+	private deleteStorageReferencesIfExist(yRedisDoc: YRedisDoc, roomStreamInfos: RoomStreamInfos): Promise<void> {
 		let promise = Promise.resolve();
 
 		if (this.isDocumentChangedAndReferencesAvaible(yRedisDoc)) {
