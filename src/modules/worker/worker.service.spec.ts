@@ -15,8 +15,8 @@ import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
 
-const mapStreamMessageReplaysToTask = (streamMessageReplys: StreamMessageReply[]) => {
-	const tasks = streamMessageReplys.map((m) => ({
+const mapStreamMessageRepliesToTask = (streamMessageReplies: StreamMessageReply[]) => {
+	const tasks = streamMessageReplies.map((m) => ({
 		stream: m.message.compact.toString(),
 		id: m?.id.toString(),
 	}));
@@ -179,7 +179,7 @@ describe(WorkerService.name, () => {
 						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
 						redisAdapter.tryClearTask.mockResolvedValueOnce(0).mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
-						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
+						const expectedTasks = mapStreamMessageRepliesToTask(reclaimedTasks.messages);
 
 						return { expectedTasks };
 					};
@@ -207,7 +207,7 @@ describe(WorkerService.name, () => {
 						redisAdapter.getDeletedDocEntries.mockResolvedValueOnce(deletedDocEntries);
 						redisAdapter.tryClearTask.mockResolvedValueOnce(0).mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
-						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
+						const expectedTasks = mapStreamMessageRepliesToTask(reclaimedTasks.messages);
 
 						return { expectedTasks };
 					};
@@ -246,7 +246,7 @@ describe(WorkerService.name, () => {
 								return await Promise.resolve(task.stream.length);
 							});
 
-						const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
+						const expectedTasks = mapStreamMessageRepliesToTask(reclaimedTasks.messages);
 
 						return { expectedTasks };
 					};
@@ -284,7 +284,7 @@ describe(WorkerService.name, () => {
 									return await Promise.resolve(task.stream.length);
 								});
 
-							const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
+							const expectedTasks = mapStreamMessageRepliesToTask(reclaimedTasks.messages);
 
 							return { expectedTasks };
 						};
@@ -330,7 +330,7 @@ describe(WorkerService.name, () => {
 									return await Promise.resolve(task.stream.length);
 								});
 
-							const expectedTasks = mapStreamMessageReplaysToTask(reclaimedTasks.messages);
+							const expectedTasks = mapStreamMessageRepliesToTask(reclaimedTasks.messages);
 
 							return { expectedTasks, storeReferences };
 						};

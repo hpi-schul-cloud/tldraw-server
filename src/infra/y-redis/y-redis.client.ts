@@ -128,7 +128,7 @@ export class YRedisClient implements OnModuleInit {
 			const messageType = decoding.readVarUint(decoder);
 			switch (messageType) {
 				case protocol.messageSync: {
-					// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
+					// The methode readVarUnit works with a pointer, that increases by each execution. The second execution gets the second value.
 					const syncType = decoding.readVarUint(decoder);
 					if (syncType === protocol.messageSyncUpdate) {
 						applyUpdate(ydoc, decoding.readVarUint8Array(decoder));

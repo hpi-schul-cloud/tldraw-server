@@ -18,11 +18,11 @@ const buildUpdate = (props: {
 }): Buffer => {
 	const { messageType, length, numberOfUpdates, awarenessId, lastClock } = props;
 	const encoder = encoding.createEncoder();
-	encoding.writeVarUint(encoder, messageType); //
-	encoding.writeVarUint(encoder, length); // Length of update
-	encoding.writeVarUint(encoder, numberOfUpdates); // Number of awareness updates
-	encoding.writeVarUint(encoder, awarenessId); // Awareness id
-	encoding.writeVarUint(encoder, lastClock); // Lasclocl
+	encoding.writeVarUint(encoder, messageType);
+	encoding.writeVarUint(encoder, length);
+	encoding.writeVarUint(encoder, numberOfUpdates);
+	encoding.writeVarUint(encoder, awarenessId);
+	encoding.writeVarUint(encoder, lastClock);
 
 	return Buffer.from(encoding.toUint8Array(encoder));
 };

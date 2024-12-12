@@ -75,7 +75,7 @@ describe('SubscriberService', () => {
 					expect(service.subscribers.get('test')?.fs.size).toEqual(1);
 				});
 
-				it('should have many service', () => {
+				it('should have two subscribers', () => {
 					const subscriptionHandler = jest.fn();
 
 					service.subscribe('test', subscriptionHandler);

@@ -97,7 +97,7 @@ describe(YRedisClient.name, () => {
 				return { spyMergeMessages, expectedResult, expectedMessages, props };
 			};
 
-			it('should call redis.readStreams with correctly params', async () => {
+			it('should call redis.readStreams with correct params', async () => {
 				const { props } = setup();
 
 				await yRedisClient.getMessages(props);
@@ -106,7 +106,7 @@ describe(YRedisClient.name, () => {
 				expect(redis.readStreams).toHaveBeenCalledWith(props);
 			});
 
-			it('should call protocol.mergeMessages with correctly values', async () => {
+			it('should call protocol.mergeMessages with correct values', async () => {
 				const { spyMergeMessages, expectedMessages, props } = setup();
 
 				await yRedisClient.getMessages(props);
@@ -157,7 +157,7 @@ describe(YRedisClient.name, () => {
 				return { props };
 			};
 
-			it('should call redis.addMessage with correctly params', async () => {
+			it('should call redis.addMessage with correct params', async () => {
 				const { props } = setup();
 
 				await yRedisClient.addMessage(props.room, props.docid, props.message);
@@ -167,7 +167,7 @@ describe(YRedisClient.name, () => {
 			});
 		});
 
-		describe('when m is correctly message', () => {
+		describe('when m is a correct message', () => {
 			const setup = () => {
 				const room = 'room';
 				const docid = 'docid';
@@ -197,7 +197,7 @@ describe(YRedisClient.name, () => {
 			return { props };
 		};
 
-		it('should call store.retrieveStateVector with correctly params', async () => {
+		it('should call store.retrieveStateVector with correct params', async () => {
 			const { props } = setup();
 			const { room, docid } = props;
 
@@ -232,7 +232,7 @@ describe(YRedisClient.name, () => {
 			};
 		};
 
-		it('should call computeRedisRoomStreamName with correctly params', async () => {
+		it('should call computeRedisRoomStreamName with correct params', async () => {
 			const { props, spyComputeRedisRoomStreamName } = setup();
 			const { room, docid } = props;
 
@@ -242,7 +242,7 @@ describe(YRedisClient.name, () => {
 			expect(spyComputeRedisRoomStreamName).toHaveBeenCalledWith(room, docid, 'prefix');
 		});
 
-		it('should call redis.readMessagesFromStream with correctly params', async () => {
+		it('should call redis.readMessagesFromStream with correct params', async () => {
 			const { props } = setup();
 			const { room, docid } = props;
 
@@ -253,7 +253,7 @@ describe(YRedisClient.name, () => {
 			expect(redis.readMessagesFromStream).toHaveBeenCalledWith('prefix:room:roomid-1:docid');
 		});
 
-		it('should call extractMessagesFromStreamReply with correctly params', async () => {
+		it('should call extractMessagesFromStreamReply with correct params', async () => {
 			const { props, spyExtractMessagesFromStreamReply, streamReply } = setup();
 			const { room, docid } = props;
 
@@ -295,7 +295,7 @@ describe(YRedisClient.name, () => {
 			return { callback };
 		};
 
-		it('should call store.destroy with correctly params', async () => {
+		it('should call store.destroy with correct params', async () => {
 			await yRedisClient.destroy();
 
 			expect(redis.quit).toHaveBeenCalledTimes(1);
@@ -351,7 +351,7 @@ describe(YRedisClient.name, () => {
 				return { ydoc, awareness, messages, spyApplyUpdate };
 			};
 
-			it('should call Y.applyUpdate with correctly params', () => {
+			it('should call Y.applyUpdate with correct params', () => {
 				const { ydoc, awareness, messages, spyApplyUpdate } = setup();
 
 				// @ts-ignore it is private method
@@ -375,7 +375,7 @@ describe(YRedisClient.name, () => {
 				return { ydoc, awareness, messages, spyApplyAwarenessUpdate };
 			};
 
-			it('should call Y.applyAwarenessUpdate with correctly params', () => {
+			it('should call Y.applyAwarenessUpdate with correct params', () => {
 				const { ydoc, awareness, messages, spyApplyAwarenessUpdate } = setup();
 
 				// @ts-ignore it is private method
