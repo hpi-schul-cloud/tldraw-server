@@ -38,12 +38,6 @@ export class YRedisClient implements OnModuleInit {
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
-		if (streams.length === 0) {
-			await promise.wait(50); // TODO: verschieben zur Schleife
-
-			return [];
-		}
-
 		const streamReplyRes = await this.redis.readStreams(streams);
 
 		const res: YRedisMessage[] = [];
@@ -107,7 +101,6 @@ export class YRedisClient implements OnModuleInit {
 
 		end();
 
-		// TODO class
 		const response = YRedisDocFactory.build({
 			ydoc,
 			awareness,

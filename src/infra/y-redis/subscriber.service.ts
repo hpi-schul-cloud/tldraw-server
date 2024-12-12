@@ -6,6 +6,7 @@
 	https://github.com/yjs/y-redis
 */
 import { Injectable } from '@nestjs/common';
+import { StreamNameClockPair } from 'infra/redis/interfaces/stream-name-clock-pair.js';
 import * as map from 'lib0/map';
 import { isSmallerRedisId } from './helper.js';
 import { YRedisClient } from './y-redis.client.js';
@@ -27,7 +28,8 @@ export class SubscriberService {
 
 	public async start(): Promise<void> {
 		while (running) {
-			await this.run();
+			const streams = await this.run();
+			await this.waitIfStreamsEmpty(streams);
 		}
 	}
 
@@ -61,10 +63,20 @@ export class SubscriberService {
 		await this.yRedisClient.destroy();
 	}
 
-	public async run(): Promise<void> {
-		const messages = await this.yRedisClient.getMessages(
-			Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id })),
-		);
+	private async waitIfStreamsEmpty(streams: StreamNameClockPair[], waitInMs = 50): Promise<void> {
+		if (streams.length === 0) {
+			await new Promise((resolve) => setTimeout(resolve, waitInMs));
+		}
+	}
+
+	public async run(): Promise<StreamNameClockPair[]> {
+		const streams = Array.from(this.subscribers.entries()).map(([stream, s]) => ({ key: stream, id: s.id }));
+
+		if (streams.length === 0) {
+			return streams;
+		}
+
+		const messages = await this.yRedisClient.getMessages(streams);
 
 		for (const message of messages) {
 			const sub = this.subscribers.get(message.stream);
@@ -76,5 +88,7 @@ export class SubscriberService {
 			}
 			sub.fs.forEach((f) => f(message.stream, message.messages));
 		}
+
+		return streams;
 	}
 }
