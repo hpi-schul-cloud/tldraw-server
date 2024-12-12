@@ -31,7 +31,7 @@ describe('Tldraw-Config Api Test', () => {
 				TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST: ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
 				TLDRAW_ASSETS_ENABLED: true,
 				TLDRAW_ASSETS_MAX_SIZE_BYTES: 10485760,
-				TLDRAW_WEBSOCKET_URL: 'ws://localhost:3345',
+				TLDRAW_WEBSOCKET_URL: 'ws://localhost:3399',
 			});
 		});
 	});
