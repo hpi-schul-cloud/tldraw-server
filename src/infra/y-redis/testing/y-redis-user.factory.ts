@@ -16,6 +16,5 @@ export const yRedisUserFactory = Factory.define<YRedisUser>(({ sequence }) => {
 		awarenessLastClock: 0,
 		awarenessLastUpdated: new Date(),
 		isClosed: false,
-		hasError: (): boolean => error !== null,
 	};
 });

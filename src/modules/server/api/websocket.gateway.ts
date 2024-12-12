@@ -85,7 +85,6 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 				aborted = true;
 			});
 
-			// TODO: Das throwed nicht ! Was macht das aborted?
 			const authPayload = await this.authorizationService.hasPermission(req);
 			if (aborted) return;
 
@@ -97,7 +96,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			res.cork(() => {
 				res.writeStatus('500 Internal Server Error').end('Internal Server Error');
 			});
-			this.logger.warning(error); // TODO: this.logger.error nur das interface erlaubt es gerade nicht
+			this.logger.warning(error);
 		}
 	}
 

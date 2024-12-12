@@ -20,12 +20,11 @@ export class YRedisClient implements OnModuleInit {
 	};
 
 	public constructor(
-		private readonly store: DocumentStorage, // TODO: Naming?
+		private readonly storage: DocumentStorage, // TODO: Naming?
 		public readonly redis: RedisAdapter,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(YRedisClient.name);
-		this.store = store;
 		this.redisPrefix = redis.redisPrefix;
 	}
 
@@ -68,7 +67,7 @@ export class YRedisClient implements OnModuleInit {
 	}
 
 	public getStateVector(room: string, docid = '/'): Promise<Uint8Array | null> {
-		return this.store.retrieveStateVector(room, docid);
+		return this.storage.retrieveStateVector(room, docid);
 	}
 
 	public async getDoc(room: string, docid: string): Promise<YRedisDoc> {
@@ -81,7 +80,7 @@ export class YRedisClient implements OnModuleInit {
 		const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
 
 		const docMessages = ms.get(room)?.get(docid) ?? null;
-		const docstate = await this.store.retrieveDoc(room, docid);
+		const docstate = await this.storage.retrieveDoc(room, docid);
 
 		const ydoc = new Doc();
 		const awareness = new Awareness(ydoc);
