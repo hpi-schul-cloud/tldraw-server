@@ -122,7 +122,7 @@ export class WorkerService implements Job {
 	}
 
 	private destroyAwarenessToAvoidMemoryLeaks(yRedisDoc: YRedisDoc): void {
-		// awareness is destroyed here to avoid memory leaks, see: https://github.com/yjs/y-redis/issues/24
+		// @see: https://github.com/yjs/y-redis/issues/24
 		yRedisDoc.awareness.destroy();
 	}
 
