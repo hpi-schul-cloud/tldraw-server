@@ -6,11 +6,11 @@ import { Doc, encodeStateAsUpdateV2 } from 'yjs';
 import { Logger } from '../logger/logger.js';
 import { RedisAdapter } from '../redis/interfaces/index.js';
 import { IoRedisAdapter } from '../redis/ioredis.adapter.js';
+import { streamMessagesReplyFactory } from '../redis/testing/stream-messages-reply.factory.js';
 import { StorageService } from '../storage/storage.service.js';
 import * as helper from './helper.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
-import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
 import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
 import { YRedisClient } from './y-redis.client.js';
 

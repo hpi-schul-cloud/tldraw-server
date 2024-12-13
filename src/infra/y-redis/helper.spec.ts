@@ -1,10 +1,10 @@
+import { streamMessagesReplyFactory } from '../redis/testing/stream-messages-reply.factory.js';
 import {
 	computeRedisRoomStreamName,
 	decodeRedisRoomStreamName,
 	extractMessagesFromStreamReply,
 	isSmallerRedisId,
 } from './helper.js';
-import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
 
 describe('helper', () => {
 	describe('isSmallerRedisId', () => {
