@@ -12,8 +12,6 @@ import { StreamNameClockPair } from '../../infra/redis/interfaces/stream-name-cl
 import { isSmallerRedisId } from './helper.js';
 import { YRedisClient } from './y-redis.client.js';
 
-export const running = true;
-
 export type SubscriptionHandler = (stream: string, message: Uint8Array[]) => void;
 interface Subscriptions {
 	fs: Set<SubscriptionHandler>;
@@ -92,10 +90,14 @@ export class SubscriberService implements OnModuleDestroy {
 	public async run(): Promise<StreamNameClockPair[]> {
 		const streams = this.getSubscriberStreams();
 
-		if (streams.length === 0) {
-			return streams;
+		if (streams.length > 0) {
+			await this.publishMessages(streams);
 		}
 
+		return streams;
+	}
+
+	private async publishMessages(streams: StreamNameClockPair[]): Promise<void> {
 		const messages = await this.yRedisClient.getMessages(streams);
 
 		for (const message of messages) {
@@ -106,10 +108,8 @@ export class SubscriberService implements OnModuleDestroy {
 				sub.id = sub.nextId;
 				sub.nextId = null;
 			}
-			sub.fs.forEach((f) => f(message.stream, message.messages));
+			sub.fs.forEach((subscriberCallback) => subscriberCallback(message.stream, message.messages));
 		}
-
-		return streams;
 	}
 
 	private getSubscriberStreams(): StreamNameClockPair[] {

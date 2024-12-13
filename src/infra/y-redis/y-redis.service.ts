@@ -25,8 +25,8 @@ export class YRedisService {
 		return { redisId };
 	}
 
-	public unsubscribe(streamName: string, callback: SubscriptionHandler): void {
-		this.subscriberService.unsubscribe(streamName, callback);
+	public unsubscribe(stream: string, callback: SubscriptionHandler): void {
+		this.subscriberService.unsubscribe(stream, callback);
 	}
 
 	public ensureLatestContentSubscription(yRedisDoc: YRedisDoc, yRedisUser: YRedisUser): void {
