@@ -148,6 +148,22 @@ describe('SubscriberService', () => {
 			});
 		});
 
+		describe('status', () => {
+			describe('when running is true', () => {
+				it('should return true', () => {
+					expect(service.status()).toBeTruthy();
+				});
+			});
+
+			describe('when running is false', () => {
+				it('should return false', () => {
+					service.stop();
+
+					expect(service.status()).toBeFalsy();
+				});
+			});
+		});
+
 		describe('destroy', () => {
 			it('should call client destroy', async () => {
 				await service.onModuleDestroy();
