@@ -10,9 +10,7 @@ export class RedisFactory {
 	public constructor(
 		private readonly config: RedisConfig,
 		private readonly logger: Logger,
-	) {
-		this.logger.setContext(RedisFactory.name);
-	}
+	) {}
 
 	public async createRedisInstance(): Promise<RedisAdapter> {
 		let redisInstance: Redis;

@@ -1,2 +1,2 @@
+export * from './redis.factory.js';
 export * from './redis.module.js';
-export * from './redis.service.js';

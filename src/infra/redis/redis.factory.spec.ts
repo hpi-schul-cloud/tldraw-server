@@ -4,7 +4,7 @@ import * as util from 'util';
 import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
-import { RedisFactory } from './redis.service.js';
+import { RedisFactory } from './redis.factory.js';
 
 jest.mock('ioredis', () => {
 	return {

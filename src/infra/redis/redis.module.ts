@@ -4,7 +4,7 @@ import { Logger } from '../logger/logger.js';
 import { LoggerModule } from '../logger/logger.module.js';
 import { RedisAdapter } from './interfaces/redis-adapter.js';
 import { RedisConfig } from './redis.config.js';
-import { RedisFactory } from './redis.service.js';
+import { RedisFactory } from './redis.factory.js';
 
 @Module({})
 export class RedisModule {
@@ -16,6 +16,8 @@ export class RedisModule {
 				{
 					provide: token,
 					useFactory: async (config: RedisConfig, logger: Logger): Promise<RedisAdapter> => {
+						logger.setContext(`${RedisFactory.name} - ${token}`);
+
 						const redisFactory = new RedisFactory(config, logger);
 						const redisAdapter = await redisFactory.createRedisInstance();
 
