@@ -71,11 +71,10 @@ export class WorkerService implements Job {
 		]);
 
 		try {
-			// TODO: It is importend to check if we need a await at this place.
 			if (this.streamIsEmpty(streamLength)) {
 				this.removingRecurringTaskFromQueue(task, deletedDocEntries);
 			} else {
-				this.processUpdateChanges(deletedDocEntries, task);
+				await this.processUpdateChanges(deletedDocEntries, task);
 			}
 		} catch (error: unknown) {
 			this.logger.warning({ error, deletedDocEntries, task, message: 'processTask' });
@@ -136,7 +135,7 @@ export class WorkerService implements Job {
 		if (deleteEntryId) {
 			const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
 			await Promise.all([
-				this.redis.deleteDeleteDocEntry(deleteEntryId),
+				this.redis.deleteDeletedDocEntry(deleteEntryId),
 				this.storageService.deleteDocument(roomStreamInfos.room, roomStreamInfos.docid),
 			]);
 		}

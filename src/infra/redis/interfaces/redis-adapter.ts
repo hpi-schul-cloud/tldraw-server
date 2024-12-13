@@ -15,7 +15,7 @@ export interface RedisAdapter {
 	readMessagesFromStream(streamName: string): Promise<StreamMessagesReply[]>;
 	reclaimTasks(consumerName: string, redisTaskDebounce: number, tryClaimCount: number): Promise<XAutoClaimResponse>;
 	getDeletedDocEntries(): Promise<StreamMessageReply[]>;
-	deleteDeleteDocEntry(id: string): Promise<number>;
+	deleteDeletedDocEntry(id: string): Promise<number>;
 	tryClearTask(task: Task): Promise<number>;
 	tryDeduplicateTask(task: Task, lastId: number, redisMinMessageLifetime: number): Promise<void>;
 }

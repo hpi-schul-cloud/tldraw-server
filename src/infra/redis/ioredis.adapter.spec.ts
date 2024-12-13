@@ -412,7 +412,7 @@ describe(IoRedisAdapter.name, () => {
 		it('should call redis xdel with correct values', async () => {
 			const { id, xdelSpy, expectedProps, redisAdapter } = await setup();
 
-			await redisAdapter.deleteDeleteDocEntry(id);
+			await redisAdapter.deleteDeletedDocEntry(id);
 
 			expect(xdelSpy).toHaveBeenCalledWith(...expectedProps);
 		});
@@ -420,7 +420,7 @@ describe(IoRedisAdapter.name, () => {
 		it('should return correct value', async () => {
 			const { id, redisAdapter } = await setup();
 
-			const result = await redisAdapter.deleteDeleteDocEntry(id);
+			const result = await redisAdapter.deleteDeletedDocEntry(id);
 
 			expect(result).toBe(1);
 		});

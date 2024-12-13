@@ -140,7 +140,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		return transformedDeletedTasks;
 	}
 
-	public deleteDeleteDocEntry(id: string): Promise<number> {
+	public deleteDeletedDocEntry(id: string): Promise<number> {
 		const result = this.redis.xdel(this.redisDeleteStreamName, id);
 
 		return result;
