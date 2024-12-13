@@ -179,8 +179,11 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		try {
 			const user = ws.getUserData();
 
-			// don't read any messages from users without write access // TODO authorization check in private Methode, ts macht Probleme, das return hier sieht merkwürdig aus, warum kein throw?
-			if (!user.hasWriteAccess || !user.room) return;
+			if (!user.hasWriteAccess || !user.room) {
+				ws.end(WebSocketErrorCodes.TldrawPolicyViolation, 'User has no write access or room is missing');
+
+				return;
+			}
 
 			const message = this.yRedisService.filterMessageForPropagation(messageBuffer, user);
 
