@@ -85,10 +85,8 @@ export class WorkerService implements Job {
 	private async processUpdateChanges(deletedDocEntries: StreamMessageReply[], task: Task): Promise<void> {
 		this.logger.log('requesting doc from store');
 		const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
-		const yRedisDoc = await this.yRedisClient.getDoc(roomStreamInfos.room, roomStreamInfos.docid); // todo ?
+		const yRedisDoc = await this.yRedisClient.getDoc(roomStreamInfos.room, roomStreamInfos.docid);
 
-		// @todo, make sure that awareness by this.getDoc is eventually destroyed, or doesn't
-		// register a timeout anymore
 		this.destroyAwarenessToAvoidMemoryLeaks(yRedisDoc);
 		this.logDoc(yRedisDoc);
 		const lastId = this.determineLastId(yRedisDoc, task);

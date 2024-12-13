@@ -5,9 +5,10 @@
 	The original code from the `y-redis` repository is licensed under the AGPL-3.0 license.
 	https://github.com/yjs/y-redis
 */
-import { Injectable } from '@nestjs/common';
-import { StreamNameClockPair } from 'infra/redis/interfaces/stream-name-clock-pair.js';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import * as map from 'lib0/map';
+import { Logger } from '../../infra/logger/logger.js';
+import { StreamNameClockPair } from '../../infra/redis/interfaces/stream-name-clock-pair.js';
 import { isSmallerRedisId } from './helper.js';
 import { YRedisClient } from './y-redis.client.js';
 
@@ -21,16 +22,34 @@ interface Subscriptions {
 }
 
 @Injectable()
-export class SubscriberService {
+export class SubscriberService implements OnModuleDestroy {
+	private running = true;
 	public readonly subscribers = new Map<string, Subscriptions>();
 
-	public constructor(private readonly yRedisClient: YRedisClient) {}
+	public constructor(
+		private readonly yRedisClient: YRedisClient,
+		private readonly logger: Logger,
+	) {
+		this.logger.setContext(SubscriberService.name);
+	}
 
 	public async start(): Promise<void> {
-		while (running) {
+		this.running = true;
+		this.logger.log(`Start sync messages process`);
+
+		while (this.running) {
 			const streams = await this.run();
 			await this.waitIfStreamsEmpty(streams);
 		}
+	}
+
+	public stop(): void {
+		this.running = false;
+		this.logger.log(`Ended sync messages process`);
+	}
+
+	public status(): boolean {
+		return this.running;
 	}
 
 	public ensureSubId(stream: string, id: string): void {
@@ -59,7 +78,8 @@ export class SubscriberService {
 		}
 	}
 
-	public async destroy(): Promise<void> {
+	public async onModuleDestroy(): Promise<void> {
+		this.stop();
 		await this.yRedisClient.destroy();
 	}
 

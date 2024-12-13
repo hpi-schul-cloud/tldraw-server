@@ -1,5 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Logger } from '../logger/logger.js';
 import { SubscriberService } from './subscriber.service.js';
 import { yRedisMessageFactory } from './testing/y-redis-message.factory.js';
 import { YRedisClient } from './y-redis.client.js';
@@ -17,6 +18,10 @@ describe('SubscriberService', () => {
 					{
 						provide: YRedisClient,
 						useValue: createMock<YRedisClient>(),
+					},
+					{
+						provide: Logger,
+						useValue: createMock<Logger>(),
 					},
 				],
 			}).compile();
@@ -145,7 +150,7 @@ describe('SubscriberService', () => {
 
 		describe('destroy', () => {
 			it('should call client destroy', async () => {
-				await service.destroy();
+				await service.onModuleDestroy();
 
 				expect(yRedisClient.destroy).toHaveBeenCalled();
 			});
