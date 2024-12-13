@@ -1,4 +1,4 @@
-import { YRedisDocProps } from './interfaces/y-redis-doc.js';
+import { YRedisDocProps } from './interfaces/y-redis-doc-props.js';
 import { YRedisDoc } from './y-redis-doc.js';
 
 export class YRedisDocFactory {

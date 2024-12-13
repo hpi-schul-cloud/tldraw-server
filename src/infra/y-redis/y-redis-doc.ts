@@ -1,6 +1,6 @@
 import { Awareness } from 'y-protocols/awareness';
 import { Doc } from 'yjs';
-import { YRedisDocProps } from './interfaces/y-redis-doc.js';
+import { YRedisDocProps } from './interfaces/y-redis-doc-props.js';
 
 export class YRedisDoc {
 	public readonly ydoc: Doc;
