@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { RedisKey } from 'ioredis';
 import { Logger } from '../../infra/logger/index.js';
@@ -17,7 +17,7 @@ interface Job {
 }
 
 @Injectable()
-export class WorkerService implements Job {
+export class WorkerService implements Job, OnModuleDestroy {
 	private readonly consumerId = randomUUID();
 	private running = true;
 
@@ -29,9 +29,11 @@ export class WorkerService implements Job {
 		private readonly yRedisClient: YRedisClient,
 	) {
 		this.logger.setContext(WorkerService.name);
-		this.yRedisClient.registerDestroyedCallback(() => {
-			this.stop();
-		});
+	}
+
+	public async onModuleDestroy(): Promise<void> {
+		this.stop();
+		await this.yRedisClient.destroy();
 	}
 
 	public async start(): Promise<void> {

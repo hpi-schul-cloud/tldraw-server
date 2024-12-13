@@ -15,9 +15,6 @@ import { YRedisDoc } from './y-redis-doc.js';
 @Injectable()
 export class YRedisClient implements OnModuleInit {
 	public readonly redisPrefix: string;
-	private destroyedCallback = (): void => {
-		return;
-	};
 
 	public constructor(
 		private readonly storage: DocumentStorage,
@@ -30,10 +27,6 @@ export class YRedisClient implements OnModuleInit {
 
 	public async onModuleInit(): Promise<void> {
 		await this.redis.createGroup();
-	}
-
-	public registerDestroyedCallback(callback: () => void): void {
-		this.destroyedCallback = callback;
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
@@ -117,7 +110,6 @@ export class YRedisClient implements OnModuleInit {
 	}
 
 	public async destroy(): Promise<void> {
-		this.destroyedCallback();
 		await this.redis.quit();
 	}
 

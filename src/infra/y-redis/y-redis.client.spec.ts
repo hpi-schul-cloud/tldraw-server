@@ -287,52 +287,10 @@ describe(YRedisClient.name, () => {
 	});
 
 	describe('destroy', () => {
-		const setup = () => {
-			const callback = jest.fn();
-
-			yRedisClient.registerDestroyedCallback(callback);
-
-			return { callback };
-		};
-
 		it('should call store.destroy with correct params', async () => {
 			await yRedisClient.destroy();
 
 			expect(redis.quit).toHaveBeenCalledTimes(1);
-		});
-
-		it('should call destroyedCallback', async () => {
-			const { callback } = setup();
-
-			await yRedisClient.destroy();
-
-			expect(callback).toHaveBeenCalledTimes(1);
-		});
-	});
-
-	describe('registerDestroyedCallback', () => {
-		const setup = () => {
-			const callback = jest.fn();
-
-			return { callback };
-		};
-
-		it('should set the destroyedCallback correctly', () => {
-			const { callback } = setup();
-
-			yRedisClient.registerDestroyedCallback(callback);
-
-			// @ts-ignore it is private method
-			expect(yRedisClient.destroyedCallback).toBe(callback);
-		});
-
-		it('should call the destroyedCallback when destroy is called', async () => {
-			const { callback } = setup();
-
-			yRedisClient.registerDestroyedCallback(callback);
-			await yRedisClient.destroy();
-
-			expect(callback).toHaveBeenCalledTimes(1);
 		});
 	});
 

@@ -109,16 +109,6 @@ describe(WorkerService.name, () => {
 				expect(service.status()).toBe(true);
 			});
 
-			it('it should register stop function as destroy callback in yRedisClient', () => {
-				setup();
-
-				expect(yRedisClient.registerDestroyedCallback).toHaveBeenCalledTimes(1);
-
-				yRedisClient.registerDestroyedCallback.mock.calls[0][0]();
-
-				expect(service.status()).toBe(false);
-			});
-
 			it('should call consumeWorkerQueue', async () => {
 				const { spy } = setup();
 
