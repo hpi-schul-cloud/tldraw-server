@@ -4,7 +4,7 @@ import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { Logger } from '../logger/logger.js';
 import { MetricsService } from '../metrics/metrics.service.js';
-import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
+import { RedisAdapter, StreamMessageReply, StreamNameClockPair } from '../redis/interfaces/index.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 import * as protocol from './protocol.js';
@@ -20,7 +20,7 @@ export class YRedisClient implements OnModuleInit {
 	};
 
 	public constructor(
-		private readonly storage: DocumentStorage, // TODO: Naming?
+		private readonly storage: DocumentStorage,
 		public readonly redis: RedisAdapter,
 		private readonly logger: Logger,
 	) {
@@ -42,10 +42,10 @@ export class YRedisClient implements OnModuleInit {
 		const res: YRedisMessage[] = [];
 
 		streamReplyRes?.forEach((stream) => {
+			const messages = this.extractMessages(stream.messages);
 			res.push({
 				stream: stream.name.toString(),
-				// @ts-ignore
-				messages: protocol.mergeMessages(stream.messages.map((message) => message.message.m).filter((m) => m != null)),
+				messages: protocol.mergeMessages(messages),
 				lastId: stream.messages ? array.last(stream.messages).id.toString() : '',
 			});
 		});
@@ -140,5 +140,15 @@ export class YRedisClient implements OnModuleInit {
 				}
 			}
 		});
+	}
+
+	private extractMessages(messages: StreamMessageReply[] | null): Buffer[] {
+		if (messages === null) {
+			return [];
+		}
+
+		const filteredMessages = messages.map((message) => message.message.m).filter((m) => m != null);
+
+		return filteredMessages;
 	}
 }

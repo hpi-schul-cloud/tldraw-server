@@ -16,9 +16,9 @@ import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
 
 const mapStreamMessageRepliesToTask = (streamMessageReplies: StreamMessageReply[]) => {
-	const tasks = streamMessageReplies.map((m) => ({
-		stream: m.message.compact.toString(),
-		id: m?.id.toString(),
+	const tasks = streamMessageReplies.map((message) => ({
+		stream: message.message.compact?.toString(),
+		id: message.id.toString(),
 	}));
 
 	return tasks;

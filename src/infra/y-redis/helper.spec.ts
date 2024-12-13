@@ -116,7 +116,7 @@ describe('helper', () => {
 								'docid',
 								{
 									lastId: 'redis-id-2',
-									messages: ['message-1-2', 'message-2-2'],
+									messages: [Buffer.from('message-1-2'), Buffer.from('message-2-2')],
 								},
 							],
 						]),

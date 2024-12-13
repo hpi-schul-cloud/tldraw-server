@@ -173,10 +173,12 @@ export class WorkerService implements Job {
 		return lastId;
 	}
 
-	private extractDocNamesFromStreamMessageReply(docEntries: StreamMessageReply[]): RedisKey[] {
-		const docNames = docEntries?.map((entry) => {
-			return entry.message.docName;
-		});
+	private extractDocNamesFromStreamMessageReply(docEntries: StreamMessageReply[]): string[] {
+		const docNames = docEntries
+			.map((entry) => {
+				return entry.message.docName;
+			})
+			.filter((docName) => docName !== undefined);
 
 		return docNames;
 	}

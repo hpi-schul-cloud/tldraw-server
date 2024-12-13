@@ -13,9 +13,9 @@ export const streamMessageReplyFactory = Factory.define<StreamMessageReply>(({ s
 		id: sequence.toString(),
 		message: {
 			key: sequence.toString(),
-			m: sequence.toString(),
+			m: Buffer.from(sequence.toString()),
 			docName: `prefix:room:room:docid-${sequence.toString()}`,
-			compact: `prefix:room:room:docid-${sequence.toString()}`,
+			compact: Buffer.from(`prefix:room:room:docid-${sequence.toString()}`),
 		},
 	};
 });
