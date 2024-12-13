@@ -44,12 +44,12 @@ export class WorkerService implements Job, OnModuleDestroy {
 			await this.waitIfNoOpenTask(tasks, this.config.WORKER_IDLE_BREAK_MS);
 		}
 
-		this.logger.log(`Start worker process ${this.consumerId}`);
+		this.logger.info(`Start worker process ${this.consumerId}`);
 	}
 
 	public stop(): void {
 		this.running = false;
-		this.logger.log(`Ended worker process ${this.consumerId}`);
+		this.logger.info(`Ended worker process ${this.consumerId}`);
 	}
 
 	public status(): boolean {
@@ -84,7 +84,7 @@ export class WorkerService implements Job, OnModuleDestroy {
 	}
 
 	private async processUpdateChanges(deletedDocEntries: StreamMessageReply[], task: Task): Promise<void> {
-		this.logger.log('requesting doc from store');
+		this.logger.info('requesting doc from store');
 		const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
 		const yRedisDoc = await this.yRedisClient.getDoc(roomStreamInfos.room, roomStreamInfos.docid);
 
@@ -107,7 +107,7 @@ export class WorkerService implements Job, OnModuleDestroy {
 
 	private async waitIfNoOpenTask(tasks: Task[], waitInMs: number): Promise<void> {
 		if (tasks.length === 0) {
-			this.logger.log(`No tasks available, pausing... ${JSON.stringify({ tasks })}`);
+			this.logger.info(`No tasks available, pausing... ${JSON.stringify({ tasks })}`);
 			await new Promise((resolve) => setTimeout(resolve, waitInMs));
 		}
 	}
@@ -128,7 +128,7 @@ export class WorkerService implements Job, OnModuleDestroy {
 	}
 
 	private async removingRecurringTaskFromQueue(task: Task, deletedDocEntries: StreamMessageReply[]): Promise<void> {
-		this.logger.log(
+		this.logger.info(
 			`Stream still empty, removing recurring task from queue ${JSON.stringify({ stream: task.stream })}`,
 		);
 
@@ -163,7 +163,7 @@ export class WorkerService implements Job, OnModuleDestroy {
 		});
 
 		if (tasks.length > 0) {
-			this.logger.log(`Accepted tasks ${JSON.stringify({ tasks })}`);
+			this.logger.info(`Accepted tasks ${JSON.stringify({ tasks })}`);
 		}
 
 		return tasks;
@@ -207,7 +207,7 @@ export class WorkerService implements Job, OnModuleDestroy {
 
 	// logs
 	private logDoc(yRedisDoc: YRedisDoc): void {
-		this.logger.log(
+		this.logger.info(
 			'retrieved doc from store. redisLastId=' +
 				yRedisDoc.redisLastId +
 				' storeRefs=' +
@@ -216,7 +216,7 @@ export class WorkerService implements Job, OnModuleDestroy {
 	}
 
 	private logStream(task: Task, newLastId: number): void {
-		this.logger.log(
+		this.logger.info(
 			`Compacted stream
 			${JSON.stringify({
 				stream: task.stream,

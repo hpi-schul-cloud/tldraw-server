@@ -35,7 +35,7 @@ export class RedisFactory {
 		const sentinelName = this.config.REDIS_SENTINEL_NAME;
 		const sentinelPassword = this.config.REDIS_SENTINEL_PASSWORD;
 		const sentinels = await this.discoverSentinelHosts();
-		this.logger.log(`Discovered sentinels: ${JSON.stringify(sentinels)}`);
+		this.logger.info(`Discovered sentinels: ${JSON.stringify(sentinels)}`);
 
 		const redisInstance = new Redis({
 			sentinels,
@@ -59,7 +59,7 @@ export class RedisFactory {
 
 			return hosts;
 		} catch (err) {
-			this.logger.log('Error during service discovery:', err);
+			this.logger.info('Error during service discovery:', err);
 			throw err;
 		}
 	}

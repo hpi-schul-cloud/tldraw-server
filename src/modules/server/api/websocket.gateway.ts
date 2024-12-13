@@ -67,7 +67,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 
 		this.webSocketServer.listen(this.config.TLDRAW_WEBSOCKET_PORT, (t) => {
 			if (t) {
-				this.logger.log(`Websocket Server is running on port ${this.config.TLDRAW_WEBSOCKET_PORT}`);
+				this.logger.info(`Websocket Server is running on port ${this.config.TLDRAW_WEBSOCKET_PORT}`);
 			}
 		});
 

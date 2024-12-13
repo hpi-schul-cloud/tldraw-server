@@ -194,7 +194,7 @@ describe(IoRedisAdapter.name, () => {
 
 			await redisAdapter.createGroup();
 
-			expect(logger.log).toHaveBeenCalledWith(error);
+			expect(logger.info).toHaveBeenCalledWith(error);
 		});
 	});
 

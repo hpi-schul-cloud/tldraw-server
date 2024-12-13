@@ -44,10 +44,10 @@ describe('Logger', () => {
 		processStderrWriteSpy.mockRestore();
 	});
 
-	describe('WHEN log logging', () => {
+	describe('WHEN info logging', () => {
 		it('should call winstonLogger.info', () => {
 			const error = new Error('custom error');
-			logger.log(error.message, error.stack);
+			logger.info(error.message, error.stack);
 			expect(winstonLogger.info).toHaveBeenCalled();
 		});
 	});

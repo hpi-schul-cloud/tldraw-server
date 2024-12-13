@@ -76,7 +76,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		try {
 			await this.redis.xgroup('CREATE', this.redisWorkerStreamName, this.redisWorkerGroupName, '0', 'MKSTREAM');
 		} catch (e) {
-			this.logger.log(e);
+			this.logger.info(e);
 			// It is okay when the group already exists, so we can ignore this error.
 			if (e.message !== 'BUSYGROUP Consumer Group name already exists') {
 				throw e;

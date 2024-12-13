@@ -35,7 +35,7 @@ export class SubscriberService implements OnModuleDestroy {
 
 	public async start(): Promise<void> {
 		this.running = true;
-		this.logger.log(`Start sync messages process`);
+		this.logger.info(`Start sync messages process`);
 
 		while (this.running) {
 			const streams = await this.run();
@@ -45,7 +45,7 @@ export class SubscriberService implements OnModuleDestroy {
 
 	public stop(): void {
 		this.running = false;
-		this.logger.log(`Ended sync messages process`);
+		this.logger.info(`Ended sync messages process`);
 	}
 
 	public status(): boolean {

@@ -29,13 +29,13 @@ async function bootstrap(): Promise<void> {
 	await metricsApp.listen(metricsPort, async () => {
 		const logger = await metricsApp.resolve(Logger);
 		logger.setContext('METRICS');
-		logger.log(`Metrics server is running on port ${metricsPort}`);
+		logger.info(`Metrics server is running on port ${metricsPort}`);
 	});
 
 	await nestApp.listen(httpPort, async () => {
 		const logger = await nestApp.resolve(Logger);
 		logger.setContext('TLDRAW');
-		logger.log(`Server is running on port ${httpPort}`);
+		logger.info(`Server is running on port ${httpPort}`);
 	});
 }
 bootstrap();

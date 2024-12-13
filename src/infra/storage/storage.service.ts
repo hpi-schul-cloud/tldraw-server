@@ -42,14 +42,14 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 	}
 
 	public async retrieveDoc(room: string, docname: string): Promise<{ doc: Uint8Array; references: string[] } | null> {
-		this.logger.log('retrieving doc room=' + room + ' docname=' + docname);
+		this.logger.info('retrieving doc room=' + room + ' docname=' + docname);
 
 		const objNames = await this.client
 			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname), true)
 			.toArray();
 		const references: string[] = objNames.map((obj) => obj.name);
 
-		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' refs=' + JSON.stringify(references));
+		this.logger.info('retrieved doc room=' + room + ' docname=' + docname + ' refs=' + JSON.stringify(references));
 
 		if (references.length === 0) {
 			return null;
@@ -67,7 +67,7 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 			}),
 		);
 		updates = updates.filter((update) => update != null);
-		this.logger.log('retrieved doc room=' + room + ' docname=' + docname + ' updatesLen=' + updates.length);
+		this.logger.info('retrieved doc room=' + room + ' docname=' + docname + ' updatesLen=' + updates.length);
 
 		return { doc: Y.mergeUpdatesV2(updates), references };
 	}
