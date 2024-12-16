@@ -5,10 +5,9 @@ export const streamMessageReplyFactory = Factory.define<StreamMessageReply>(({ s
 	return {
 		id: `redis-id-${sequence}`,
 		message: {
-			key: `redis-key-${sequence}-1`,
 			m: Buffer.from(`message-${sequence}-2`),
-			docName: `doc-name-${sequence}`,
-			compact: Buffer.from(`compact-${sequence}`),
+			docName: `prefix:room:room:docid-${sequence.toString()}`,
+			compact: Buffer.from(`prefix:room:room:docid-${sequence.toString()}`),
 		},
 	};
 });

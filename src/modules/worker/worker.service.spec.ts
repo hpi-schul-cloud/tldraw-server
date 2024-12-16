@@ -4,10 +4,8 @@ import { Awareness } from 'y-protocols/awareness';
 import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
 import { RedisAdapter, StreamMessageReply } from '../../infra/redis/interfaces/index.js';
-import {
-	streamMessageReplyFactory,
-	xAutoClaimResponseFactory,
-} from '../../infra/redis/testing/x-auto-claim-response.factory.js';
+import { streamMessageReplyFactory } from '../../infra/redis/testing/stream-message-reply.factory.js';
+import { xAutoClaimResponseFactory } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
 import { yRedisDocFactory } from '../../infra/y-redis/testing/y-redis-doc.factory.js';
 import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
