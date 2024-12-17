@@ -1,73 +1,44 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
 import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
+import { Logger } from '../logger/logger.js';
 import { MetricsService } from '../metrics/metrics.service.js';
-import { RedisAdapter, StreamNameClockPair } from '../redis/interfaces/index.js';
-import { RedisService } from '../redis/redis.service.js';
+import { RedisAdapter, StreamMessageReply, StreamNameClockPair } from '../redis/interfaces/index.js';
 import { computeRedisRoomStreamName, extractMessagesFromStreamReply } from './helper.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
-import { YRedisDoc } from './interfaces/y-redis-doc.js';
 import * as protocol from './protocol.js';
 import { DocumentStorage } from './storage.js';
+import { YRedisDocFactory } from './y-redis-doc.factory.js';
+import { YRedisDoc } from './y-redis-doc.js';
 
-export const handleMessageUpdates = (docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void => {
-	docMessages?.messages.forEach((m) => {
-		const decoder = decoding.createDecoder(m);
-		const messageType = decoding.readVarUint(decoder);
-		switch (messageType) {
-			case protocol.messageSync: {
-				// The methode readVarUnit work with pointer, that increase by each execution. The second execution get the second value.
-				const syncType = decoding.readVarUint(decoder);
-				if (syncType === protocol.messageSyncUpdate) {
-					applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
-				}
-				break;
-			}
-			case protocol.messageAwareness: {
-				applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
-				break;
-			}
-		}
-	});
-};
-
-export const createApiClient = async (store: DocumentStorage, createRedisInstance: RedisService): Promise<Api> => {
-	const a = new Api(store, await createRedisInstance.createRedisInstance());
-
-	await a.redis.createGroup();
-
-	return a;
-};
-
-export class Api {
+@Injectable()
+export class YRedisClient implements OnModuleInit {
 	public readonly redisPrefix: string;
-	public _destroyed;
 
 	public constructor(
-		private readonly store: DocumentStorage,
+		private readonly storage: DocumentStorage,
 		public readonly redis: RedisAdapter,
+		private readonly logger: Logger,
 	) {
-		this.store = store;
+		this.logger.setContext(YRedisClient.name);
 		this.redisPrefix = redis.redisPrefix;
-		this._destroyed = false;
+	}
+
+	public async onModuleInit(): Promise<void> {
+		await this.redis.createGroup();
 	}
 
 	public async getMessages(streams: StreamNameClockPair[]): Promise<YRedisMessage[]> {
-		if (streams.length === 0) {
-			await promise.wait(50);
-
-			return [];
-		}
-
 		const streamReplyRes = await this.redis.readStreams(streams);
 
 		const res: YRedisMessage[] = [];
 
 		streamReplyRes?.forEach((stream) => {
+			const messages = this.extractMessages(stream.messages);
 			res.push({
 				stream: stream.name.toString(),
-				// @ts-ignore
-				messages: protocol.mergeMessages(stream.messages.map((message) => message.message.m).filter((m) => m != null)),
+				messages: protocol.mergeMessages(messages),
 				lastId: stream.messages ? array.last(stream.messages).id.toString() : '',
 			});
 		});
@@ -89,20 +60,20 @@ export class Api {
 	}
 
 	public getStateVector(room: string, docid = '/'): Promise<Uint8Array | null> {
-		return this.store.retrieveStateVector(room, docid);
+		return this.storage.retrieveStateVector(room, docid);
 	}
 
 	public async getDoc(room: string, docid: string): Promise<YRedisDoc> {
 		const end = MetricsService.methodDurationHistogram.startTimer();
 		let docChanged = false;
 
-		const roomComputed = computeRedisRoomStreamName(room, docid, this.redisPrefix);
-		const streamReply = await this.redis.readMessagesFromStream(roomComputed);
+		const streamName = computeRedisRoomStreamName(room, docid, this.redisPrefix);
+		const streamReply = await this.redis.readMessagesFromStream(streamName);
 
 		const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
 
 		const docMessages = ms.get(room)?.get(docid) ?? null;
-		const docstate = await this.store.retrieveDoc(room, docid);
+		const docstate = await this.storage.retrieveDoc(room, docid);
 
 		const ydoc = new Doc();
 		const awareness = new Awareness(ydoc);
@@ -117,28 +88,59 @@ export class Api {
 		});
 
 		ydoc.transact(() => {
-			handleMessageUpdates(docMessages, ydoc, awareness);
+			this.handleMessageUpdates(docMessages, ydoc, awareness);
 		});
 
 		end();
 
-		const response = {
+		const response = YRedisDocFactory.build({
 			ydoc,
 			awareness,
 			redisLastId: docMessages?.lastId.toString() ?? '0',
 			storeReferences: docstate?.references ?? null,
 			docChanged,
-		};
+			streamName,
+		});
 
 		if (ydoc.store.pendingStructs !== null) {
-			console.warn(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
+			this.logger.warning(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
 		}
 
 		return response;
 	}
 
 	public async destroy(): Promise<void> {
-		this._destroyed = true;
 		await this.redis.quit();
+	}
+
+	private handleMessageUpdates(docMessages: YRedisMessage | null, ydoc: Doc, awareness: Awareness): void {
+		docMessages?.messages.forEach((m) => {
+			const decoder = decoding.createDecoder(m);
+			const messageType = decoding.readVarUint(decoder);
+			switch (messageType) {
+				case protocol.messageSync: {
+					// The methode readVarUnit works with a pointer, that increases by each execution. The second execution gets the second value.
+					const syncType = decoding.readVarUint(decoder);
+					if (syncType === protocol.messageSyncUpdate) {
+						applyUpdate(ydoc, decoding.readVarUint8Array(decoder));
+					}
+					break;
+				}
+				case protocol.messageAwareness: {
+					applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), null);
+					break;
+				}
+			}
+		});
+	}
+
+	private extractMessages(messages: StreamMessageReply[] | null): Buffer[] {
+		if (messages === null) {
+			return [];
+		}
+
+		const filteredMessages = messages.map((message) => message.message.m).filter((m) => m != null);
+
+		return filteredMessages;
 	}
 }

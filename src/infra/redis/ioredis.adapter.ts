@@ -76,7 +76,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		try {
 			await this.redis.xgroup('CREATE', this.redisWorkerStreamName, this.redisWorkerGroupName, '0', 'MKSTREAM');
 		} catch (e) {
-			this.logger.log(e);
+			this.logger.info(e);
 			// It is okay when the group already exists, so we can ignore this error.
 			if (e.message !== 'BUSYGROUP Consumer Group name already exists') {
 				throw e;
@@ -88,7 +88,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		await this.redis.quit();
 	}
 
-	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamMessagesReply> {
+	public async readStreams(streams: StreamNameClockPair[]): Promise<StreamMessagesReply[]> {
 		const reads = await this.redis.xreadBuffer(
 			'COUNT',
 			1000,
@@ -104,7 +104,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		return streamReplyRes;
 	}
 
-	public async readMessagesFromStream(streamName: string): Promise<StreamMessagesReply> {
+	public async readMessagesFromStream(streamName: string): Promise<StreamMessagesReply[]> {
 		const reads = await this.redis.xreadBuffer('STREAMS', streamName, '0');
 
 		const streamReplyRes = mapToStreamMessagesReply(reads);
@@ -140,7 +140,7 @@ export class IoRedisAdapter implements RedisAdapter {
 		return transformedDeletedTasks;
 	}
 
-	public deleteDeleteDocEntry(id: string): Promise<number> {
+	public deleteDeletedDocEntry(id: string): Promise<number> {
 		const result = this.redis.xdel(this.redisDeleteStreamName, id);
 
 		return result;

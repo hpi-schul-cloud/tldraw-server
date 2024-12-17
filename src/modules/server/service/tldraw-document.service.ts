@@ -1,29 +1,22 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { TemplatedApp } from 'uWebSockets.js';
-import { RedisService } from '../../../infra/redis/index.js';
 import { RedisAdapter } from '../../../infra/redis/interfaces/index.js';
 import { computeRedisRoomStreamName } from '../../../infra/y-redis/helper.js';
-const UWS = 'UWS';
+import { REDIS_FOR_DELETION, UWS } from '../server.const.js';
 
 @Injectable()
-export class TldrawDocumentService implements OnModuleInit {
-	private redisInstance!: RedisAdapter;
-
+export class TldrawDocumentService {
 	public constructor(
 		@Inject(UWS) private readonly webSocketServer: TemplatedApp,
-		private readonly redisService: RedisService,
+		@Inject(REDIS_FOR_DELETION) private readonly redisAdapter: RedisAdapter,
 	) {}
 
-	public async onModuleInit(): Promise<void> {
-		this.redisInstance = await this.redisService.createRedisInstance();
-	}
-
 	public async deleteByDocName(parentId: string): Promise<void> {
-		const redisPrefix = this.redisInstance.redisPrefix;
+		const redisPrefix = this.redisAdapter.redisPrefix;
 		const docName = computeRedisRoomStreamName(parentId, 'index', redisPrefix);
 
 		this.webSocketServer.publish(docName, 'action:delete');
 
-		await this.redisInstance.markToDeleteByDocName(docName);
+		await this.redisAdapter.markToDeleteByDocName(docName);
 	}
 }

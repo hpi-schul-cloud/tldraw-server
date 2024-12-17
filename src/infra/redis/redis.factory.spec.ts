@@ -4,7 +4,7 @@ import * as util from 'util';
 import { Logger } from '../logger/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
-import { RedisService } from './redis.service.js';
+import { RedisFactory } from './redis.factory.js';
 
 jest.mock('ioredis', () => {
 	return {
@@ -14,7 +14,7 @@ jest.mock('ioredis', () => {
 
 jest.mock<IoRedisAdapter>('./ioredis.adapter.js');
 
-describe('Redis Service', () => {
+describe(RedisFactory.name, () => {
 	beforeEach(() => {
 		jest.resetAllMocks();
 	});
@@ -50,7 +50,7 @@ describe('Redis Service', () => {
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
 				const logger = createMock<Logger>();
-				const service = new RedisService(config, logger);
+				const factory = new RedisFactory(config, logger);
 
 				const expectedProps = {
 					sentinels: [
@@ -62,29 +62,29 @@ describe('Redis Service', () => {
 					name: 'sentinelName',
 				};
 
-				return { resolveSrv, sentinelServiceName, service, constructorSpy, expectedProps };
+				return { resolveSrv, sentinelServiceName, factory, constructorSpy, expectedProps };
 			};
 
 			it('calls resolveSrv', async () => {
-				const { resolveSrv, sentinelServiceName, service } = setup();
+				const { resolveSrv, sentinelServiceName, factory } = setup();
 
-				await service.createRedisInstance();
+				await factory.createRedisInstance();
 
 				expect(resolveSrv).toHaveBeenLastCalledWith(sentinelServiceName);
 			});
 
 			it('create new Redis instance with correctly props', async () => {
-				const { service, constructorSpy, expectedProps } = setup();
+				const { factory, constructorSpy, expectedProps } = setup();
 
-				await service.createRedisInstance();
+				await factory.createRedisInstance();
 
 				expect(constructorSpy).toHaveBeenCalledWith(expectedProps);
 			});
 
 			it('creates a new Redis instance', async () => {
-				const { service } = setup();
+				const { factory } = setup();
 
-				const redisInstance = await service.createRedisInstance();
+				const redisInstance = await factory.createRedisInstance();
 
 				expect(redisInstance).toBeInstanceOf(IoRedisAdapter);
 			});
@@ -105,33 +105,33 @@ describe('Redis Service', () => {
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
 				const logger = createMock<Logger>();
-				const service = new RedisService(config, logger);
+				const factory = new RedisFactory(config, logger);
 
 				const expectedProps = redisUrl;
 
-				return { resolveSrv, service, redisMock, constructorSpy, expectedProps };
+				return { resolveSrv, factory, redisMock, constructorSpy, expectedProps };
 			};
 
 			it('calls resolveSrv', async () => {
-				const { resolveSrv, service } = setup();
+				const { resolveSrv, factory } = setup();
 
-				await service.createRedisInstance();
+				await factory.createRedisInstance();
 
 				expect(resolveSrv).not.toHaveBeenCalled();
 			});
 
 			it('create new Redis instance with correctly props', async () => {
-				const { service, constructorSpy, expectedProps } = setup();
+				const { factory, constructorSpy, expectedProps } = setup();
 
-				await service.createRedisInstance();
+				await factory.createRedisInstance();
 
 				expect(constructorSpy).toHaveBeenCalledWith(expectedProps);
 			});
 
 			it('creates a new Redis instance', async () => {
-				const { service } = setup();
+				const { factory } = setup();
 
-				const redisInstance = await service.createRedisInstance();
+				const redisInstance = await factory.createRedisInstance();
 
 				expect(redisInstance).toBeInstanceOf(IoRedisAdapter);
 			});
