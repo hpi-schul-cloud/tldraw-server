@@ -16,11 +16,11 @@ export class Logger {
 
 	public constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: winston.Logger) {}
 
-	public log(message: unknown, context?: string): void {
+	public info(message: unknown, context?: string): void {
 		this.logger.info(this.createMessage(message, context));
 	}
 
-	public warn(message: unknown, context?: string): void {
+	public warning(message: unknown, context?: string): void {
 		this.logger.warning(this.createMessage(message, context));
 	}
 

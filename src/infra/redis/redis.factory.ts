@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import * as dns from 'dns';
 import { Redis } from 'ioredis';
 import * as util from 'util';
@@ -7,14 +6,11 @@ import { RedisAdapter } from './interfaces/index.js';
 import { IoRedisAdapter } from './ioredis.adapter.js';
 import { RedisConfig } from './redis.config.js';
 
-@Injectable()
-export class RedisService {
+export class RedisFactory {
 	public constructor(
 		private readonly config: RedisConfig,
 		private readonly logger: Logger,
-	) {
-		this.logger.setContext(RedisService.name);
-	}
+	) {}
 
 	public async createRedisInstance(): Promise<RedisAdapter> {
 		let redisInstance: Redis;
@@ -39,7 +35,7 @@ export class RedisService {
 		const sentinelName = this.config.REDIS_SENTINEL_NAME;
 		const sentinelPassword = this.config.REDIS_SENTINEL_PASSWORD;
 		const sentinels = await this.discoverSentinelHosts();
-		this.logger.log(`Discovered sentinels: ${JSON.stringify(sentinels)}`);
+		this.logger.info(`Discovered sentinels: ${JSON.stringify(sentinels)}`);
 
 		const redisInstance = new Redis({
 			sentinels,
@@ -63,7 +59,7 @@ export class RedisService {
 
 			return hosts;
 		} catch (err) {
-			this.logger.log('Error during service discovery:', err);
+			this.logger.info('Error during service discovery:', err);
 			throw err;
 		}
 	}

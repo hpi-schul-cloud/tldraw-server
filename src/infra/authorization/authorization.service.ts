@@ -94,7 +94,6 @@ export class AuthorizationService {
 
 	private createErrorResponsePayload(code: number, reason: string): ResponsePayload {
 		const response = ResponsePayloadBuilder.buildWithError(code, reason);
-		this.logger.log(`Error: ${code} - ${reason}`);
 
 		return response;
 	}

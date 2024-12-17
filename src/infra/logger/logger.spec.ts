@@ -6,7 +6,7 @@ import { RequestLoggingBody } from './interfaces/logger.interface.js';
 import { Logger } from './logger.js';
 
 describe('Logger', () => {
-	let service: Logger;
+	let logger: Logger;
 	let processStdoutWriteSpy: jest.SpyInstance<
 		boolean,
 		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
@@ -30,7 +30,7 @@ describe('Logger', () => {
 			],
 		}).compile();
 
-		service = await module.resolve(Logger);
+		logger = await module.resolve(Logger);
 		winstonLogger = module.get(WINSTON_MODULE_PROVIDER);
 	});
 
@@ -44,10 +44,10 @@ describe('Logger', () => {
 		processStderrWriteSpy.mockRestore();
 	});
 
-	describe('WHEN log logging', () => {
+	describe('WHEN info logging', () => {
 		it('should call winstonLogger.info', () => {
 			const error = new Error('custom error');
-			service.log(error.message, error.stack);
+			logger.info(error.message, error.stack);
 			expect(winstonLogger.info).toHaveBeenCalled();
 		});
 	});
@@ -55,7 +55,7 @@ describe('Logger', () => {
 	describe('WHEN warn logging', () => {
 		it('should call winstonLogger.warning', () => {
 			const error = new Error('custom error');
-			service.warn(error.message, error.stack);
+			logger.warning(error.message, error.stack);
 			expect(winstonLogger.warning).toHaveBeenCalled();
 		});
 	});
@@ -63,7 +63,7 @@ describe('Logger', () => {
 	describe('WHEN debug logging', () => {
 		it('should call winstonLogger.debug', () => {
 			const error = new Error('custom error');
-			service.debug(error.message, error.stack);
+			logger.debug(error.message, error.stack);
 			expect(winstonLogger.debug).toHaveBeenCalled();
 		});
 	});
@@ -81,7 +81,7 @@ describe('Logger', () => {
 				},
 				error,
 			};
-			service.http(message, error.stack);
+			logger.http(message, error.stack);
 			expect(winstonLogger.notice).toHaveBeenCalled();
 		});
 	});

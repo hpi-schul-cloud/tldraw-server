@@ -1,10 +1,10 @@
+import { streamMessagesReplyFactory } from '../redis/testing/stream-messages-reply.factory.js';
 import {
 	computeRedisRoomStreamName,
 	decodeRedisRoomStreamName,
 	extractMessagesFromStreamReply,
 	isSmallerRedisId,
 } from './helper.js';
-import { streamMessagesReplyFactory } from './testing/stream-messages-reply.factory.js';
 
 describe('helper', () => {
 	describe('isSmallerRedisId', () => {
@@ -116,7 +116,7 @@ describe('helper', () => {
 								'docid',
 								{
 									lastId: 'redis-id-2',
-									messages: ['message-1-2', 'message-2-2'],
+									messages: [Buffer.from('message-1-2'), Buffer.from('message-2-2')],
 								},
 							],
 						]),
