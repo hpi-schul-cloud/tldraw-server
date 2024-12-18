@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
 
 export class TldrawServerConfig {
 	@Transform(({ value }) => value === 'true')
@@ -17,10 +17,6 @@ export class TldrawServerConfig {
 	@Transform(({ value }) => value.split(','))
 	@IsArray()
 	public TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'];
-
-	@IsUrl()
-	@IsOptional()
-	public TLDRAW_TSP_LOGIN_REDIRECT?: string;
 
 	@IsString()
 	public TLDRAW_WEBSOCKET_PATH = '';

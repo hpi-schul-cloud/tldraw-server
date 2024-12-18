@@ -7,7 +7,6 @@ export class TldrawPublicConfigResponse {
 		this.TLDRAW_ASSETS_ENABLED = config.TLDRAW_ASSETS_ENABLED;
 		this.TLDRAW_ASSETS_MAX_SIZE_BYTES = config.TLDRAW_ASSETS_MAX_SIZE_BYTES;
 		this.TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST = config.TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST;
-		this.TLDRAW_TSP_LOGIN_REDIRECT = config.TLDRAW_TSP_LOGIN_REDIRECT;
 		this.TLDRAW_WEBSOCKET_URL = config.TLDRAW_WEBSOCKET_URL;
 	}
 
@@ -22,9 +21,6 @@ export class TldrawPublicConfigResponse {
 
 	@ApiProperty()
 	public TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST: string[];
-
-	@ApiProperty()
-	public TLDRAW_TSP_LOGIN_REDIRECT?: string;
 
 	@ApiProperty()
 	public TLDRAW_WEBSOCKET_URL: string;
