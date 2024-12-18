@@ -27,5 +27,5 @@ export class TldrawPublicConfigResponse {
 	public FEATURE_TLDRAW_ENABLED!: boolean;
 
 	@ApiProperty()
-	public NOT_AUTHENTICATED_REDIRECT_URL!: string;
+	public NOT_AUTHENTICATED_REDIRECT_URL: string;
 }
