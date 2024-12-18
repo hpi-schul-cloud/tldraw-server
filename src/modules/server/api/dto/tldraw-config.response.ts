@@ -3,15 +3,16 @@ import { TldrawServerConfig } from '../../tldraw-server.config.js';
 
 export class TldrawPublicConfigResponse {
 	public constructor(config: TldrawServerConfig) {
-		this.FEATURE_TLDRAW_ENABLED = config.FEATURE_TLDRAW_ENABLED;
+		this.TLDRAW_WEBSOCKET_URL = config.TLDRAW_WEBSOCKET_URL;
 		this.TLDRAW_ASSETS_ENABLED = config.TLDRAW_ASSETS_ENABLED;
 		this.TLDRAW_ASSETS_MAX_SIZE_BYTES = config.TLDRAW_ASSETS_MAX_SIZE_BYTES;
 		this.TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST = config.TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST;
-		this.TLDRAW_WEBSOCKET_URL = config.TLDRAW_WEBSOCKET_URL;
+		this.FEATURE_TLDRAW_ENABLED = config.FEATURE_TLDRAW_ENABLED;
+		this.NOT_AUTHENTICATED_REDIRECT_URL = config.NOT_AUTHENTICATED_REDIRECT_URL;
 	}
 
 	@ApiProperty()
-	public FEATURE_TLDRAW_ENABLED!: boolean;
+	public TLDRAW_WEBSOCKET_URL: string;
 
 	@ApiProperty()
 	public TLDRAW_ASSETS_ENABLED: boolean;
@@ -23,5 +24,8 @@ export class TldrawPublicConfigResponse {
 	public TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST: string[];
 
 	@ApiProperty()
-	public TLDRAW_WEBSOCKET_URL: string;
+	public FEATURE_TLDRAW_ENABLED!: boolean;
+
+	@ApiProperty()
+	public NOT_AUTHENTICATED_REDIRECT_URL!: string;
 }

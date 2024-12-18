@@ -27,4 +27,7 @@ export class TldrawServerConfig {
 
 	@IsUrl({ protocols: ['wss', 'ws'], require_tld: false })
 	public TLDRAW_WEBSOCKET_URL!: string;
+
+	@IsUrl()
+	public NOT_AUTHENTICATED_REDIRECT_URL!: string;
 }
