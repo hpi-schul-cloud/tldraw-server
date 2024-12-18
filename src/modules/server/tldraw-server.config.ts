@@ -20,7 +20,7 @@ export class TldrawServerConfig {
 
 	@IsUrl()
 	@IsOptional()
-	public TLDRAW_NOT_AUTHENTICATED_REDIRECT_URL?: string;
+	public TLDRAW_TSP_LOGIN_REDIRECT?: string;
 
 	@IsString()
 	public TLDRAW_WEBSOCKET_PATH = '';
