@@ -15,6 +15,7 @@ describe('Websocket Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
 	let tldrawServerConfig: TldrawServerConfig;
+	const allProvider: WebsocketProvider[] = [];
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -31,6 +32,7 @@ describe('Websocket Api Test', () => {
 	});
 
 	afterAll(async () => {
+		allProvider.forEach((provider) => provider.destroy());
 		await app.close();
 	});
 
@@ -44,6 +46,7 @@ describe('Websocket Api Test', () => {
 			connect: true,
 			disableBc: true,
 		});
+		allProvider.push(provider);
 
 		return { ydoc, provider };
 	};
