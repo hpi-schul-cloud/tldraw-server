@@ -27,4 +27,7 @@ export class TldrawServerConfig {
 	@Transform(({ value }) => value === 'true')
 	@IsBoolean()
 	public FEATURE_TLDRAW_ENABLED!: boolean;
+
+	@IsUrl({ protocols: ['https', 'http'], require_tld: false })
+	public NOT_AUTHENTICATED_REDIRECT_URL!: string;
 }
