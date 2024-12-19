@@ -28,6 +28,6 @@ export class TldrawServerConfig {
 	@IsBoolean()
 	public FEATURE_TLDRAW_ENABLED!: boolean;
 
-	@IsString()
-	public NOT_AUTHENTICATED_REDIRECT_URL = '/login';
+	@IsUrl({ protocols: ['https', 'http'], require_tld: false })
+	public NOT_AUTHENTICATED_REDIRECT_URL!: string;
 }
