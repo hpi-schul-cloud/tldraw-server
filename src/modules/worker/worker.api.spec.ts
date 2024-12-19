@@ -22,6 +22,7 @@ describe('Worker Api Test', () => {
 	let workerService: WorkerService;
 	let storageService: StorageService;
 	let ioRedisAdapter: IoRedisAdapter;
+	const allProvider: WebsocketProvider[] = [];
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -41,6 +42,7 @@ describe('Worker Api Test', () => {
 	});
 
 	afterAll(async () => {
+		allProvider.forEach((provider) => provider.destroy());
 		await app.close();
 	});
 
@@ -54,6 +56,7 @@ describe('Worker Api Test', () => {
 			connect: true,
 			disableBc: true,
 		});
+		allProvider.push(provider);
 
 		return { ydoc, provider };
 	};
@@ -149,8 +152,6 @@ describe('Worker Api Test', () => {
 				const doc = await storageService.retrieveDoc(room, 'index');
 				if (doc?.doc) {
 					const decodedDoc = Y.decodeUpdateV2(doc.doc);
-					console.log(decodedDoc);
-
 					// @ts-ignore
 					resultProperty = decodedDoc.structs.find((item) => item.parentSub === property2).parentSub;
 					// @ts-ignore
