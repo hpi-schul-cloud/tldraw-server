@@ -8,6 +8,7 @@ export class TldrawPublicConfigResponse {
 		this.TLDRAW_ASSETS_MAX_SIZE_BYTES = config.TLDRAW_ASSETS_MAX_SIZE_BYTES;
 		this.TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST = config.TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST;
 		this.FEATURE_TLDRAW_ENABLED = config.FEATURE_TLDRAW_ENABLED;
+		this.NOT_AUTHENTICATED_REDIRECT_URL = config.NOT_AUTHENTICATED_REDIRECT_URL;
 	}
 
 	@ApiProperty()
@@ -24,4 +25,7 @@ export class TldrawPublicConfigResponse {
 
 	@ApiProperty()
 	public FEATURE_TLDRAW_ENABLED!: boolean;
+
+	@ApiProperty()
+	public NOT_AUTHENTICATED_REDIRECT_URL: string;
 }

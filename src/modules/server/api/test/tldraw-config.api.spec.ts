@@ -32,6 +32,7 @@ describe('Tldraw-Config Api Test', () => {
 				TLDRAW_ASSETS_ENABLED: true,
 				TLDRAW_ASSETS_MAX_SIZE_BYTES: 10485760,
 				TLDRAW_WEBSOCKET_URL: 'ws://localhost:3399',
+				NOT_AUTHENTICATED_REDIRECT_URL: 'http://localhost:4000/login',
 			});
 		});
 	});
