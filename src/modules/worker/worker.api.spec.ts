@@ -1,6 +1,7 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { randomUUID } from 'crypto';
 import { WebSocket } from 'ws';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
@@ -11,18 +12,23 @@ import { StorageService } from '../../infra/storage/storage.service.js';
 import { computeRedisRoomStreamName } from '../../infra/y-redis/helper.js';
 import { REDIS_FOR_DELETION } from '../../modules/server/server.const.js';
 import { ServerModule } from '../../modules/server/server.module.js';
-import { TldrawServerConfig } from '../../modules/server/tldraw-server.config.js';
 import { WorkerModule } from './worker.module.js';
 import { WorkerService } from './worker.service.js';
 
 describe('Worker Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
-	let tldrawServerConfig: TldrawServerConfig;
 	let workerService: WorkerService;
 	let storageService: StorageService;
 	let ioRedisAdapter: IoRedisAdapter;
-	const allProvider: WebsocketProvider[] = [];
+
+	// This port must be different from the one used in the server module
+	// because tests are executed parallel and therefore we can have port conflicts.
+	const port = 3398;
+	const url = `ws://localhost:${port}`;
+
+	process.env.TLDRAW_WEBSOCKET_URL = url;
+	process.env.TLDRAW_WEBSOCKET_PORT = port.toString();
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -35,20 +41,18 @@ describe('Worker Api Test', () => {
 		app = moduleFixture.createNestApplication();
 		await app.init();
 		authorizationService = await app.resolve(AuthorizationService);
-		tldrawServerConfig = await app.resolve(TldrawServerConfig);
 		workerService = await app.resolve(WorkerService);
 		storageService = await app.resolve(StorageService);
 		ioRedisAdapter = await app.resolve(REDIS_FOR_DELETION);
 	});
 
 	afterAll(async () => {
-		allProvider.forEach((provider) => provider.destroy());
 		await app.close();
 	});
 
 	const createWsClient = (room: string) => {
 		const ydoc = new Doc();
-		const serverUrl = tldrawServerConfig.TLDRAW_WEBSOCKET_URL;
+		const serverUrl = url;
 		const prefix = 'y';
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore
@@ -56,7 +60,6 @@ describe('Worker Api Test', () => {
 			connect: true,
 			disableBc: true,
 		});
-		allProvider.push(provider);
 
 		return { ydoc, provider };
 	};
@@ -65,7 +68,7 @@ describe('Worker Api Test', () => {
 		const setup = () => {
 			workerService.start();
 
-			const room = Math.random().toString(36).substring(7);
+			const room = randomUUID();
 
 			authorizationService.hasPermission.mockResolvedValueOnce({
 				hasWriteAccess: true,
@@ -74,18 +77,18 @@ describe('Worker Api Test', () => {
 				error: null,
 			});
 
-			const { ydoc: client1Doc } = createWsClient(room);
+			const { ydoc: client1Doc, provider } = createWsClient(room);
 
 			const property = 'property';
 			const value = 'value';
 
 			client1Doc.getMap().set(property, value);
 
-			return { client1Doc, room, property, value };
+			return { client1Doc, room, property, value, provider };
 		};
 
 		it('saves doc to storage', async () => {
-			const { room, property, value } = setup();
+			const { room, property, value, provider } = setup();
 
 			let doc;
 			while (!doc) {
@@ -106,6 +109,9 @@ describe('Worker Api Test', () => {
 			expect(resultUpdateValue).toBe(value);
 
 			workerService.stop();
+			provider.awareness.destroy();
+			provider.disconnect();
+			provider.destroy();
 		}, 10000);
 	});
 
@@ -113,7 +119,7 @@ describe('Worker Api Test', () => {
 		const setup = () => {
 			workerService.start();
 
-			const room = Math.random().toString(36).substring(7);
+			const room = randomUUID();
 
 			authorizationService.hasPermission.mockResolvedValueOnce({
 				hasWriteAccess: true,
@@ -129,8 +135,8 @@ describe('Worker Api Test', () => {
 				error: null,
 			});
 
-			const { ydoc: client1Doc } = createWsClient(room);
-			const { ydoc: client2Doc } = createWsClient(room);
+			const { ydoc: client1Doc, provider: provider1 } = createWsClient(room);
+			const { ydoc: client2Doc, provider: provider2 } = createWsClient(room);
 
 			const property1 = 'property1';
 			const property2 = 'property2';
@@ -140,11 +146,11 @@ describe('Worker Api Test', () => {
 			client1Doc.getMap().set(property1, value1);
 			client2Doc.getMap().set(property2, value2);
 
-			return { client1Doc, room, property2, value2 };
+			return { client1Doc, room, property2, value2, provider1, provider2 };
 		};
 
 		it('saves doc to storage', async () => {
-			const { room, property2, value2 } = setup();
+			const { room, property2, value2, provider1, provider2 } = setup();
 
 			let resultProperty;
 			let resultValue;
@@ -163,6 +169,10 @@ describe('Worker Api Test', () => {
 			expect(resultValue).toBe(value2);
 
 			workerService.stop();
+			provider1.awareness.destroy();
+			provider2.awareness.destroy();
+			provider1.destroy();
+			provider2.destroy();
 		});
 	});
 
@@ -170,7 +180,7 @@ describe('Worker Api Test', () => {
 		const setup = async () => {
 			workerService.start();
 
-			const room = Math.random().toString(36).substring(7);
+			const room = randomUUID();
 
 			authorizationService.hasPermission.mockResolvedValueOnce({
 				hasWriteAccess: true,
@@ -192,6 +202,8 @@ describe('Worker Api Test', () => {
 			}
 
 			provider.disconnect();
+			provider.awareness.destroy();
+			provider.destroy();
 
 			const streamName = computeRedisRoomStreamName(room, 'index', 'y');
 			await ioRedisAdapter.markToDeleteByDocName(streamName);

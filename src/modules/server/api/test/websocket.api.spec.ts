@@ -15,7 +15,6 @@ describe('Websocket Api Test', () => {
 	let app: INestApplication;
 	let authorizationService: DeepMocked<AuthorizationService>;
 	let tldrawServerConfig: TldrawServerConfig;
-	const allProvider: WebsocketProvider[] = [];
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -32,7 +31,6 @@ describe('Websocket Api Test', () => {
 	});
 
 	afterAll(async () => {
-		allProvider.forEach((provider) => provider.destroy());
 		await app.close();
 	});
 
@@ -46,7 +44,6 @@ describe('Websocket Api Test', () => {
 			connect: true,
 			disableBc: true,
 		});
-		allProvider.push(provider);
 
 		return { ydoc, provider };
 	};
@@ -86,14 +83,14 @@ describe('Websocket Api Test', () => {
 					error: null,
 				});
 
-				const { ydoc: client1Doc } = createWsClient(room);
-				const { ydoc: client2Doc } = createWsClient(room);
+				const { ydoc: client1Doc, provider: provider1 } = createWsClient(room);
+				const { ydoc: client2Doc, provider: provider2 } = createWsClient(room);
 
-				return { client1Doc, client2Doc };
+				return { client1Doc, client2Doc, provider1, provider2 };
 			};
 
 			it('syncs doc changes of first client to second client', async () => {
-				const { client1Doc, client2Doc } = setup();
+				const { client1Doc, client2Doc, provider1, provider2 } = setup();
 
 				client1Doc.getMap().set('a', 1);
 
@@ -101,10 +98,15 @@ describe('Websocket Api Test', () => {
 
 				const result = client2Doc.getMap().get('a');
 				expect(result).toBe(1);
+
+				provider1.awareness.destroy();
+				provider2.awareness.destroy();
+				provider1.destroy();
+				provider2.destroy();
 			});
 
 			it('syncs subsequent doc changes of second client to first client', async () => {
-				const { client1Doc, client2Doc } = setup();
+				const { client1Doc, client2Doc, provider1, provider2 } = setup();
 
 				client1Doc.getMap().set('a', 1);
 				await waitUntilDocsEqual(client1Doc, client2Doc);
@@ -114,6 +116,11 @@ describe('Websocket Api Test', () => {
 
 				const result = client1Doc.getMap().get('a');
 				expect(result).toBe(2);
+
+				provider1.awareness.destroy();
+				provider2.awareness.destroy();
+				provider1.destroy();
+				provider2.destroy();
 			});
 
 			/* it('syncs nearly parallel doc changes of second client to first client', async () => {
@@ -135,36 +142,47 @@ describe('Websocket Api Test', () => {
 				const randomString = Math.random().toString(36).substring(7);
 				const room = randomString;
 
-				authorizationService.hasPermission.mockResolvedValue({
+				authorizationService.hasPermission.mockResolvedValueOnce({
 					hasWriteAccess: true,
 					room: randomString,
-					userid: 'userId',
+					userid: 'userId1',
+					error: null,
+				});
+				authorizationService.hasPermission.mockResolvedValueOnce({
+					hasWriteAccess: true,
+					room: randomString,
+					userid: 'userId2',
 					error: null,
 				});
 
-				const { ydoc: client1Doc } = createWsClient(room);
+				const { ydoc: client1Doc, provider } = createWsClient(room);
 
-				return { client1Doc, room };
+				return { client1Doc, room, provider };
 			};
 
 			it('syncs doc changes of first client to second client', async () => {
-				const { client1Doc, room } = setup();
+				const { client1Doc, room, provider } = setup();
 
 				client1Doc.getMap().set('a', 1);
 
-				const { ydoc: client2Doc } = createWsClient(room);
+				const { ydoc: client2Doc, provider: provider2 } = createWsClient(room);
 				await waitUntilDocsEqual(client1Doc, client2Doc);
 
 				const result = client2Doc.getMap().get('a');
 				expect(result).toBe(1);
+
+				provider.awareness.destroy();
+				provider.destroy();
+				provider2.awareness.destroy();
+				provider2.destroy();
 			});
 
 			it('syncs subsequent doc changes of second client to first client', async () => {
-				const { client1Doc, room } = setup();
+				const { client1Doc, room, provider } = setup();
 
 				client1Doc.getMap().set('a', 1);
 
-				const { ydoc: client2Doc } = createWsClient(room);
+				const { ydoc: client2Doc, provider: provider2 } = createWsClient(room);
 				await waitUntilDocsEqual(client1Doc, client2Doc);
 
 				client2Doc.getMap().set('a', 2);
@@ -172,6 +190,11 @@ describe('Websocket Api Test', () => {
 
 				const result = client1Doc.getMap().get('a');
 				expect(result).toBe(2);
+
+				provider.awareness.destroy();
+				provider.destroy();
+				provider2.awareness.destroy();
+				provider2.destroy();
 			});
 
 			/* 	it('syncs nearly parallel doc changes of second client to first client', async () => {
@@ -202,7 +225,7 @@ describe('Websocket Api Test', () => {
 				const room = randomString;
 
 				const errorResponse = ResponsePayloadBuilder.buildWithError(4401, 'Unauthorized');
-				authorizationService.hasPermission.mockResolvedValue(errorResponse);
+				authorizationService.hasPermission.mockResolvedValueOnce(errorResponse);
 
 				const { ydoc: client1Doc, provider } = createWsClient(room);
 
@@ -227,6 +250,9 @@ describe('Websocket Api Test', () => {
 				expect(error.reason).toBe('Unauthorized');
 				// @ts-ignore
 				expect(error.code).toBe(4401);
+
+				provider.awareness.destroy();
+				provider.destroy();
 			});
 		});
 
@@ -236,7 +262,7 @@ describe('Websocket Api Test', () => {
 				const room = randomString;
 
 				const response = ResponsePayloadBuilder.build(null, 'userId');
-				authorizationService.hasPermission.mockResolvedValue(response);
+				authorizationService.hasPermission.mockResolvedValueOnce(response);
 
 				const { ydoc: client1Doc, provider } = createWsClient(room);
 
@@ -261,6 +287,9 @@ describe('Websocket Api Test', () => {
 				expect(error.reason).toBe('Missing room or userid');
 				// @ts-ignore
 				expect(error.code).toBe(1008);
+
+				provider.awareness.destroy();
+				provider.destroy();
 			});
 		});
 	});
