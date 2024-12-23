@@ -57,14 +57,6 @@ describe('Websocket Api Test', () => {
 			return isSynced;
 		});
 
-	/* 	const waitUntilDocValueMatches = (ydoc: Doc, key: string, value: number): Promise<void> =>
-		promise.until(0, () => {
-			const result = ydoc.getMap().get(key);
-			const isMatch = result === value;
-
-			return isMatch;
-		}); */
-
 	describe('when clients have permission for room', () => {
 		describe('when two clients connect to the same doc before any changes', () => {
 			const setup = () => {
