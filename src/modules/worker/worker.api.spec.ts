@@ -21,7 +21,7 @@ describe('Worker Api Test', () => {
 	let storageService: StorageService;
 	let ioRedisAdapter: IoRedisAdapter;
 
-	// This port must be different from the one used in the server module
+	// This port must be different from the one used in the websocket api test
 	// because tests are executed parallel and therefore we can have port conflicts.
 	const port = 3398;
 	const url = `ws://localhost:${port}`;
@@ -111,7 +111,7 @@ describe('Worker Api Test', () => {
 			provider.awareness.destroy();
 			provider.disconnect();
 			provider.destroy();
-		}, 10000);
+		});
 	});
 
 	describe('when second client sends update', () => {
