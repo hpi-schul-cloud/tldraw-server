@@ -1,7 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { randomUUID } from 'crypto';
 import { WebSocket } from 'ws';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
@@ -68,7 +67,7 @@ describe('Worker Api Test', () => {
 		const setup = () => {
 			workerService.start();
 
-			const room = randomUUID();
+			const room = Math.random().toString(36).substring(7);
 
 			authorizationService.hasPermission.mockResolvedValueOnce({
 				hasWriteAccess: true,
@@ -119,7 +118,7 @@ describe('Worker Api Test', () => {
 		const setup = () => {
 			workerService.start();
 
-			const room = randomUUID();
+			const room = Math.random().toString(36).substring(7);
 
 			authorizationService.hasPermission.mockResolvedValueOnce({
 				hasWriteAccess: true,
@@ -180,7 +179,7 @@ describe('Worker Api Test', () => {
 		const setup = async () => {
 			workerService.start();
 
-			const room = randomUUID();
+			const room = Math.random().toString(36).substring(7);
 
 			authorizationService.hasPermission.mockResolvedValueOnce({
 				hasWriteAccess: true,
