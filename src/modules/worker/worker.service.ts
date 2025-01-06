@@ -2,11 +2,9 @@ import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { RedisKey } from 'ioredis';
 import { Logger } from '../../infra/logger/index.js';
-import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/interfaces/index.js';
-import { StorageService } from '../../infra/storage/storage.service.js';
-import { decodeRedisRoomStreamName, RoomStreamInfos } from '../../infra/y-redis/helper.js';
-import { YRedisDoc } from '../../infra/y-redis/y-redis-doc.js';
-import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
+import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/index.js';
+import { StorageService } from '../../infra/storage/index.js';
+import { decodeRedisRoomStreamName, RoomStreamInfos, YRedisClient, YRedisDoc } from '../../infra/y-redis/index.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 

@@ -1,8 +1,7 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { TemplatedApp } from 'uWebSockets.js';
-import { RedisFactory } from '../../../infra/redis/index.js';
-import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
+import { RedisAdapter, RedisFactory } from '../../../infra/redis/index.js';
 import { REDIS_FOR_DELETION, UWS } from '../server.const.js';
 import { TldrawDocumentService } from './tldraw-document.service.js';
 

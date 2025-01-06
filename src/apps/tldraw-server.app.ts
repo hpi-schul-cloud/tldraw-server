@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from '../infra/logger/index.js';
-import { MetricsModule } from '../infra/metrics/metrics.module.js';
+import { MetricsModule } from '../infra/metrics/index.js';
 import { ServerModule } from '../modules/server/server.module.js';
 
 async function bootstrap(): Promise<void> {
