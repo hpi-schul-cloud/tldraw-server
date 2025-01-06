@@ -132,12 +132,14 @@ export class WorkerService implements Job, OnModuleDestroy {
 			`Stream still empty, removing recurring task from queue ${JSON.stringify({ stream: task.stream })}`,
 		);
 
-		const deleteEntryId = deletedDocEntries.find((entry) => entry.message.docName === task.stream)?.id.toString();
+		const deleteEntry = deletedDocEntries.find(
+			(entry) => 'docName' in entry.message && entry.message.docName === task.stream,
+		);
 
-		if (deleteEntryId) {
+		if (deleteEntry) {
 			const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
 			await Promise.all([
-				this.redis.deleteDeletedDocEntry(deleteEntryId),
+				this.redis.deleteDeletedDocEntry(deleteEntry.id.toString()),
 				this.storageService.deleteDocument(roomStreamInfos.room, roomStreamInfos.docid),
 			]);
 		}
@@ -157,9 +159,10 @@ export class WorkerService implements Job, OnModuleDestroy {
 	// helper
 	private mapReclaimTaskToTask(reclaimedTasks: XAutoClaimResponse): Task[] {
 		const tasks: Task[] = [];
-		reclaimedTasks.messages?.forEach((m) => {
-			const stream = m?.message.compact;
-			stream && tasks.push({ stream: stream.toString(), id: m?.id.toString() });
+		reclaimedTasks.messages?.forEach((entry) => {
+			if ('compact' in entry.message && entry.message.compact) {
+				tasks.push({ stream: entry.message.compact.toString(), id: entry?.id.toString() });
+			}
 		});
 
 		if (tasks.length > 0) {
@@ -176,11 +179,13 @@ export class WorkerService implements Job, OnModuleDestroy {
 	}
 
 	private extractDocNamesFromStreamMessageReply(docEntries: StreamMessageReply[]): string[] {
-		const docNames = docEntries
-			.map((entry) => {
-				return entry.message.docName;
-			})
-			.filter((docName) => docName !== undefined);
+		const docNames: string[] = [];
+
+		docEntries.forEach((entry) => {
+			if ('docName' in entry.message && typeof entry.message.docName === 'string' && entry.message.docName) {
+				docNames.push(entry.message.docName);
+			}
+		});
 
 		return docNames;
 	}

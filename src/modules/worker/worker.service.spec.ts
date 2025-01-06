@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Awareness } from 'y-protocols/awareness';
 import { Doc } from 'yjs';
 import { Logger } from '../../infra/logger/logger.js';
-import { RedisAdapter, StreamMessageReply } from '../../infra/redis/interfaces/index.js';
+import { RedisAdapter, StreamMessageReply, Task } from '../../infra/redis/interfaces/index.js';
 import { streamMessageReplyFactory } from '../../infra/redis/testing/stream-message-reply.factory.js';
 import { xAutoClaimResponseFactory } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
@@ -14,10 +14,16 @@ import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
 
 const mapStreamMessageRepliesToTask = (streamMessageReplies: StreamMessageReply[]) => {
-	const tasks = streamMessageReplies.map((message) => ({
-		stream: message.message.compact?.toString(),
-		id: message.id.toString(),
-	}));
+	const tasks: Task[] = [];
+
+	streamMessageReplies.forEach((message) => {
+		if ('compact' in message.message) {
+			tasks.push({
+				stream: message.message.compact.toString(),
+				id: message.id.toString(),
+			});
+		}
+	});
 
 	return tasks;
 };

@@ -67,7 +67,7 @@ export const extractMessagesFromStreamReply = (
 			messages: [] as Uint8Array[],
 		}));
 		docStreamReply.messages?.forEach((m: StreamMessageReply) => {
-			if (m.message.m != null) {
+			if ('m' in m.message && m.message.m != null) {
 				const unit8ArrayRedisKey = castRedisKeyToUnit8Array(m.message.m);
 				docMessages.messages.push(unit8ArrayRedisKey);
 			}

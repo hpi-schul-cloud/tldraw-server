@@ -1,6 +1,8 @@
-import { RedisKey } from 'ioredis';
 import { RedisGuard, TypeGuard } from './guards/index.js';
 import {
+	Compact,
+	DocName,
+	M,
 	StreamMessageReply,
 	StreamMessagesReply,
 	XAutoClaimResponse,
@@ -69,8 +71,8 @@ function mapToStreamMessageReply(value: XItem): StreamMessageReply {
 	return { id: id.toString(), message: transformTuplesReply(fields) };
 }
 
-function transformTuplesReply(reply: RedisKey[]): Record<string, RedisKey> {
-	const message: Record<string, RedisKey> = Object.create(null);
+function transformTuplesReply(reply: string[] | Buffer[]): M | DocName | Compact {
+	const message = Object.create(null);
 
 	for (let i = 0; i < reply.length; i += 2) {
 		message[reply[i].toString()] = reply[i + 1];

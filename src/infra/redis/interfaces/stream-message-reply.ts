@@ -1,16 +1,19 @@
 import { RedisKey } from 'ioredis';
 
-interface Message {
-	m?: Buffer;
-	docName?: string;
-	compact?: Buffer;
+export interface M {
+	m: Buffer;
+}
+export interface DocName {
+	docName: string;
+}
+export interface Compact {
+	compact: Buffer;
 }
 
 export interface StreamMessageReply {
 	id: RedisKey;
-	message: Message;
+	message: M | DocName | Compact;
 }
-
 export interface StreamMessagesReply {
 	name: string;
 	messages: StreamMessageReply[] | null;
