@@ -11,7 +11,7 @@
     kubernetes.core.helm:
       chart_ref: oci://docker.io/bitnamicharts/valkey
       chart_version: "{{ TLDRAW_VALKEY_CHART_VERSION }}"
-      release_name: valkey
+      release_name: tldraw-valkey
       release_namespace: "{{ NAMESPACE }}"
       release_state: present
       create_namespace: yes
@@ -22,6 +22,8 @@
           defaultStorageClass: "{{ SC_DEFAULT_STORAGE_CLASS_NAME }}"
         replica:
           replicaCount: "{{ TLDRAW_VALKEY_REPLICAS }}"
+          pdb:
+            create: false
           resources:
             limits:
               cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
@@ -30,6 +32,10 @@
               cpu: "{{ TLDRAW_VALKEY_CPU_REQUESTS|default('100m', true) }}"
               memory: "{{ TLDRAW_VALKEY_MEMORY_REQUESTS|default('1Gi', true) }}"
         primary:
+          pdb:
+            create: false
+          readinessProbe:
+            timeoutSeconds: 5
           resources:
             limits:
               cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
@@ -40,9 +46,6 @@
         auth:
           existingSecret: tldraw-valkey-password
           existingSecretPasswordKey: REDIS_SENTINEL_PASSWORD
-        master:
-          readinessProbe:
-            timeoutSeconds: 5
         sentinel:
           enabled: true
           readinessProbe:

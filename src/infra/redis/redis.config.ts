@@ -19,7 +19,7 @@ export class RedisConfig {
 	public REDIS_PREFIX = 'y';
 
 	@IsString()
-	public REDIS_SENTINEL_NAME = 'mymaster';
+	public REDIS_SENTINEL_NAME = 'myprimary';
 
 	@IsString()
 	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED)
