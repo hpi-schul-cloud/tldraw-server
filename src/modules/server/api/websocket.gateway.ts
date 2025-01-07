@@ -7,15 +7,11 @@ import {
 	us_socket_context_t,
 	WebSocket,
 } from 'uWebSockets.js';
-import { AuthorizationService } from '../../../infra/authorization/authorization.service.js';
+import { AuthorizationService } from '../../../infra/authorization/index.js';
 import { Logger } from '../../../infra/logger/index.js';
-import { MetricsService } from '../../../infra/metrics/metrics.service.js';
-import { RedisAdapter } from '../../../infra/redis/interfaces/redis-adapter.js';
-import { YRedisDoc } from '../../../infra/y-redis/y-redis-doc.js';
-import { YRedisUserFactory } from '../../../infra/y-redis/y-redis-user.factory.js';
-import { YRedisUser } from '../../../infra/y-redis/y-redis-user.js';
-import { YRedisClient } from '../../../infra/y-redis/y-redis.client.js';
-import { YRedisService } from '../../../infra/y-redis/y-redis.service.js';
+import { MetricsService } from '../../../infra/metrics/index.js';
+import { RedisAdapter } from '../../../infra/redis/index.js';
+import { YRedisClient, YRedisDoc, YRedisService, YRedisUser, YRedisUserFactory } from '../../../infra/y-redis/index.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
 

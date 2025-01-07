@@ -92,7 +92,13 @@ describe(YRedisClient.name, () => {
 					},
 				];
 
-				const expectedMessages = messages?.map((message) => message.message.m).filter((m) => m != null);
+				const expectedMessages: Buffer[] = [];
+
+				messages?.forEach((message) => {
+					if ('m' in message.message && message.message.m) {
+						expectedMessages.push(message.message.m);
+					}
+				});
 
 				return { spyMergeMessages, expectedResult, expectedMessages, props };
 			};

@@ -139,7 +139,13 @@ export class YRedisClient implements OnModuleInit {
 			return [];
 		}
 
-		const filteredMessages = messages.map((message) => message.message.m).filter((m) => m != null);
+		const filteredMessages: Buffer[] = [];
+
+		messages.forEach((message) => {
+			if ('m' in message.message && Buffer.isBuffer(message.message.m) && message.message.m) {
+				filteredMessages.push(message.message.m);
+			}
+		});
 
 		return filteredMessages;
 	}

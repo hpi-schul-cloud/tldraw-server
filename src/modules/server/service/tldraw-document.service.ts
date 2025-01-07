@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TemplatedApp } from 'uWebSockets.js';
-import { RedisAdapter } from '../../../infra/redis/interfaces/index.js';
-import { computeRedisRoomStreamName } from '../../../infra/y-redis/helper.js';
+import { RedisAdapter } from '../../../infra/redis/index.js';
+import { computeRedisRoomStreamName } from '../../../infra/y-redis/index.js';
 import { REDIS_FOR_DELETION, UWS } from '../server.const.js';
 
 @Injectable()

@@ -7,8 +7,8 @@
 */
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import * as map from 'lib0/map';
-import { Logger } from '../../infra/logger/logger.js';
-import { StreamNameClockPair } from '../../infra/redis/interfaces/stream-name-clock-pair.js';
+import { Logger } from '../../infra/logger/index.js';
+import { StreamNameClockPair } from '../../infra/redis/index.js';
 import { isSmallerRedisId } from './helper.js';
 import { YRedisClient } from './y-redis.client.js';
 

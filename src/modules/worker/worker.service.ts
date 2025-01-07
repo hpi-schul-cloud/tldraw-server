@@ -2,11 +2,9 @@ import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { RedisKey } from 'ioredis';
 import { Logger } from '../../infra/logger/index.js';
-import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/interfaces/index.js';
-import { StorageService } from '../../infra/storage/storage.service.js';
-import { decodeRedisRoomStreamName, RoomStreamInfos } from '../../infra/y-redis/helper.js';
-import { YRedisDoc } from '../../infra/y-redis/y-redis-doc.js';
-import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
+import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/index.js';
+import { StorageService } from '../../infra/storage/index.js';
+import { decodeRedisRoomStreamName, RoomStreamInfos, YRedisClient, YRedisDoc } from '../../infra/y-redis/index.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 
@@ -132,12 +130,14 @@ export class WorkerService implements Job, OnModuleDestroy {
 			`Stream still empty, removing recurring task from queue ${JSON.stringify({ stream: task.stream })}`,
 		);
 
-		const deleteEntryId = deletedDocEntries.find((entry) => entry.message.docName === task.stream)?.id.toString();
+		const deleteEntry = deletedDocEntries.find(
+			(entry) => 'docName' in entry.message && entry.message.docName === task.stream,
+		);
 
-		if (deleteEntryId) {
+		if (deleteEntry) {
 			const roomStreamInfos = decodeRedisRoomStreamName(task.stream.toString(), this.redis.redisPrefix);
 			await Promise.all([
-				this.redis.deleteDeletedDocEntry(deleteEntryId),
+				this.redis.deleteDeletedDocEntry(deleteEntry.id.toString()),
 				this.storageService.deleteDocument(roomStreamInfos.room, roomStreamInfos.docid),
 			]);
 		}
@@ -157,9 +157,10 @@ export class WorkerService implements Job, OnModuleDestroy {
 	// helper
 	private mapReclaimTaskToTask(reclaimedTasks: XAutoClaimResponse): Task[] {
 		const tasks: Task[] = [];
-		reclaimedTasks.messages?.forEach((m) => {
-			const stream = m?.message.compact;
-			stream && tasks.push({ stream: stream.toString(), id: m?.id.toString() });
+		reclaimedTasks.messages?.forEach((entry) => {
+			if ('compact' in entry.message && entry.message.compact) {
+				tasks.push({ stream: entry.message.compact.toString(), id: entry?.id.toString() });
+			}
 		});
 
 		if (tasks.length > 0) {
@@ -176,11 +177,13 @@ export class WorkerService implements Job, OnModuleDestroy {
 	}
 
 	private extractDocNamesFromStreamMessageReply(docEntries: StreamMessageReply[]): string[] {
-		const docNames = docEntries
-			.map((entry) => {
-				return entry.message.docName;
-			})
-			.filter((docName) => docName !== undefined);
+		const docNames: string[] = [];
+
+		docEntries.forEach((entry) => {
+			if ('docName' in entry.message && typeof entry.message.docName === 'string' && entry.message.docName) {
+				docNames.push(entry.message.docName);
+			}
+		});
 
 		return docNames;
 	}

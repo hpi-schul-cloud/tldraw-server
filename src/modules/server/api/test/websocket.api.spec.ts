@@ -7,7 +7,7 @@ import { WebSocket } from 'ws';
 import { WebsocketProvider } from 'y-websocket';
 import { Doc, encodeStateAsUpdateV2 } from 'yjs';
 import { ResponsePayloadBuilder } from '../../../../infra//authorization/response.builder.js';
-import { AuthorizationService } from '../../../../infra/authorization/authorization.service.js';
+import { AuthorizationService } from '../../../../infra/authorization/index.js';
 import { ServerModule } from '../../server.module.js';
 import { TldrawServerConfig } from '../../tldraw-server.config.js';
 

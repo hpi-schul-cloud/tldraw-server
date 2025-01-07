@@ -2,22 +2,27 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Awareness } from 'y-protocols/awareness';
 import { Doc } from 'yjs';
-import { Logger } from '../../infra/logger/logger.js';
-import { RedisAdapter, StreamMessageReply } from '../../infra/redis/interfaces/index.js';
-import { streamMessageReplyFactory } from '../../infra/redis/testing/stream-message-reply.factory.js';
-import { xAutoClaimResponseFactory } from '../../infra/redis/testing/x-auto-claim-response.factory.js';
-import { StorageService } from '../../infra/storage/storage.service.js';
-import { yRedisDocFactory } from '../../infra/y-redis/testing/y-redis-doc.factory.js';
-import { YRedisClient } from '../../infra/y-redis/y-redis.client.js';
+import { Logger } from '../../infra/logger/index.js';
+import { RedisAdapter, StreamMessageReply, Task } from '../../infra/redis/index.js';
+import { streamMessageReplyFactory, xAutoClaimResponseFactory } from '../../infra/redis/testing/index.js';
+import { StorageService } from '../../infra/storage/index.js';
+import { YRedisClient } from '../../infra/y-redis/index.js';
+import { yRedisDocFactory } from '../../infra/y-redis/testing/index.js';
 import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
 
 const mapStreamMessageRepliesToTask = (streamMessageReplies: StreamMessageReply[]) => {
-	const tasks = streamMessageReplies.map((message) => ({
-		stream: message.message.compact?.toString(),
-		id: message.id.toString(),
-	}));
+	const tasks: Task[] = [];
+
+	streamMessageReplies.forEach((message) => {
+		if ('compact' in message.message) {
+			tasks.push({
+				stream: message.message.compact.toString(),
+				id: message.id.toString(),
+			});
+		}
+	});
 
 	return tasks;
 };

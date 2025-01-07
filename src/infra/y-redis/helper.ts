@@ -1,7 +1,6 @@
 import { RedisKey } from 'ioredis';
 import { array, map } from 'lib0';
-import { TypeGuard } from '../../infra/redis/guards/type.guard.js';
-import { StreamMessageReply, StreamMessagesReply } from '../../infra/redis/interfaces/index.js';
+import { StreamMessageReply, StreamMessagesReply, TypeGuard } from '../../infra/redis/index.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,
@@ -67,7 +66,7 @@ export const extractMessagesFromStreamReply = (
 			messages: [] as Uint8Array[],
 		}));
 		docStreamReply.messages?.forEach((m: StreamMessageReply) => {
-			if (m.message.m != null) {
+			if ('m' in m.message && m.message.m != null) {
 				const unit8ArrayRedisKey = castRedisKeyToUnit8Array(m.message.m);
 				docMessages.messages.push(unit8ArrayRedisKey);
 			}
