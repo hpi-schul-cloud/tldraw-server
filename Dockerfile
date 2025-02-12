@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY tsconfig.json tsconfig.build.json package.json package-lock.json nest-cli.json ./
 
-RUN npm ci && npm cache clean --force
+RUN npm ci --ignore-scripts && npm cache clean --force
 
 COPY src /app/src
 
