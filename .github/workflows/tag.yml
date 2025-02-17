@@ -51,7 +51,7 @@ jobs:
           tags: ${{ steps.docker_meta_img_hub.outputs.tags }}
           labels: ${{ steps.docker_meta_img_hub.outputs.labels }}
 
-  generate_sbom:
+  create_release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
