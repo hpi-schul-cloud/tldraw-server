@@ -23,7 +23,7 @@
         replica:
           replicaCount: "{{ TLDRAW_VALKEY_REPLICAS }}"
           pdb:
-            create: false
+            create: true
           resources:
             limits:
               cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
