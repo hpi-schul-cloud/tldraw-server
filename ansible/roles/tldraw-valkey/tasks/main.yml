@@ -46,6 +46,7 @@
         auth:
           existingSecret: tldraw-valkey-password
           existingSecretPasswordKey: REDIS_SENTINEL_PASSWORD
+          usePasswordFiles: false
         sentinel:
           enabled: true
           readinessProbe:
