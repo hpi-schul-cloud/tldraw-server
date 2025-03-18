@@ -29,8 +29,6 @@ export interface RoomStreamInfos {
 
 export const decodeRedisRoomStreamName = (rediskey: string, expectedRedisPrefix: string): RoomStreamInfos => {
 	const match = new RegExp(`^${expectedRedisPrefix}:room:([^:]+):([^:]+)$`).exec(rediskey);
-	console.log('match', match);
-	console.log('expectedRedisPrefix', expectedRedisPrefix);
 
 	if (match == null) {
 		throw new Error(`Malformed stream name! expectedRedisPrefix="${expectedRedisPrefix}", rediskey="${rediskey}"`);
