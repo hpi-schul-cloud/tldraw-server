@@ -26,15 +26,15 @@ export interface RoomStreamInfos {
 	room: string;
 	docid: string;
 }
-export const decodeRedisRoomStreamName = (rediskey: string, expectedPrefix: string): RoomStreamInfos => {
-	const match = /^(.*):room:(.*):(.*)$/.exec(rediskey);
-	if (match == null || match[1] !== expectedPrefix) {
-		throw new Error(
-			`Malformed stream name! prefix="${match?.[1]}" expectedPrefix="${expectedPrefix}", rediskey="${rediskey}"`,
-		);
+
+export const decodeRedisRoomStreamName = (rediskey: string, expectedRedisPrefix: string): RoomStreamInfos => {
+	const match = new RegExp(`^${expectedRedisPrefix}:room:([^:]+):([^:]+)$`).exec(rediskey);
+
+	if (match == null) {
+		throw new Error(`Malformed stream name! expectedRedisPrefix="${expectedRedisPrefix}", rediskey="${rediskey}"`);
 	}
 
-	return { room: decodeURIComponent(match[2]), docid: decodeURIComponent(match[3]) };
+	return { room: decodeURIComponent(match[1]), docid: decodeURIComponent(match[2]) };
 };
 
 const getIdFromLastStreamMessageReply = (docStreamReplay: StreamMessagesReply): RedisKey | undefined => {

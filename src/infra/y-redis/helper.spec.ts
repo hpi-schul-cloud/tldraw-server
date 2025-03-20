@@ -57,11 +57,11 @@ describe('helper', () => {
 		it('returns the expected value', () => {
 			const room = 'room';
 			const docid = 'docid';
-			const prefix = 'prefix';
+			const prefix = 'y';
 
 			const result = computeRedisRoomStreamName(room, docid, prefix);
 
-			expect(result).toBe('prefix:room:room:docid');
+			expect(result).toBe('y:room:room:docid');
 		});
 	});
 
@@ -69,18 +69,18 @@ describe('helper', () => {
 		describe('when the rediskey is malformed', () => {
 			it('throws an error', () => {
 				const rediskey = 'invalid';
-				const expectedPrefix = 'prefix';
+				const expectedPrefix = 'y';
 
 				expect(() => decodeRedisRoomStreamName(rediskey, expectedPrefix)).toThrow(
-					`Malformed stream name! prefix="undefined" expectedPrefix="prefix", rediskey="invalid"`,
+					`Malformed stream name! expectedRedisPrefix="y", rediskey="invalid"`,
 				);
 			});
 		});
 
 		describe('when the rediskey is well formed', () => {
 			it('returns the expected values', () => {
-				const rediskey = 'prefix:room:room:docid';
-				const expectedPrefix = 'prefix';
+				const rediskey = 'y:room:room:docid';
+				const expectedPrefix = 'y';
 
 				const result = decodeRedisRoomStreamName(rediskey, expectedPrefix);
 
@@ -91,10 +91,10 @@ describe('helper', () => {
 		describe('when the prefix does not match', () => {
 			it('throws an error', () => {
 				const rediskey = 'invalid:room:room:docid';
-				const expectedPrefix = 'prefix';
+				const expectedPrefix = 'y';
 
 				expect(() => decodeRedisRoomStreamName(rediskey, expectedPrefix)).toThrow(
-					`Malformed stream name! prefix="invalid" expectedPrefix="prefix", rediskey="invalid:room:room:docid"`,
+					`Malformed stream name! expectedRedisPrefix="y", rediskey="invalid:room:room:docid"`,
 				);
 			});
 		});
