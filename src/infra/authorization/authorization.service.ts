@@ -28,7 +28,11 @@ export class AuthorizationService {
 
 			response = await this.fetchAuthorization(room, token);
 		} catch (error) {
-			response = this.createErrorResponsePayload(4500, error.message);
+			if (error.message === 'JWT not found') {
+				response = this.createErrorResponsePayload(4401, 'JWT not found');
+			} else {
+				response = this.createErrorResponsePayload(4500, error.message);
+			}
 		}
 
 		return response;
@@ -48,7 +52,7 @@ export class AuthorizationService {
 		const jwtToken = this.getCookie(req, 'jwt');
 
 		if (!jwtToken) {
-			throw new Error('JWT token not found');
+			throw new Error('JWT not found');
 		}
 
 		return jwtToken;

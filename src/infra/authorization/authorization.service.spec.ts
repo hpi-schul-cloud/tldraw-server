@@ -133,8 +133,8 @@ describe(AuthorizationService.name, () => {
 				const { req } = setupRequest('roomId', 'other=ABC');
 				const expectedResult = {
 					error: {
-						code: 4500,
-						reason: 'JWT token not found',
+						code: 4401,
+						reason: 'JWT not found',
 					},
 					hasWriteAccess: false,
 					room: null,
