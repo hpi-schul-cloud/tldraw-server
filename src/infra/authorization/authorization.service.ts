@@ -49,13 +49,13 @@ export class AuthorizationService {
 	}
 
 	private getToken(req: HttpRequest): string {
-		const jwtToken = this.getCookie(req, 'jwt');
+		const token = this.getCookie(req, 'jwt');
 
-		if (!jwtToken) {
+		if (!token) {
 			throw new Error('JWT not found');
 		}
 
-		return jwtToken;
+		return token;
 	}
 
 	private async fetchAuthorization(room: string, token: string): Promise<ResponsePayload> {
