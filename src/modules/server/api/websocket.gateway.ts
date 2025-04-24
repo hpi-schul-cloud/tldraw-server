@@ -12,7 +12,7 @@ import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/index.js';
 import { RedisAdapter } from '../../../infra/redis/index.js';
 import { YRedisClient, YRedisDoc, YRedisService, YRedisUser, YRedisUserFactory } from '../../../infra/y-redis/index.js';
-import { WebSocketCloseCode } from '../../../shared/type/webSocketCloseCode.js';
+import { WebSocketCloseCode } from '../../../shared/type/websocket-close-code.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
 
