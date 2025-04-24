@@ -12,6 +12,7 @@ import { Logger } from '../../../infra/logger/index.js';
 import { MetricsService } from '../../../infra/metrics/index.js';
 import { RedisAdapter } from '../../../infra/redis/index.js';
 import { YRedisClient, YRedisDoc, YRedisService, YRedisUser, YRedisUserFactory } from '../../../infra/y-redis/index.js';
+import { WebSocketCloseCode } from '../../../shared/type/webSocketCloseCode.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
 import { TldrawServerConfig } from '../tldraw-server.config.js';
 
@@ -19,14 +20,6 @@ interface RequestHeaderInfos {
 	headerWsExtensions: string;
 	headerWsKey: string;
 	headerWsProtocol: string;
-}
-
-// https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
-enum WebSocketErrorCodes {
-	InternalError = 1011,
-	PolicyViolation = 1008,
-	TldrawPolicyViolation = 4401,
-	TldrawInternalError = 4500,
 }
 
 @Injectable()
@@ -120,7 +113,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 
 			if (user.room === null || user.userid === null) {
-				ws.end(WebSocketErrorCodes.PolicyViolation, 'Missing room or userid');
+				ws.end(WebSocketCloseCode.PolicyViolation, 'Missing room or userid');
 
 				return;
 			}
@@ -149,7 +142,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			this.yRedisService.ensureLatestContentSubscription(yRedisDoc, user);
 		} catch (error) {
 			this.logger.warning(error);
-			ws.end(WebSocketErrorCodes.InternalError, 'Internal Server Error');
+			ws.end(WebSocketCloseCode.InternalError, 'Internal Server Error');
 		}
 	}
 
@@ -176,7 +169,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			const user = ws.getUserData();
 
 			if (!user.hasWriteAccess || !user.room) {
-				ws.end(WebSocketErrorCodes.TldrawPolicyViolation, 'User has no write access or room is missing');
+				ws.end(WebSocketCloseCode.TldrawPolicyViolation, 'User has no write access or room is missing');
 
 				return;
 			}
@@ -188,7 +181,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 		} catch (error) {
 			this.logger.warning(error);
-			ws.end(WebSocketErrorCodes.InternalError);
+			ws.end(WebSocketCloseCode.InternalError);
 		}
 	}
 
@@ -207,7 +200,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			MetricsService.openConnectionsGauge.dec();
 		} catch (error) {
 			this.logger.warning(error);
-			ws.end(WebSocketErrorCodes.InternalError);
+			ws.end(WebSocketCloseCode.InternalError);
 		}
 	}
 
