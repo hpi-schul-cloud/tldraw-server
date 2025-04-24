@@ -2,6 +2,6 @@
 export enum WebSocketCloseCode {
 	InternalError = 1011,
 	PolicyViolation = 1008,
-	TldrawPolicyViolation = 4401,
+	Unauthorized = 4401,
 	TldrawInternalError = 4500,
 }

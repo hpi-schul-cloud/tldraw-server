@@ -169,7 +169,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			const user = ws.getUserData();
 
 			if (!user.hasWriteAccess || !user.room) {
-				ws.end(WebSocketCloseCode.TldrawPolicyViolation, 'User has no write access or room is missing');
+				ws.end(WebSocketCloseCode.Unauthorized, 'User has no write access or room is missing');
 
 				return;
 			}
