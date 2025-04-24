@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpRequest } from 'uWebSockets.js';
+import { WebSocketCloseCode } from '../../shared/type/websocket-close-code.js';
 import { Logger } from '../logger/index.js';
 import {
 	AuthorizationApi,
@@ -29,9 +30,9 @@ export class AuthorizationService {
 			response = await this.fetchAuthorization(room, token);
 		} catch (error) {
 			if (error.message === 'JWT not found') {
-				response = this.createErrorResponsePayload(4401, 'JWT not found');
+				response = this.createErrorResponsePayload(WebSocketCloseCode.Unauthorized, 'JWT not found');
 			} else {
-				response = this.createErrorResponsePayload(4500, error.message);
+				response = this.createErrorResponsePayload(WebSocketCloseCode.InternalError, error.message);
 			}
 		}
 
@@ -84,7 +85,7 @@ export class AuthorizationService {
 
 		const { isAuthorized, userId } = response;
 		if (!isAuthorized) {
-			return this.createErrorResponsePayload(4401, 'Unauthorized');
+			return this.createErrorResponsePayload(WebSocketCloseCode.Unauthorized, 'Unauthorized');
 		}
 
 		return this.createResponsePayload(room, userId);

@@ -1,6 +1,7 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpRequest } from 'uWebSockets.js';
+import { WebSocketCloseCode } from '../../shared/type/websocket-close-code.js';
 import { Logger } from '../logger/index.js';
 import { AuthorizationApi, AuthorizedReponse } from './authorization-api-client/index.js';
 import { AuthorizationService } from './authorization.service.js';
@@ -82,7 +83,7 @@ describe(AuthorizationService.name, () => {
 
 				const expectedResult = {
 					error: {
-						code: 4401,
+						code: WebSocketCloseCode.Unauthorized,
 						reason: 'Unauthorized',
 					},
 					hasWriteAccess: false,
@@ -108,7 +109,7 @@ describe(AuthorizationService.name, () => {
 
 				const expectedResult = {
 					error: {
-						code: 4500,
+						code: WebSocketCloseCode.InternalError,
 						reason: 'RoomId not found',
 					},
 					hasWriteAccess: false,
@@ -133,7 +134,7 @@ describe(AuthorizationService.name, () => {
 				const { req } = setupRequest('roomId', 'other=ABC');
 				const expectedResult = {
 					error: {
-						code: 4401,
+						code: WebSocketCloseCode.Unauthorized,
 						reason: 'JWT not found',
 					},
 					hasWriteAccess: false,
@@ -162,7 +163,7 @@ describe(AuthorizationService.name, () => {
 
 				const expectedResult = {
 					error: {
-						code: 4500,
+						code: WebSocketCloseCode.InternalError,
 						reason: 'testError',
 					},
 					hasWriteAccess: false,
