@@ -53,8 +53,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		this.webSocketServer.ws(`${this.config.TLDRAW_WEBSOCKET_PATH}/:room`, {
 			compression: SHARED_COMPRESSOR,
 			maxPayloadLength: 100 * 1024 * 1024,
-			idleTimeout: 10,
-			sendPingsAutomatically: false,
+			idleTimeout: 60,
+			sendPingsAutomatically: true,
 			upgrade: (res, req, context) => this.upgradeCallback(res, req, context),
 			open: (ws: WebSocket<YRedisUser>) => this.openCallback(ws),
 			message: (ws, messageBuffer) => this.messageCallback(ws, messageBuffer),
