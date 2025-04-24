@@ -113,7 +113,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			}
 
 			if (user.room === null || user.userid === null) {
-				ws.end(WebSocketCloseCode.PolicyViolation, 'Missing room or userid');
+				ws.end(WebSocketCloseCode.InternalError, 'Missing room or userid');
 
 				return;
 			}
