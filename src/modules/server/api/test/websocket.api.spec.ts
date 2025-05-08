@@ -8,6 +8,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { Doc, encodeStateAsUpdateV2 } from 'yjs';
 import { ResponsePayloadBuilder } from '../../../../infra//authorization/response.builder.js';
 import { AuthorizationService } from '../../../../infra/authorization/index.js';
+import { WebSocketCloseCode } from '../../../../shared/type/websocket-close-code.js';
 import { ServerModule } from '../../server.module.js';
 import { TldrawServerConfig } from '../../tldraw-server.config.js';
 
@@ -184,7 +185,7 @@ describe('Websocket Api Test', () => {
 				const randomString = Math.random().toString(36).substring(7);
 				const room = randomString;
 
-				const errorResponse = ResponsePayloadBuilder.buildWithError(4401, 'Unauthorized');
+				const errorResponse = ResponsePayloadBuilder.buildWithError(WebSocketCloseCode.Unauthorized, 'Unauthorized');
 				authorizationService.hasPermission.mockResolvedValueOnce(errorResponse);
 
 				const { ydoc: client1Doc, provider } = createWsClient(room);
@@ -209,7 +210,7 @@ describe('Websocket Api Test', () => {
 				// @ts-ignore
 				expect(error.reason).toBe('Unauthorized');
 				// @ts-ignore
-				expect(error.code).toBe(4401);
+				expect(error.code).toBe(WebSocketCloseCode.Unauthorized);
 
 				provider.awareness.destroy();
 				provider.destroy();
@@ -246,7 +247,7 @@ describe('Websocket Api Test', () => {
 				// @ts-ignore
 				expect(error.reason).toBe('Missing room or userid');
 				// @ts-ignore
-				expect(error.code).toBe(1008);
+				expect(error.code).toBe(WebSocketCloseCode.InternalError);
 
 				provider.awareness.destroy();
 				provider.destroy();
@@ -281,7 +282,7 @@ describe('Websocket Api Test', () => {
 			// @ts-ignore
 			expect(error.reason).toBe('Internal Server Error');
 			// @ts-ignore
-			expect(error.code).toBe(1011);
+			expect(error.code).toBe(WebSocketCloseCode.InternalError);
 		});
 	});
 });
