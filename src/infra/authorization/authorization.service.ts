@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpRequest } from 'uWebSockets.js';
+import { WebSocketCloseCode } from '../../shared/type/websocket-close-code.js';
 import { Logger } from '../logger/index.js';
 import {
 	AuthorizationApi,
@@ -28,7 +29,11 @@ export class AuthorizationService {
 
 			response = await this.fetchAuthorization(room, token);
 		} catch (error) {
-			response = this.createErrorResponsePayload(4500, error.message);
+			if (error.message === 'JWT not found') {
+				response = this.createErrorResponsePayload(WebSocketCloseCode.Unauthorized, 'JWT not found');
+			} else {
+				response = this.createErrorResponsePayload(WebSocketCloseCode.InternalError, error.message);
+			}
 		}
 
 		return response;
@@ -45,13 +50,13 @@ export class AuthorizationService {
 	}
 
 	private getToken(req: HttpRequest): string {
-		const jwtToken = this.getCookie(req, 'jwt');
+		const token = this.getCookie(req, 'jwt');
 
-		if (!jwtToken) {
-			throw new Error('JWT token not found');
+		if (!token) {
+			throw new Error('JWT not found');
 		}
 
-		return jwtToken;
+		return token;
 	}
 
 	private async fetchAuthorization(room: string, token: string): Promise<ResponsePayload> {
@@ -80,7 +85,7 @@ export class AuthorizationService {
 
 		const { isAuthorized, userId } = response;
 		if (!isAuthorized) {
-			return this.createErrorResponsePayload(4401, 'Unauthorized');
+			return this.createErrorResponsePayload(WebSocketCloseCode.Unauthorized, 'Unauthorized');
 		}
 
 		return this.createResponsePayload(room, userId);
