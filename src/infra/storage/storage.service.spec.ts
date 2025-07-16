@@ -41,7 +41,60 @@ describe('StorageService', () => {
 		jest.resetAllMocks();
 	});
 
-	
+	describe('onModuleInit', () => {
+		describe('when makeBucket resolves', () => {
+			it('should call makeBucket', async () => {
+				await service.onModuleInit();
+
+				expect(client.makeBucket).toHaveBeenCalledWith(bucketName);
+			});
+		});
+
+		describe('when makeBucket rejects with BucketAlreadyOwnedByYou', () => {
+			const setup = () => {
+				const error = new Error();
+				// @ts-ignore
+				error.code = 'BucketAlreadyOwnedByYou';
+				client.makeBucket.mockRejectedValueOnce(error);
+			};
+
+			it('should not throw an error', async () => {
+				setup();
+
+				await expect(service.onModuleInit()).resolves.not.toThrow();
+			});
+		});
+
+		describe('when makeBucket rejects with BucketAlreadyExists', () => {
+			const setup = () => {
+				const error = new Error();
+				// @ts-ignore
+				error.code = 'BucketAlreadyExists';
+				client.makeBucket.mockRejectedValueOnce(error);
+			};
+
+			it('should not throw an error', async () => {
+				setup();
+
+				await expect(service.onModuleInit()).resolves.not.toThrow();
+			});
+		});
+
+		describe('when makeBucket rejects with other error', () => {
+			const setup = () => {
+				const error = new Error('other error');
+				client.makeBucket.mockRejectedValueOnce(error);
+
+				return { error };
+			};
+
+			it('should throw an error', async () => {
+				const { error } = setup();
+
+				await expect(service.onModuleInit()).rejects.toThrow(error);
+			});
+		});
+	});
 
 	describe('persistDoc', () => {
 		describe('when putObject resolves', () => {
