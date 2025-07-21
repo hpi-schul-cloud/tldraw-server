@@ -29,18 +29,10 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 	}
 
 	public async onModuleInit(): Promise<void> {
-		try {
+		const bucketExists = await this.client.bucketExists(this.config.S3_BUCKET);
+
+		if (!bucketExists) {
 			await this.client.makeBucket(this.config.S3_BUCKET);
-		} catch (err: unknown) {
-			if (
-				err &&
-				typeof err === 'object' &&
-				'code' in err &&
-				(err.code === 'BucketAlreadyOwnedByYou' || err.code === 'BucketAlreadyExists')
-			) {
-				return;
-			}
-			throw err;
 		}
 	}
 
