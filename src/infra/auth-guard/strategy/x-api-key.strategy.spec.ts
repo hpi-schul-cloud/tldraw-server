@@ -38,6 +38,7 @@ describe('XApiKeyStrategy', () => {
 			it('should return true', () => {
 				const CORRECT_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
 				config.X_API_ALLOWED_KEYS = [CORRECT_API_KEY];
+
 				expect(strategy.validate(CORRECT_API_KEY)).toBe(true);
 			});
 		});
@@ -46,6 +47,7 @@ describe('XApiKeyStrategy', () => {
 			it('should throw an UnauthorizedException', () => {
 				const INVALID_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4BAD';
 				config.X_API_ALLOWED_KEYS = ['some-other-key'];
+
 				expect(() => strategy.validate(INVALID_API_KEY)).toThrow(UnauthorizedException);
 			});
 		});
@@ -54,6 +56,7 @@ describe('XApiKeyStrategy', () => {
 			it('should throw an UnauthorizedException', () => {
 				const ANY_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
 				config.X_API_ALLOWED_KEYS = [];
+
 				expect(() => strategy.validate(ANY_API_KEY)).toThrow(UnauthorizedException);
 			});
 		});
@@ -62,6 +65,7 @@ describe('XApiKeyStrategy', () => {
 	describe('constructor', () => {
 		it('should create strategy', () => {
 			const ApiKeyStrategy = new XApiKeyStrategy(config);
+
 			expect(ApiKeyStrategy).toBeDefined();
 			expect(ApiKeyStrategy).toBeInstanceOf(XApiKeyStrategy);
 		});
