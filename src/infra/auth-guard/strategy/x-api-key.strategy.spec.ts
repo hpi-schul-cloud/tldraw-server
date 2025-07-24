@@ -35,28 +35,40 @@ describe('XApiKeyStrategy', () => {
 
 	describe('validate', () => {
 		describe('when a valid api key is provided', () => {
-			it('should return true', () => {
+			const setup = () => {
 				const CORRECT_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
 				config.X_API_ALLOWED_KEYS = [CORRECT_API_KEY];
 
+				return { CORRECT_API_KEY };
+			};
+			it('should return true', () => {
+				const { CORRECT_API_KEY } = setup();
 				expect(strategy.validate(CORRECT_API_KEY)).toBe(true);
 			});
 		});
 
 		describe('when an invalid api key is provided', () => {
-			it('should throw an UnauthorizedException', () => {
+			const setup = () => {
 				const INVALID_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4BAD';
 				config.X_API_ALLOWED_KEYS = ['some-other-key'];
 
+				return { INVALID_API_KEY };
+			};
+			it('should throw an UnauthorizedException', () => {
+				const { INVALID_API_KEY } = setup();
 				expect(() => strategy.validate(INVALID_API_KEY)).toThrow(UnauthorizedException);
 			});
 		});
 
 		describe('when no api keys are allowed', () => {
-			it('should throw an UnauthorizedException', () => {
+			const setup = () => {
 				const ANY_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
 				config.X_API_ALLOWED_KEYS = [];
 
+				return { ANY_API_KEY };
+			};
+			it('should throw an UnauthorizedException', () => {
+				const { ANY_API_KEY } = setup();
 				expect(() => strategy.validate(ANY_API_KEY)).toThrow(UnauthorizedException);
 			});
 		});
