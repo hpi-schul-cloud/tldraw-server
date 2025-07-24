@@ -1,3 +1,4 @@
+
 import { RedisMemoryServer } from 'redis-memory-server';
 
 export default async function globalSetup(): Promise<void> {
@@ -9,3 +10,4 @@ export default async function globalSetup(): Promise<void> {
 	// @ts-ignore
 	global.__REDISINSTANCE = redisMemoryServer;
 }
+

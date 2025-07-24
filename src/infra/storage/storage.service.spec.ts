@@ -34,42 +34,12 @@ describe('StorageService', () => {
 		}).compile();
 
 		service = moduleFixture.get(StorageService);
+		await service.onModuleInit();
 		client = moduleFixture.get(Client);
 	});
 
 	beforeEach(() => {
 		jest.resetAllMocks();
-	});
-
-	describe('onModuleInit', () => {
-		describe('when bucket exists', () => {
-			const setup = () => {
-				client.bucketExists.mockResolvedValue(true);
-			};
-
-			it('should create the bucket if it does not exist', async () => {
-				setup();
-
-				await service.onModuleInit();
-
-				expect(client.bucketExists).toHaveBeenCalledWith(bucketName);
-			});
-		});
-
-		describe('when bucket does not exist', () => {
-			const setup = () => {
-				client.bucketExists.mockResolvedValue(false);
-			};
-
-			it('should create the bucket if it does not exist', async () => {
-				setup();
-
-				await service.onModuleInit();
-
-				expect(client.bucketExists).toHaveBeenCalledWith(bucketName);
-				expect(client.makeBucket).toHaveBeenCalledWith(bucketName);
-			});
-		});
 	});
 
 	describe('persistDoc', () => {

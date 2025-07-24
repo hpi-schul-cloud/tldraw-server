@@ -52,6 +52,7 @@ describe(YRedisClient.name, () => {
 		redis = module.get(IoRedisAdapter);
 		store = module.get(StorageService);
 		yRedisClient = module.get(YRedisClient);
+		await yRedisClient.onModuleInit();
 	});
 
 	afterEach(() => {

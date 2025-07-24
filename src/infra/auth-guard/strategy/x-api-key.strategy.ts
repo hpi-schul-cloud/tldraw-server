@@ -6,17 +6,14 @@ import { XApiKeyConfig } from '../x-api-key.config.js';
 
 @Injectable()
 export class XApiKeyStrategy extends PassportStrategy(Strategy, StrategyType.API_KEY) {
-	private readonly allowedApiKeys: string[];
-
 	public constructor(private readonly config: XApiKeyConfig) {
-		super({ header: 'X-API-KEY' }, false);
-		this.allowedApiKeys = this.config.X_API_ALLOWED_KEYS;
+		super({ header: 'X-API-KEY', prefix: '' }, false);
 	}
 
-	public validate(apiKey: string, done: (error: Error | null, data: boolean | null) => void): void {
-		if (this.allowedApiKeys.includes(apiKey)) {
-			done(null, true);
+	public validate(apiKey: string): boolean {
+		if (this.config.X_API_ALLOWED_KEYS.includes(apiKey)) {
+			return true;
 		}
-		done(new UnauthorizedException(), null);
+		throw new UnauthorizedException();
 	}
 }

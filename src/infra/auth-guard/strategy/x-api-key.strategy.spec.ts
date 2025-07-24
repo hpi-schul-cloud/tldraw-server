@@ -34,32 +34,42 @@ describe('XApiKeyStrategy', () => {
 	});
 
 	describe('validate', () => {
-		const done = jest.fn(() => null);
 		describe('when a valid api key is provided', () => {
 			const setup = () => {
 				const CORRECT_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
 				config.X_API_ALLOWED_KEYS = [CORRECT_API_KEY];
 
-				return { CORRECT_API_KEY, done };
+				return { CORRECT_API_KEY };
 			};
-			it('should do nothing', () => {
+			it('should return true', () => {
 				const { CORRECT_API_KEY } = setup();
-				strategy.validate(CORRECT_API_KEY, done);
-				expect(done).toHaveBeenCalledWith(null, true);
+				expect(strategy.validate(CORRECT_API_KEY)).toBe(true);
 			});
 		});
 
-		describe('when a invalid api key is provided', () => {
+		describe('when an invalid api key is provided', () => {
 			const setup = () => {
 				const INVALID_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4BAD';
-				config.X_API_ALLOWED_KEYS = [INVALID_API_KEY];
+				config.X_API_ALLOWED_KEYS = ['some-other-key'];
 
-				return { INVALID_API_KEY, done };
+				return { INVALID_API_KEY };
 			};
-			it('should throw error', () => {
+			it('should throw an UnauthorizedException', () => {
 				const { INVALID_API_KEY } = setup();
-				strategy.validate(INVALID_API_KEY, done);
-				expect(done).toHaveBeenCalledWith(new UnauthorizedException(), null);
+				expect(() => strategy.validate(INVALID_API_KEY)).toThrow(UnauthorizedException);
+			});
+		});
+
+		describe('when no api keys are allowed', () => {
+			const setup = () => {
+				const ANY_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
+				config.X_API_ALLOWED_KEYS = [];
+
+				return { ANY_API_KEY };
+			};
+			it('should throw an UnauthorizedException', () => {
+				const { ANY_API_KEY } = setup();
+				expect(() => strategy.validate(ANY_API_KEY)).toThrow(UnauthorizedException);
 			});
 		});
 	});
@@ -67,6 +77,7 @@ describe('XApiKeyStrategy', () => {
 	describe('constructor', () => {
 		it('should create strategy', () => {
 			const ApiKeyStrategy = new XApiKeyStrategy(config);
+
 			expect(ApiKeyStrategy).toBeDefined();
 			expect(ApiKeyStrategy).toBeInstanceOf(XApiKeyStrategy);
 		});
