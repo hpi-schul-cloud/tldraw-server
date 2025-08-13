@@ -21,11 +21,11 @@ resources:
 
 sentinelResources:
   limits:
-    cpu: "{{ TLDRAW_VALKEY_CPU_LIMITS|default('1000m', true) }}"
-    memory: "{{ TLDRAW_VALKEY_MEMORY_LIMITS|default('4Gi', true) }}"
+    cpu: "{{ TLDRAW_VALKEY_SENTINEL_CPU_LIMITS|default('150m', true) }}"
+    memory: "{{ TLDRAW_VALKEY_SENTINEL_MEMORY_LIMITS|default('192Mi', true) }}"
   requests:
-    cpu: "{{ TLDRAW_VALKEY_CPU_REQUESTS|default('100m', true) }}"
-    memory: "{{ TLDRAW_VALKEY_MEMORY_REQUESTS|default('1Gi', true) }}"
+    cpu: "{{ TLDRAW_VALKEY_SENTINEL_CPU_REQUESTS|default('100m', true) }}"
+    memory: "{{ TLDRAW_VALKEY_SENTINEL_MEMORY_REQUESTS|default('128Mi', true) }}"
 
 extraSecretValkeyConfigs: "tldraw-valkey-config"
 extraSecretSentinelConfigs: "tldraw-valkey-sentinel-config"
