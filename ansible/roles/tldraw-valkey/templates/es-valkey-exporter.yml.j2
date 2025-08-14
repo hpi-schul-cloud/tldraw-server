@@ -1,0 +1,21 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: tldraw-valkey-exporter
+  namespace: {{ NAMESPACE }}
+  labels:
+    app: tldraw-valkey
+spec:
+  refreshInterval: {{ EXTERNAL_SECRETS_REFRESH_INTERVAL }}
+  secretStoreRef:
+    kind: SecretStore
+    name: {{ EXTERNAL_SECRETS_K8S_STORE }}
+  target:
+    name: tldraw-valkey-exporter
+    template:
+      engineVersion: v2
+      data:
+        REDIS_PASSWORD: "{% raw %}{{ .REDIS_SENTINEL_PASSWORD }}{% endraw %}"
+  dataFrom:
+    - extract:
+        key: tldraw-valkey-password
