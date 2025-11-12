@@ -396,7 +396,7 @@ describe('StorageService', () => {
 
 	describe('destroy', () => {
 		it('should throw an error', () => {
-			expect(() => service.destroy()).toThrowError('Method not implemented.');
+			expect(() => service.destroy()).toThrow('Method not implemented.');
 		});
 	});
 });
