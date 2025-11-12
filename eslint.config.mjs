@@ -17,7 +17,7 @@ const compat = new FlatCompat({
 
 export default [
 	{
-		ignores: ['**/.eslintrc.cjs', '**/ansible', '**/.github', 'src/infra/authorization/authorization-api-client'],
+		ignores: ['**/eslint.config.mjs', '**/ansible', '**/.github', 'src/infra/authorization/authorization-api-client'],
 	},
 	...compat.extends('plugin:@typescript-eslint/stylistic-type-checked', 'plugin:prettier/recommended'),
 	{
@@ -38,7 +38,7 @@ export default [
 
 			parserOptions: {
 				project: 'tsconfig.json',
-				tsconfigRootDir: '.',
+				tsconfigRootDir: import.meta.dirname,
 			},
 		},
 
