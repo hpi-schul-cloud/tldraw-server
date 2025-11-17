@@ -44,19 +44,19 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT a string', () => {
 			it('should be return false', () => {
-				expect(() => TypeGuard.checkString(undefined)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString(undefined)).toThrow('Type is not a string');
 			});
 
 			it('should be return false', () => {
-				expect(() => TypeGuard.checkString(null)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString(null)).toThrow('Type is not a string');
 			});
 
 			it('should be return false', () => {
-				expect(() => TypeGuard.checkString({})).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString({})).toThrow('Type is not a string');
 			});
 
 			it('should be return false', () => {
-				expect(() => TypeGuard.checkString(1)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString(1)).toThrow('Type is not a string');
 			});
 		});
 	});
@@ -104,19 +104,19 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT an array', () => {
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray(undefined)).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray(undefined)).toThrow('Type is not an array.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray(null)).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray(null)).toThrow('Type is not an array.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray({})).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray({})).toThrow('Type is not an array.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray(1)).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray(1)).toThrow('Type is not an array.');
 			});
 		});
 	});
@@ -168,25 +168,23 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT an array', () => {
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkUnknownArrayWithElements([])).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkUnknownArrayWithElements([])).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkUnknownArrayWithElements(undefined)).toThrowError(
-					'Type is not an array with elements.',
-				);
+				expect(() => TypeGuard.checkUnknownArrayWithElements(undefined)).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkUnknownArrayWithElements(null)).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkUnknownArrayWithElements(null)).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkUnknownArrayWithElements({})).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkUnknownArrayWithElements({})).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkUnknownArrayWithElements(1)).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkUnknownArrayWithElements(1)).toThrow('Type is not an array with elements.');
 			});
 		});
 	});

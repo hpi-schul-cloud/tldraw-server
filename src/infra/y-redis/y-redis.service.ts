@@ -57,7 +57,10 @@ export class YRedisService {
 			return null;
 		}
 
-		throw new Error(`Unexpected message type ${message}`);
+		const decoder = decoding.createDecoder(message);
+		const messageType = decoding.readVarUint(decoder);
+
+		throw new Error(`Unexpected message type: ${messageType}`);
 	}
 
 	public createAwarenessUserDisconnectedMessage(yRedisUser: YRedisUser): Buffer {

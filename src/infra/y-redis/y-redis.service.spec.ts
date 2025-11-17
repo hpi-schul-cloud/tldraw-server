@@ -15,7 +15,7 @@ const buildUpdate = (props: {
 	numberOfUpdates: number;
 	awarenessId: number;
 	lastClock: number;
-}): Buffer => {
+}): ArrayBuffer => {
 	const { messageType, length, numberOfUpdates, awarenessId, lastClock } = props;
 	const encoder = encoding.createEncoder();
 	encoding.writeVarUint(encoder, messageType);
@@ -24,7 +24,9 @@ const buildUpdate = (props: {
 	encoding.writeVarUint(encoder, awarenessId);
 	encoding.writeVarUint(encoder, lastClock);
 
-	return Buffer.from(encoding.toUint8Array(encoder));
+	const uint8Array = encoding.toUint8Array(encoder);
+
+	return uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength) as ArrayBuffer;
 };
 
 describe(YRedisService.name, () => {
@@ -298,7 +300,7 @@ describe(YRedisService.name, () => {
 				const { messageBuffer, user } = setup();
 
 				expect(() => yRedisService.filterMessageForPropagation(messageBuffer, user)).toThrow(
-					`Unexpected message type ${messageBuffer}`,
+					'Unexpected message type: 999',
 				);
 			});
 		});
