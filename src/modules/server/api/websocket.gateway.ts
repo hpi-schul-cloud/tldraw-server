@@ -102,8 +102,9 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	private async openCallback(ws: WebSocket<YRedisUser>): Promise<void> {
+		const user = ws.getUserData();
+
 		try {
-			const user = ws.getUserData();
 			if (user.error != null) {
 				const { code: authorizationRequestErrorCode, reason } = user.error;
 				this.logger.warning(`Error: ${authorizationRequestErrorCode} - ${reason}`);
@@ -121,13 +122,14 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			MetricsService.openConnectionsGauge.inc();
 
 			const yRedisDoc = await this.yRedisClient.getDoc(user.room, 'index');
+
+			if (user.isClosed) return;
+
 			user.subs.add(yRedisDoc.streamName);
 			ws.subscribe(yRedisDoc.streamName);
 
 			const { redisId } = this.yRedisService.subscribe(yRedisDoc.streamName, this.redisMessageSubscriber);
 			user.initialRedisSubId = redisId;
-
-			if (user.isClosed) return;
 
 			ws.cork(() => {
 				ws.send(this.yRedisService.encodeSyncStep1StateVectorMessage(yRedisDoc.ydoc), true, false);
@@ -142,7 +144,9 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			this.yRedisService.ensureLatestContentSubscription(yRedisDoc, user);
 		} catch (error) {
 			this.logger.warning(error);
-			ws.end(WebSocketCloseCode.InternalError, 'Internal Server Error');
+			if (!user.isClosed) {
+				ws.end(WebSocketCloseCode.InternalError, 'Internal Server Error');
+			}
 		}
 	}
 
@@ -167,6 +171,8 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	private messageCallback(ws: WebSocket<YRedisUser>, messageBuffer: ArrayBuffer): void {
 		try {
 			const user = ws.getUserData();
+
+			if (user.isClosed) return;
 
 			if (!user.hasWriteAccess || !user.room) {
 				ws.end(WebSocketCloseCode.Unauthorized, 'User has no write access or room is missing');
@@ -200,7 +206,6 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			MetricsService.openConnectionsGauge.dec();
 		} catch (error) {
 			this.logger.warning(error);
-			ws.end(WebSocketCloseCode.InternalError);
 		}
 	}
 
