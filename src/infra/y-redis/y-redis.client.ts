@@ -110,12 +110,10 @@ export class YRedisClient implements OnModuleInit {
 	private logExistingPendingStructs(room: string, docid: string, ydoc: Doc): void {
 		if (ydoc.store.pendingStructs !== null) {
 			const stateVector = Array.from(encodeStateVector(ydoc));
-
 			const pendingAnalysis = this.analyzePendingStructs(ydoc.store.pendingStructs);
 
 			this.logger.warning(
 				`Document ${room}/${docid} has pending structures. Details: ${JSON.stringify({
-					pendingStructs: ydoc.store.pendingStructs,
 					stateVector,
 					...pendingAnalysis,
 				})}`,
