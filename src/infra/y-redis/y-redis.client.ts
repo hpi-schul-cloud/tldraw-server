@@ -123,68 +123,28 @@ export class YRedisClient implements OnModuleInit {
 		}
 	}
 
-	private analyzePendingStructs(pendingStructs: unknown): {
-		missingStructs: unknown;
-		updateStructs: unknown;
+	private analyzePendingStructs(pendingStructs: { missing: Map<number, number>; update: Uint8Array }): {
+		missingStructs: Map<number, number>;
+		updateStructs: Uint8Array;
 		affectedClients: Set<number>;
-		structureType: string;
+		missingClients: Record<number, number>;
 	} {
 		const affectedClients = new Set<number>();
-		let missingStructs: unknown = null;
-		let updateStructs: unknown = null;
-		let structureType = 'unknown';
+		const missingClients: Record<number, number> = {};
 
-		if (pendingStructs && typeof pendingStructs === 'object') {
-			const obj = pendingStructs as Record<string, unknown>;
-
-			if ('missing' in obj || 'update' in obj) {
-				structureType = 'missing-update';
-				missingStructs = obj.missing;
-				updateStructs = obj.update;
-
-				if (obj.missing && typeof obj.missing === 'object') {
-					this.extractClientIdsFromStructs(obj.missing, affectedClients);
-				}
-
-				if (obj.update && typeof obj.update === 'object') {
-					this.extractClientIdsFromStructs(obj.update, affectedClients);
-				}
-			} else {
-				structureType = 'client-map';
-				Object.keys(obj).forEach((key) => {
-					const clientId = Number(key);
-					if (!isNaN(clientId)) {
-						affectedClients.add(clientId);
-					}
-				});
-			}
-		}
+		// pendingStructs is guaranteed to be non-null here since we check in logExistingPendingStructs
+		// Extract client IDs from missing Map<clientId, clock>
+		pendingStructs.missing.forEach((clock, clientId) => {
+			affectedClients.add(Number(clientId));
+			missingClients[Number(clientId)] = Number(clock);
+		});
 
 		return {
-			missingStructs,
-			updateStructs,
+			missingStructs: pendingStructs.missing,
+			updateStructs: pendingStructs.update,
 			affectedClients,
-			structureType,
+			missingClients,
 		};
-	}
-
-	private extractClientIdsFromStructs(structs: unknown, clientIds: Set<number>): void {
-		if (structs instanceof Map) {
-			structs.forEach((clock, clientId) => {
-				clientIds.add(Number(clientId));
-			});
-		} else if (structs instanceof Uint8Array) {
-			// update is Uint8Array - we can't easily extract client IDs from serialized data
-			// This would require decoding the update, which is complex
-			// For now, we just note that there are updates pending
-		} else if (structs && typeof structs === 'object') {
-			Object.keys(structs as Record<string, unknown>).forEach((key) => {
-				const clientId = Number(key);
-				if (!isNaN(clientId)) {
-					clientIds.add(clientId);
-				}
-			});
-		}
 	}
 
 	public async destroy(): Promise<void> {
