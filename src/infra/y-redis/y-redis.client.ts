@@ -109,16 +109,74 @@ export class YRedisClient implements OnModuleInit {
 
 	private logExistingPendingStructs(room: string, docid: string, ydoc: Doc): void {
 		if (ydoc.store.pendingStructs !== null) {
-			const stateVector = encodeStateVector(ydoc);
-			const pendingClients = Object.keys(ydoc.store.pendingStructs || {});
+			const stateVector = Array.from(encodeStateVector(ydoc));
+
+			const pendingAnalysis = this.analyzePendingStructs(ydoc.store.pendingStructs);
+
 			this.logger.warning(
 				`Document ${room}/${docid} has pending structures. Details: ${JSON.stringify({
 					pendingStructs: ydoc.store.pendingStructs,
-					stateVector: Array.from(stateVector),
-					pendingClients,
+					stateVector,
+					...pendingAnalysis,
 				})}`,
 			);
 		}
+	}
+
+	/**
+	 * 	Echte Client-IDs: Nicht nur Object.keys() sondern tatsächlich betroffene Clients
+	 *	Clock-Ranges: Zeigt genau welche Updates fehlen
+	 *	Count per Client: Hilft zu erkennen ob es ein spezifischer Client-Problem ist
+	 *	Total Count: Gesamtüberblick über das Ausmaß des Problems
+	 */
+	private analyzePendingStructs(pendingStructs: unknown): {
+		pendingClients: number[];
+		totalPendingCount: number;
+		clientDetails: Record<string, { count: number; clockRange: string }>;
+	} {
+		const pendingClients: number[] = [];
+		const clientDetails: Record<string, { count: number; clockRange: string }> = {};
+		let totalPendingCount = 0;
+
+		if (pendingStructs instanceof Map) {
+			pendingStructs.forEach((structs, clientId) => {
+				if (Array.isArray(structs) && structs.length > 0) {
+					pendingClients.push(Number(clientId));
+					totalPendingCount += structs.length;
+
+					const clocks = structs.map((struct: { clock?: number }) => struct.clock ?? 0);
+					const minClock = Math.min(...clocks);
+					const maxClock = Math.max(...clocks);
+
+					clientDetails[clientId.toString()] = {
+						count: structs.length,
+						clockRange: `${minClock}-${maxClock}`,
+					};
+				}
+			});
+		} else if (pendingStructs && typeof pendingStructs === 'object') {
+			Object.entries(pendingStructs).forEach(([clientId, structs]) => {
+				if (Array.isArray(structs) && structs.length > 0) {
+					pendingClients.push(Number(clientId));
+					totalPendingCount += structs.length;
+
+					const clocks = structs.map((struct: { clock?: number }) => struct.clock ?? 0);
+					const minClock = Math.min(...clocks);
+					const maxClock = Math.max(...clocks);
+
+					clientDetails[clientId] = {
+						count: structs.length,
+						clockRange: `${minClock}-${maxClock}`,
+					};
+				}
+			});
+		}
+
+		return {
+			pendingClients,
+			totalPendingCount,
+			clientDetails,
+		};
 	}
 
 	public async destroy(): Promise<void> {
