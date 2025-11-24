@@ -132,7 +132,7 @@ export class YRedisClient implements OnModuleInit {
 
 		// pendingStructs is guaranteed to be non-null here since we check in logExistingPendingStructs
 		// Extract client IDs from missing Map<clientId, clock>
-		pendingStructs.missing.forEach((clock, clientId) => {
+		pendingStructs.missing.forEach((clock, clientId) => { // TODO: Möglicherweise auch clientId, clock ...ka die Reihenfolge.
 			affectedClients.add(Number(clientId));
 			missingClients[Number(clientId)] = Number(clock);
 		});
