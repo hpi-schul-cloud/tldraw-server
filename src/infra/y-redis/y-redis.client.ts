@@ -123,60 +123,68 @@ export class YRedisClient implements OnModuleInit {
 		}
 	}
 
-	/**	Note für morgen.
-	 * 	Echte Client-IDs: Nicht nur Object.keys() sondern tatsächlich betroffene Clients
-	 *	Clock-Ranges: Zeigt genau welche Updates fehlen
-	 *	Count per Client: Hilft zu erkennen ob es ein spezifischer Client-Problem ist
-	 *	Total Count: Gesamtüberblick über das Ausmaß des Problems
-	 */
 	private analyzePendingStructs(pendingStructs: unknown): {
-		pendingClients: number[];
-		totalPendingCount: number;
-		clientDetails: Record<string, { count: number; clockRange: string }>;
+		missingStructs: unknown;
+		updateStructs: unknown;
+		affectedClients: Set<number>;
+		structureType: string;
 	} {
-		const pendingClients: number[] = [];
-		const clientDetails: Record<string, { count: number; clockRange: string }> = {};
-		let totalPendingCount = 0;
+		const affectedClients = new Set<number>();
+		let missingStructs: unknown = null;
+		let updateStructs: unknown = null;
+		let structureType = 'unknown';
 
-		if (pendingStructs instanceof Map) {
-			pendingStructs.forEach((structs, clientId) => {
-				if (Array.isArray(structs) && structs.length > 0) {
-					pendingClients.push(Number(clientId));
-					totalPendingCount += structs.length;
+		if (pendingStructs && typeof pendingStructs === 'object') {
+			const obj = pendingStructs as Record<string, unknown>;
 
-					const clocks = structs.map((struct: { clock?: number }) => struct.clock ?? 0);
-					const minClock = Math.min(...clocks);
-					const maxClock = Math.max(...clocks);
+			if ('missing' in obj || 'update' in obj) {
+				structureType = 'missing-update';
+				missingStructs = obj.missing;
+				updateStructs = obj.update;
 
-					clientDetails[clientId.toString()] = {
-						count: structs.length,
-						clockRange: `${minClock}-${maxClock}`,
-					};
+				if (obj.missing && typeof obj.missing === 'object') {
+					this.extractClientIdsFromStructs(obj.missing, affectedClients);
 				}
-			});
-		} else if (pendingStructs && typeof pendingStructs === 'object') {
-			Object.entries(pendingStructs).forEach(([clientId, structs]) => {
-				if (Array.isArray(structs) && structs.length > 0) {
-					pendingClients.push(Number(clientId));
-					totalPendingCount += structs.length;
 
-					const clocks = structs.map((struct: { clock?: number }) => struct.clock ?? 0);
-					const minClock = Math.min(...clocks);
-					const maxClock = Math.max(...clocks);
-
-					clientDetails[clientId] = {
-						count: structs.length,
-						clockRange: `${minClock}-${maxClock}`,
-					};
+				if (obj.update && typeof obj.update === 'object') {
+					this.extractClientIdsFromStructs(obj.update, affectedClients);
 				}
-			});
+			} else {
+				structureType = 'client-map';
+				Object.keys(obj).forEach((key) => {
+					const clientId = Number(key);
+					if (!isNaN(clientId)) {
+						affectedClients.add(clientId);
+					}
+				});
+			}
 		}
 
 		return {
-			pendingClients,
-			totalPendingCount,
-			clientDetails,
+			missingStructs,
+			updateStructs,
+			affectedClients,
+			structureType,
 		};
+	}
+
+	private extractClientIdsFromStructs(structs: unknown, clientIds: Set<number>): void {
+		if (structs instanceof Map) {
+			structs.forEach((clock, clientId) => {
+				clientIds.add(Number(clientId));
+			});
+		} else if (structs instanceof Uint8Array) {
+			// update is Uint8Array - we can't easily extract client IDs from serialized data
+			// This would require decoding the update, which is complex
+			// For now, we just note that there are updates pending
+		} else if (structs && typeof structs === 'object') {
+			Object.keys(structs as Record<string, unknown>).forEach((key) => {
+				const clientId = Number(key);
+				if (!isNaN(clientId)) {
+					clientIds.add(clientId);
+				}
+			});
+		}
 	}
 
 	public async destroy(): Promise<void> {
