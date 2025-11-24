@@ -123,7 +123,7 @@ export class YRedisClient implements OnModuleInit {
 		}
 	}
 
-	/**
+	/**	Note für morgen.
 	 * 	Echte Client-IDs: Nicht nur Object.keys() sondern tatsächlich betroffene Clients
 	 *	Clock-Ranges: Zeigt genau welche Updates fehlen
 	 *	Count per Client: Hilft zu erkennen ob es ein spezifischer Client-Problem ist
