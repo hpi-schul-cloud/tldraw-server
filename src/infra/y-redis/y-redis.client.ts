@@ -126,13 +126,14 @@ export class YRedisClient implements OnModuleInit {
 		updateStructs: Uint8Array;
 		affectedClients: Set<number>;
 		missingClients: Record<number, number>;
+		missingCount: number;
+		updateSize: number;
 	} {
 		const affectedClients = new Set<number>();
 		const missingClients: Record<number, number> = {};
 
-		// pendingStructs is guaranteed to be non-null here since we check in logExistingPendingStructs
 		// Extract client IDs from missing Map<clientId, clock>
-		pendingStructs.missing.forEach((clock, clientId) => { // TODO: Möglicherweise auch clientId, clock ...ka die Reihenfolge.
+		pendingStructs.missing.forEach((clock, clientId) => { // TODO: Reihenfolge clock clientId?
 			affectedClients.add(Number(clientId));
 			missingClients[Number(clientId)] = Number(clock);
 		});
@@ -142,6 +143,8 @@ export class YRedisClient implements OnModuleInit {
 			updateStructs: pendingStructs.update,
 			affectedClients,
 			missingClients,
+			missingCount: pendingStructs.missing.size,
+			updateSize: pendingStructs.update.length,
 		};
 	}
 
