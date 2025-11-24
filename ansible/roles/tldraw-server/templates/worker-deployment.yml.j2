@@ -53,6 +53,9 @@ spec:
       - name: tldraw-worker
         image: {{ TLDRAW_SERVER_IMAGE }}:{{ TLDRAW_SERVER_IMAGE_TAG }}
         imagePullPolicy: IfNotPresent
+        env:
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size={{ ((TLDRAW_SERVER_WORKER_MEMORY_LIMITS | regex_replace('Gi', '')|int * 1024 * 0.8)|int) }}"
         envFrom:
         - configMapRef:
             name: tldraw-server-configmap
@@ -64,10 +67,10 @@ spec:
         resources:
           limits:
             cpu: {{ TLDRAW_SERVER_WORKER_CPU_LIMITS|default("2000m", true) }}
-            memory: {{ TLDRAW_SERVER_WORKER_MEMORY_LIMITS|default("2Gi", true) }}
+            memory: {{ TLDRAW_SERVER_WORKER_MEMORY_LIMITS }}
           requests:
             cpu: {{ TLDRAW_SERVER_WORKER_CPU_REQUESTS|default("100m", true) }}
-            memory: {{ TLDRAW_SERVER_WORKER_MEMORY_REQUESTS|default("150Mi", true) }}
+            memory: {{ TLDRAW_SERVER_WORKER_MEMORY_REQUESTS }}
 {% if AFFINITY_ENABLE is defined and AFFINITY_ENABLE|bool %}
       affinity:
         podAffinity:
