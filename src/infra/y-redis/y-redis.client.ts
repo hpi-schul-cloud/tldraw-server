@@ -91,6 +91,14 @@ export class YRedisClient implements OnModuleInit {
 			this.handleMessageUpdates(docMessages, ydoc, awareness);
 		});
 
+		// Versuche automatische Reparatur von pendingStructs
+		if (ydoc.store.pendingStructs !== null) {
+			const repaired = this.attemptQuickRepair(ydoc);
+			if (!repaired) {
+				this.logger.info(`Document ${room}/${docid} still has pending structures after quick repair attempt`);
+			}
+		}
+
 		this.logExistingPendingStructs(room, docid, ydoc);
 
 		end();
@@ -133,7 +141,8 @@ export class YRedisClient implements OnModuleInit {
 		const missingClients: Record<number, number> = {};
 
 		// Extract client IDs from missing Map<clientId, clock>
-		pendingStructs.missing.forEach((clock, clientId) => { // TODO: Reihenfolge clock clientId?
+		pendingStructs.missing.forEach((clock, clientId) => {
+			// Basierend auf Yjs source: Map<clientId, clock> - clientId ist der Key, clock der Value
 			affectedClients.add(Number(clientId));
 			missingClients[Number(clientId)] = Number(clock);
 		});
@@ -187,5 +196,312 @@ export class YRedisClient implements OnModuleInit {
 		});
 
 		return filteredMessages;
+	}
+
+	/**
+	 * Versucht pendingStructs zu reparieren, wenn Updates verloren gegangen sind.
+	 * Basierend auf Yjs-Mechanismen für State-Vector-Synchronisation.
+	 */
+	public async repairPendingStructs(
+		room: string,
+		docid: string,
+		ydoc: Doc,
+	): Promise<{
+		success: boolean;
+		method: string;
+		recoveredUpdates?: number;
+		remainingPending?: number;
+		message: string;
+	}> {
+		if (ydoc.store.pendingStructs === null) {
+			return {
+				success: true,
+				method: 'none_needed',
+				message: 'No pending structures found - document is in sync',
+			};
+		}
+
+		const initialAnalysis = this.analyzePendingStructs(ydoc.store.pendingStructs);
+		this.logger.info(
+			`Attempting to repair pending structures for ${room}/${docid}. Missing: ${initialAnalysis.missingCount}, Update size: ${initialAnalysis.updateSize}`,
+		);
+
+		// Strategie 1: State Vector Synchronisation
+		const stateVectorResult = await this.tryStateVectorRepair(room, docid, ydoc);
+		if (stateVectorResult.success) {
+			return stateVectorResult;
+		}
+
+		// Strategie 2: Pending Update direkt anwenden
+		const pendingUpdateResult = this.tryApplyPendingUpdate(ydoc);
+		if (pendingUpdateResult.success) {
+			return pendingUpdateResult;
+		}
+
+		// Strategie 3: Vollständige Dokumenten-Resynchronisation
+		const fullSyncResult = await this.tryFullDocumentSync(room, docid, ydoc);
+		if (fullSyncResult.success) {
+			return fullSyncResult;
+		}
+
+		return {
+			success: false,
+			method: 'all_failed',
+			remainingPending: ydoc.store.pendingStructs
+				? this.analyzePendingStructs(ydoc.store.pendingStructs).missingCount
+				: 0,
+			message: 'All repair strategies failed - manual intervention may be required',
+		};
+	}
+
+	/**
+	 * Strategie 1: Versucht Reparatur durch State Vector Synchronisation
+	 */
+	private async tryStateVectorRepair(
+		room: string,
+		docid: string,
+		ydoc: Doc,
+	): Promise<{ success: boolean; method: string; recoveredUpdates?: number; message: string }> {
+		try {
+			// Aktuellen State Vector des Dokuments abrufen
+			const currentStateVector = encodeStateVector(ydoc);
+
+			// Gespeicherten State Vector aus Storage abrufen
+			const storedStateVector = await this.getStateVector(room, docid);
+
+			if (!storedStateVector) {
+				return {
+					success: false,
+					method: 'state_vector',
+					message: 'No stored state vector available for comparison',
+				};
+			}
+
+			// Prüfen ob State Vectors unterschiedlich sind
+			if (this.compareStateVectors(currentStateVector, storedStateVector)) {
+				return {
+					success: false,
+					method: 'state_vector',
+					message: 'State vectors are identical - no missing updates detectable',
+				};
+			}
+
+			// Re-read von Redis für fehlende Updates
+			const streamName = computeRedisRoomStreamName(room, docid, this.redisPrefix);
+			const streamReply = await this.redis.readMessagesFromStream(streamName);
+			const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
+			const docMessages = ms.get(room)?.get(docid) ?? null;
+
+			const beforePendingCount = ydoc.store.pendingStructs
+				? this.analyzePendingStructs(ydoc.store.pendingStructs).missingCount
+				: 0;
+
+			// Erneute Anwendung aller Messages
+			ydoc.transact(() => {
+				this.handleMessageUpdates(docMessages, ydoc, new Awareness(ydoc));
+			});
+
+			const afterPendingCount = ydoc.store.pendingStructs
+				? this.analyzePendingStructs(ydoc.store.pendingStructs).missingCount
+				: 0;
+			const recovered = beforePendingCount - afterPendingCount;
+
+			if (afterPendingCount === 0) {
+				return {
+					success: true,
+					method: 'state_vector',
+					recoveredUpdates: recovered,
+					message: `Successfully repaired ${recovered} pending structures through re-sync`,
+				};
+			}
+
+			return {
+				success: false,
+				method: 'state_vector',
+				message: `Partial repair: recovered ${recovered} structures, ${afterPendingCount} still pending`,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				method: 'state_vector',
+				message: `State vector repair failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			};
+		}
+	}
+
+	/**
+	 * Strategie 2: Versucht die pending Update direkt anzuwenden
+	 */
+	private tryApplyPendingUpdate(ydoc: Doc): {
+		success: boolean;
+		method: string;
+		recoveredUpdates?: number;
+		message: string;
+	} {
+		if (!ydoc.store.pendingStructs || ydoc.store.pendingStructs.update.length === 0) {
+			return {
+				success: false,
+				method: 'pending_update',
+				message: 'No pending update data available to apply',
+			};
+		}
+
+		try {
+			const beforeCount = this.analyzePendingStructs(ydoc.store.pendingStructs).missingCount;
+
+			// Versuche das pending Update direkt anzuwenden
+			// Dies kann helfen wenn das Update nur "steckt" aber die Daten korrekt sind
+			ydoc.transact(() => {
+				try {
+					if (ydoc.store.pendingStructs) {
+						applyUpdate(ydoc, ydoc.store.pendingStructs.update);
+					}
+				} catch {
+					// Fallback: Update als V2 versuchen
+					if (ydoc.store.pendingStructs) {
+						applyUpdateV2(ydoc, ydoc.store.pendingStructs.update);
+					}
+				}
+			});
+
+			const afterCount = ydoc.store.pendingStructs
+				? this.analyzePendingStructs(ydoc.store.pendingStructs).missingCount
+				: 0;
+			const recovered = beforeCount - afterCount;
+
+			if (afterCount === 0) {
+				return {
+					success: true,
+					method: 'pending_update',
+					recoveredUpdates: recovered,
+					message: `Successfully applied pending update, recovered ${recovered} structures`,
+				};
+			}
+
+			return {
+				success: false,
+				method: 'pending_update',
+				message: `Partial success: applied update but ${afterCount} structures still pending`,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				method: 'pending_update',
+				message: `Failed to apply pending update: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			};
+		}
+	}
+
+	/**
+	 * Strategie 3: Vollständige Dokumenten-Resynchronisation
+	 */
+	private async tryFullDocumentSync(
+		room: string,
+		docid: string,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		ydoc: Doc,
+	): Promise<{ success: boolean; method: string; recoveredUpdates?: number; message: string }> {
+		try {
+			// Gespeicherten Dokumentzustand aus Storage laden
+			const docstate = await this.storage.retrieveDoc(room, docid);
+			if (!docstate) {
+				return {
+					success: false,
+					method: 'full_sync',
+					message: 'No stored document state available for full sync',
+				};
+			}
+
+			// Wir verfolgen die Anzahl nicht in dieser Strategie, da wir das Dokument neu erstellen
+
+			// Neues Dokument erstellen und gespeicherten Zustand anwenden
+			const freshDoc = new Doc();
+			applyUpdateV2(freshDoc, docstate.doc);
+
+			// Dann alle Redis-Messages erneut anwenden
+			const streamName = computeRedisRoomStreamName(room, docid, this.redisPrefix);
+			const streamReply = await this.redis.readMessagesFromStream(streamName);
+			const ms = extractMessagesFromStreamReply(streamReply, this.redisPrefix);
+			const docMessages = ms.get(room)?.get(docid) ?? null;
+
+			freshDoc.transact(() => {
+				this.handleMessageUpdates(docMessages, freshDoc, new Awareness(freshDoc));
+			});
+
+			// Prüfen ob das frische Dokument sauber ist
+			if (freshDoc.store.pendingStructs === null) {
+				// Das originale Dokument durch das frische ersetzen ist nicht direkt möglich
+				// Aber wir können den Zustand übertragen
+				return {
+					success: false, // Technisch nicht direkt erfolgreich, da wir das Doc nicht ersetzen können
+					method: 'full_sync',
+					message:
+						'Fresh document is clean, but cannot replace original doc instance. Consider recreating the document.',
+				};
+			}
+
+			return {
+				success: false,
+				method: 'full_sync',
+				message: 'Full sync created document also has pending structures - data corruption likely',
+			};
+		} catch (error) {
+			return {
+				success: false,
+				method: 'full_sync',
+				message: `Full document sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+			};
+		}
+	}
+
+	/**
+	 * Hilfsmethode zum Vergleichen von State Vectors
+	 */
+	private compareStateVectors(vector1: Uint8Array, vector2: Uint8Array): boolean {
+		if (vector1.length !== vector2.length) {
+			return false;
+		}
+		for (let i = 0; i < vector1.length; i++) {
+			if (vector1[i] !== vector2[i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Einfache automatische Reparatur von pendingStructs
+	 * Kann direkt nach dem Laden eines Dokuments aufgerufen werden
+	 */
+	public attemptQuickRepair(ydoc: Doc): boolean {
+		if (ydoc.store.pendingStructs === null) {
+			return true; // Bereits sauber
+		}
+
+		const originalCount = this.analyzePendingStructs(ydoc.store.pendingStructs).missingCount;
+
+		// Strategie: Erneute Transaktionsausführung, um "steckende" Updates zu lösen
+		try {
+			ydoc.transact(() => {
+				// Manchmal hilft es, einfach eine leere Transaktion auszuführen
+				// Dies kann Yjs dazu bringen, pendingStructs zu verarbeiten
+			});
+
+			// Prüfen ob die Reparatur erfolgreich war
+			const newCount = ydoc.store.pendingStructs
+				? this.analyzePendingStructs(ydoc.store.pendingStructs).missingCount
+				: 0;
+
+			if (newCount < originalCount) {
+				this.logger.info(`Quick repair reduced pending structures from ${originalCount} to ${newCount}`);
+
+				return newCount === 0;
+			}
+		} catch (error) {
+			this.logger.debug(`Quick repair failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+
+		return false;
 	}
 }
