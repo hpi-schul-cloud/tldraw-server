@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { array, decoding, promise } from 'lib0';
 import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness';
-import { applyUpdate, applyUpdateV2, Doc, encodeStateVector } from 'yjs';
+import { applyUpdate, applyUpdateV2, Doc } from 'yjs';
 import { Logger } from '../logger/logger.js';
 import { MetricsService } from '../metrics/metrics.service.js';
 import { RedisAdapter, StreamMessageReply, StreamNameClockPair } from '../redis/interfaces/index.js';
@@ -85,6 +85,8 @@ export class YRedisClient implements OnModuleInit {
 
 		ydoc.once('afterTransaction', (tr) => {
 			docChanged = tr.changed.size > 0;
+			// https://github.com/yjs/y-redis/pull/36
+			ydoc.destroy();
 		});
 
 		ydoc.transact(() => {
@@ -109,12 +111,10 @@ export class YRedisClient implements OnModuleInit {
 
 	private logExistingPendingStructs(room: string, docid: string, ydoc: Doc): void {
 		if (ydoc.store.pendingStructs !== null) {
-			const stateVector = Array.from(encodeStateVector(ydoc));
 			const pendingAnalysis = this.analyzePendingStructs(ydoc.store.pendingStructs);
 
 			this.logger.warning(
 				`Document ${room}/${docid} has pending structures. Details: ${JSON.stringify({
-					stateVector,
 					...pendingAnalysis,
 				})}`,
 			);
@@ -122,28 +122,13 @@ export class YRedisClient implements OnModuleInit {
 	}
 
 	private analyzePendingStructs(pendingStructs: { missing: Map<number, number>; update: Uint8Array }): {
-		missingStructs: Map<number, number>;
-		updateStructs: Uint8Array;
-		affectedClients: Set<number>;
-		missingClients: Record<number, number>;
-		missingCount: number;
+		missingStructs: Iterable<[number, number]>;
 		updateSize: number;
 	} {
-		const affectedClients = new Set<number>();
-		const missingClients: Record<number, number> = {};
-
-		// Extract client IDs from missing Map<clientId, clock>
-		pendingStructs.missing.forEach((clock, clientId) => { // TODO: Reihenfolge clock clientId?
-			affectedClients.add(Number(clientId));
-			missingClients[Number(clientId)] = Number(clock);
-		});
+		const missingStructs = Array.from(pendingStructs.missing.entries());
 
 		return {
-			missingStructs: pendingStructs.missing,
-			updateStructs: pendingStructs.update,
-			affectedClients,
-			missingClients,
-			missingCount: pendingStructs.missing.size,
+			missingStructs,
 			updateSize: pendingStructs.update.length,
 		};
 	}
