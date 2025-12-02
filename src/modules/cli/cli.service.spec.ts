@@ -79,6 +79,15 @@ describe(CliService.name, () => {
 		});
 	});
 
+	describe('onModuleDestroy', () => {
+		it('should call redis.quit and log info message', async () => {
+			await cliService.onModuleDestroy();
+
+			expect(redisAdapter.quit).toHaveBeenCalledTimes(1);
+			expect(logger.info).toHaveBeenCalledWith('Disconnecting Redis client');
+		});
+	});
+
 	describe('constructor', () => {
 		it('should set logger context and redis prefix', () => {
 			expect(logger.setContext).toHaveBeenCalledWith(CliService.name);

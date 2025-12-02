@@ -1,4 +1,4 @@
-import { Inject, Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Doc, applyUpdateV2 } from 'yjs';
 import { Logger } from '../../infra/logger/index.js';
 import { RedisAdapter } from '../../infra/redis/index.js';
@@ -6,7 +6,7 @@ import { StorageService } from '../../infra/storage/storage.service.js';
 import { REDIS_FOR_CLI } from './cli.const.js';
 
 @Injectable()
-export class CliService implements OnModuleInit {
+export class CliService implements OnModuleInit, OnModuleDestroy {
 	public readonly redisPrefix: string;
 	private readonly docid = 'index';
 
@@ -21,6 +21,11 @@ export class CliService implements OnModuleInit {
 
 	public async onModuleInit(): Promise<void> {
 		await this.redis.createGroup();
+	}
+
+	public async onModuleDestroy(): Promise<void> {
+		this.logger.info('Disconnecting Redis client');
+		await this.redis.quit();
 	}
 
 	public async clearPendingDocumentStructs(room: string): Promise<boolean> {
