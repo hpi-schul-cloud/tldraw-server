@@ -130,6 +130,22 @@ describe(YRedisClient.name, () => {
 				expect(result).toEqual(expectedResult);
 			});
 		});
+
+		describe('when redis.readStreams returns null', () => {
+			it('should return empty array', async () => {
+				// @ts-ignore
+				redis.readStreams.mockResolvedValueOnce([{ name: 'stream1', messages: null }]);
+
+				const result = await yRedisClient.getMessages([
+					{
+						key: 'stream1',
+						id: '1',
+					},
+				]);
+
+				expect(result).toEqual([{ stream: 'stream1', messages: [], lastId: '' }]);
+			});
+		});
 	});
 
 	describe('addMessage', () => {
