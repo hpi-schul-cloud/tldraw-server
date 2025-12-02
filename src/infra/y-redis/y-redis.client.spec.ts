@@ -350,4 +350,146 @@ describe(YRedisClient.name, () => {
 			});
 		});
 	});
+
+	describe('logExistingPendingStructs', () => {
+		describe('when document has no pending structures', () => {
+			const setup = () => {
+				const room = 'test-room';
+				const docid = 'test-doc';
+				const ydoc = new Doc();
+				const logger = module.get(Logger);
+
+				return { room, docid, ydoc, logger };
+			};
+
+			it('should not log warning', () => {
+				const { room, docid, ydoc, logger } = setup();
+
+				// @ts-ignore it is private method
+				yRedisClient.logExistingPendingStructs(room, docid, ydoc);
+
+				expect(logger.warning).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('when document has pending structures', () => {
+			const setup = () => {
+				const room = 'test-room';
+				const docid = 'test-doc';
+				const ydoc = new Doc();
+				const logger = module.get(Logger);
+				const mockPendingStructs = {
+					missing: new Map([
+						[1, 5],
+						[3, 2],
+					]),
+					update: new Uint8Array([1, 2, 3, 4, 5]),
+				};
+
+				// Mock the ydoc.store.pendingStructs
+				Object.defineProperty(ydoc.store, 'pendingStructs', {
+					value: mockPendingStructs,
+					writable: true,
+				});
+
+				return { room, docid, ydoc, logger, mockPendingStructs };
+			};
+
+			it('should log warning with detailed analysis', () => {
+				const { room, docid, ydoc, logger } = setup();
+
+				// @ts-ignore it is private method
+				yRedisClient.logExistingPendingStructs(room, docid, ydoc);
+
+				expect(logger.warning).toHaveBeenCalledWith(
+					`Document ${room}/${docid} has pending structures. Details: ${JSON.stringify({
+						missingStructs: [
+							[1, 5],
+							[3, 2],
+						],
+						updateSize: 5,
+					})}`,
+				);
+			});
+		});
+	});
+
+	describe('analyzePendingStructs', () => {
+		describe('when analyzing pending structures', () => {
+			const setup = () => {
+				const mockPendingStructs = {
+					missing: new Map([
+						[1, 5],
+						[3, 2],
+						[10, 1],
+					]),
+					update: new Uint8Array([1, 2, 3, 4, 5, 6, 7]),
+				};
+
+				return { mockPendingStructs };
+			};
+
+			it('should return correct analysis with missing structures and update size', () => {
+				const { mockPendingStructs } = setup();
+
+				// @ts-ignore it is private method
+				const result = yRedisClient.analyzePendingStructs(mockPendingStructs);
+
+				expect(result).toEqual({
+					missingStructs: [
+						[1, 5],
+						[3, 2],
+						[10, 1],
+					],
+					updateSize: 7,
+				});
+			});
+		});
+
+		describe('when missing structures is empty', () => {
+			const setup = () => {
+				const mockPendingStructs = {
+					missing: new Map(),
+					update: new Uint8Array([1, 2, 3]),
+				};
+
+				return { mockPendingStructs };
+			};
+
+			it('should handle empty missing structures', () => {
+				const { mockPendingStructs } = setup();
+
+				// @ts-ignore it is private method
+				const result = yRedisClient.analyzePendingStructs(mockPendingStructs);
+
+				expect(result).toEqual({
+					missingStructs: [],
+					updateSize: 3,
+				});
+			});
+		});
+
+		describe('when update array is empty', () => {
+			const setup = () => {
+				const mockPendingStructs = {
+					missing: new Map([[5, 10]]),
+					update: new Uint8Array([]),
+				};
+
+				return { mockPendingStructs };
+			};
+
+			it('should handle empty update array', () => {
+				const { mockPendingStructs } = setup();
+
+				// @ts-ignore it is private method
+				const result = yRedisClient.analyzePendingStructs(mockPendingStructs);
+
+				expect(result).toEqual({
+					missingStructs: [[5, 10]],
+					updateSize: 0,
+				});
+			});
+		});
+	});
 });
