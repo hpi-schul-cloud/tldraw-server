@@ -85,6 +85,8 @@ export class YRedisClient implements OnModuleInit {
 
 		ydoc.once('afterTransaction', (tr) => {
 			docChanged = tr.changed.size > 0;
+			this.logExistingPendingStructs(room, docid, ydoc);
+
 			// https://github.com/yjs/y-redis/pull/36
 			ydoc.destroy();
 		});
@@ -92,8 +94,6 @@ export class YRedisClient implements OnModuleInit {
 		ydoc.transact(() => {
 			this.handleMessageUpdates(docMessages, ydoc, awareness);
 		});
-
-		this.logExistingPendingStructs(room, docid, ydoc);
 
 		end();
 
