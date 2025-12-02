@@ -37,7 +37,7 @@ export class CliService implements OnModuleInit {
 			if (pendingStructs?.missing && pendingStructs.missing.size > 0) {
 				ydoc.store.pendingStructs = null;
 			} else {
-				this.logger.debug(`No missing structs for document ${room}/${docid}`);
+				this.logger.info(`No missing structs for document ${room}/${docid}`);
 
 				return true;
 			}
