@@ -85,6 +85,10 @@ export class YRedisClient implements OnModuleInit {
 
 		ydoc.once('afterTransaction', (tr) => {
 			docChanged = tr.changed.size > 0;
+			this.logExistingPendingStructs(room, docid, ydoc);
+
+			// https://github.com/yjs/y-redis/pull/36
+			ydoc.destroy();
 		});
 
 		ydoc.transact(() => {
@@ -102,11 +106,31 @@ export class YRedisClient implements OnModuleInit {
 			streamName,
 		});
 
-		if (ydoc.store.pendingStructs !== null) {
-			this.logger.warning(`Document ${room} has pending structs ${JSON.stringify(ydoc.store.pendingStructs)}.`);
-		}
-
 		return response;
+	}
+
+	private logExistingPendingStructs(room: string, docid: string, ydoc: Doc): void {
+		if (ydoc.store.pendingStructs !== null) {
+			const pendingAnalysis = this.analyzePendingStructs(ydoc.store.pendingStructs);
+
+			this.logger.warning(
+				`Document ${room}/${docid} has pending structures. Details: ${JSON.stringify({
+					...pendingAnalysis,
+				})}`,
+			);
+		}
+	}
+
+	private analyzePendingStructs(pendingStructs: { missing: Map<number, number>; update: Uint8Array }): {
+		missingStructs: Iterable<[number, number]>;
+		updateSize: number;
+	} {
+		const missingStructs = Array.from(pendingStructs.missing.entries());
+
+		return {
+			missingStructs,
+			updateSize: pendingStructs.update.length,
+		};
 	}
 
 	public async destroy(): Promise<void> {
