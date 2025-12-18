@@ -19,7 +19,7 @@ async function bootstrap(): Promise<void> {
 		.setDescription('The Tldraw API to persist and share drawings')
 		.build();
 	const document = SwaggerModule.createDocument(nestApp, config, options);
-	SwaggerModule.setup('docs', nestApp, document);
+	SwaggerModule.setup('tldraw-server/docs', nestApp, document);
 
 	await nestApp.init();
 
