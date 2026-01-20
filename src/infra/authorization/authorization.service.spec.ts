@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpRequest } from 'uWebSockets.js';
 import { WebSocketCloseCode } from '../../shared/type/websocket-close-code.js';
 import { Logger } from '../logger/index.js';
-import { AuthorizationApi, AuthorizedReponse } from './authorization-api-client/index.js';
+import { AuthorizationApi, AuthorizedResponse } from './authorization-api-client/index.js';
 import { AuthorizationService } from './authorization.service.js';
 
 describe(AuthorizationService.name, () => {
@@ -51,7 +51,7 @@ describe(AuthorizationService.name, () => {
 			const setup = () => {
 				const { req } = setupRequest();
 
-				const response = createMock<AuthorizedReponse>({
+				const response = createMock<AuthorizedResponse>({
 					isAuthorized: true,
 					userId: '123',
 				});
@@ -75,7 +75,7 @@ describe(AuthorizationService.name, () => {
 			const setup = () => {
 				const { req } = setupRequest();
 
-				const response = createMock<AuthorizedReponse>({
+				const response = createMock<AuthorizedResponse>({
 					isAuthorized: false,
 					userId: '123',
 				});
