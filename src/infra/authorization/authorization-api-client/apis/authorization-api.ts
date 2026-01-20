@@ -17,15 +17,15 @@ import * as runtime from '../runtime.js';
 import type {
   ApiValidationError,
   AuthorizationBodyParams,
-  AuthorizedReponse,
+  AuthorizedResponse,
 } from '../models/index.js';
 import {
     ApiValidationErrorFromJSON,
     ApiValidationErrorToJSON,
     AuthorizationBodyParamsFromJSON,
     AuthorizationBodyParamsToJSON,
-    AuthorizedReponseFromJSON,
-    AuthorizedReponseToJSON,
+    AuthorizedResponseFromJSON,
+    AuthorizedResponseToJSON,
 } from '../models/index.js';
 
 export interface AuthorizationReferenceControllerAuthorizeByReferenceRequest {
@@ -47,12 +47,12 @@ export interface AuthorizationApiInterface {
      * @throws {RequiredError}
      * @memberof AuthorizationApiInterface
      */
-    authorizationReferenceControllerAuthorizeByReferenceRaw(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizedReponse>>;
+    authorizationReferenceControllerAuthorizeByReferenceRaw(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizedResponse>>;
 
     /**
      * Checks if user is authorized to perform the given operation.
      */
-    authorizationReferenceControllerAuthorizeByReference(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthorizedReponse>;
+    authorizationReferenceControllerAuthorizeByReference(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthorizedResponse>;
 
 }
 
@@ -64,7 +64,7 @@ export class AuthorizationApi extends runtime.BaseAPI implements AuthorizationAp
     /**
      * Checks if user is authorized to perform the given operation.
      */
-    async authorizationReferenceControllerAuthorizeByReferenceRaw(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizedReponse>> {
+    async authorizationReferenceControllerAuthorizeByReferenceRaw(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizedResponse>> {
         if (requestParameters['authorizationBodyParams'] == null) {
             throw new runtime.RequiredError(
                 'authorizationBodyParams',
@@ -94,13 +94,13 @@ export class AuthorizationApi extends runtime.BaseAPI implements AuthorizationAp
             body: AuthorizationBodyParamsToJSON(requestParameters['authorizationBodyParams']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizedReponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizedResponseFromJSON(jsonValue));
     }
 
     /**
      * Checks if user is authorized to perform the given operation.
      */
-    async authorizationReferenceControllerAuthorizeByReference(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthorizedReponse> {
+    async authorizationReferenceControllerAuthorizeByReference(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthorizedResponse> {
         const response = await this.authorizationReferenceControllerAuthorizeByReferenceRaw(requestParameters, initOverrides);
         return await response.value();
     }
