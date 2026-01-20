@@ -34,4 +34,4 @@ models/*
 !models/api-validation-error.ts
 !models/authorization-body-params.ts
 !models/authorization-context-params.ts
-!models/authorized-reponse.ts
+!models/authorized-response.ts
