@@ -16,37 +16,37 @@ import { mapValues } from '../runtime.js';
 /**
  * 
  * @export
- * @interface AuthorizedReponse
+ * @interface AuthorizedResponse
  */
-export interface AuthorizedReponse {
+export interface AuthorizedResponse {
     /**
      * 
      * @type {string}
-     * @memberof AuthorizedReponse
+     * @memberof AuthorizedResponse
      */
     userId: string;
     /**
      * 
      * @type {boolean}
-     * @memberof AuthorizedReponse
+     * @memberof AuthorizedResponse
      */
     isAuthorized: boolean;
 }
 
 /**
- * Check if a given object implements the AuthorizedReponse interface.
+ * Check if a given object implements the AuthorizedResponse interface.
  */
-export function instanceOfAuthorizedReponse(value: object): value is AuthorizedReponse {
+export function instanceOfAuthorizedResponse(value: object): value is AuthorizedResponse {
     if (!('userId' in value) || value['userId'] === undefined) return false;
     if (!('isAuthorized' in value) || value['isAuthorized'] === undefined) return false;
     return true;
 }
 
-export function AuthorizedReponseFromJSON(json: any): AuthorizedReponse {
-    return AuthorizedReponseFromJSONTyped(json, false);
+export function AuthorizedResponseFromJSON(json: any): AuthorizedResponse {
+    return AuthorizedResponseFromJSONTyped(json, false);
 }
 
-export function AuthorizedReponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthorizedReponse {
+export function AuthorizedResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthorizedResponse {
     if (json == null) {
         return json;
     }
@@ -57,11 +57,11 @@ export function AuthorizedReponseFromJSONTyped(json: any, ignoreDiscriminator: b
     };
 }
 
-  export function AuthorizedReponseToJSON(json: any): AuthorizedReponse {
-      return AuthorizedReponseToJSONTyped(json, false);
+  export function AuthorizedResponseToJSON(json: any): AuthorizedResponse {
+      return AuthorizedResponseToJSONTyped(json, false);
   }
 
-  export function AuthorizedReponseToJSONTyped(value?: AuthorizedReponse | null, ignoreDiscriminator: boolean = false): any {
+  export function AuthorizedResponseToJSONTyped(value?: AuthorizedResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
