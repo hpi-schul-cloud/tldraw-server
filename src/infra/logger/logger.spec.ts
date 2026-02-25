@@ -9,25 +9,19 @@ describe('Logger', () => {
 	let logger: Logger;
 	let processStdoutWriteSpy: jest.SpyInstance<
 		boolean,
-		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
+		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error | null) => void) | undefined],
 		unknown
 	>;
 	let processStderrWriteSpy: jest.SpyInstance<
 		boolean,
-		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
+		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error | null) => void) | undefined],
 		unknown
 	>;
 	let winstonLogger: DeepMocked<WinstonLogger>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
-			providers: [
-				Logger,
-				{
-					provide: WINSTON_MODULE_PROVIDER,
-					useValue: createMock<WinstonLogger>(),
-				},
-			],
+			providers: [Logger, { provide: WINSTON_MODULE_PROVIDER, useValue: createMock<WinstonLogger>() }],
 		}).compile();
 
 		logger = await module.resolve(Logger);
@@ -73,12 +67,7 @@ describe('Logger', () => {
 			const error = new Error('custom error');
 			const message: RequestLoggingBody = {
 				userId: '123',
-				request: {
-					url: 'http://localhost',
-					method: 'GET',
-					params: { id: '1' },
-					query: { page: '1' },
-				},
+				request: { url: 'http://localhost', method: 'GET', params: { id: '1' }, query: { page: '1' } },
 				error,
 			};
 			logger.http(message, error.stack);
