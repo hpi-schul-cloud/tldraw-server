@@ -283,6 +283,9 @@ describe('Websocket Api Test', () => {
 			expect(error.reason).toBe('Internal Server Error');
 			// @ts-ignore
 			expect(error.code).toBe(WebSocketCloseCode.InternalError);
+
+			provider.awareness.destroy();
+			provider.destroy();
 		});
 	});
 });

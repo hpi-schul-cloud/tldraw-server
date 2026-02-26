@@ -9,6 +9,9 @@ module.exports = {
 			'ts-jest',
 			{
 				useESM: true,
+				diagnostics: {
+					ignoreCodes: [151002],
+				},
 			},
 		],
 	},
@@ -20,4 +23,5 @@ module.exports = {
 	testEnvironment: 'node',
 	globalSetup: '<rootDir>/../scripts/testing/globalSetup.ts',
 	globalTeardown: '<rootDir>/../scripts/testing/globalTeardown.ts',
+	forceExit: true,
 };

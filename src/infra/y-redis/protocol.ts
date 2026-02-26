@@ -37,52 +37,56 @@ export const mergeMessages = (messages: Uint8Array[]): Uint8Array[] => {
 	}
 	const aw = new awarenessProtocol.Awareness(new Y.Doc());
 
-	const updates: Uint8Array[] = [];
-	messages.forEach((m) => {
-		const decoder = decoding.createDecoder(m);
+	try {
+		const updates: Uint8Array[] = [];
+		messages.forEach((m) => {
+			const decoder = decoding.createDecoder(m);
 
-		const messageType = decoding.readUint8(decoder);
-		switch (messageType) {
-			case messageSync: {
-				const syncType = decoding.readUint8(decoder);
-				if (syncType === messageSyncUpdate) {
-					updates.push(decoding.readVarUint8Array(decoder));
-				} else {
+			const messageType = decoding.readUint8(decoder);
+			switch (messageType) {
+				case messageSync: {
+					const syncType = decoding.readUint8(decoder);
+					if (syncType === messageSyncUpdate) {
+						updates.push(decoding.readVarUint8Array(decoder));
+					} else {
+						error.unexpectedCase();
+					}
+					break;
+				}
+				case messageAwareness: {
+					awarenessProtocol.applyAwarenessUpdate(aw, decoding.readVarUint8Array(decoder), null);
+					break;
+				}
+				default: {
 					error.unexpectedCase();
 				}
-				break;
 			}
-			case messageAwareness: {
-				awarenessProtocol.applyAwarenessUpdate(aw, decoding.readVarUint8Array(decoder), null);
-				break;
-			}
-			default: {
-				error.unexpectedCase();
-			}
-		}
-	});
+		});
 
-	const result: Uint8Array[] = [];
-	updates.length > 0 &&
-		result.push(
-			encoding.encode((encoder) => {
-				encoding.writeVarUint(encoder, messageSync);
-				encoding.writeVarUint(encoder, messageSyncUpdate); // update
-				encoding.writeVarUint8Array(encoder, Y.mergeUpdates(updates));
-			}),
-		);
-	aw.states.size > 0 &&
-		result.push(
-			encoding.encode((encoder) => {
-				encoding.writeVarUint(encoder, messageAwareness);
-				encoding.writeVarUint8Array(
-					encoder,
-					awarenessProtocol.encodeAwarenessUpdate(aw, array.from(aw.getStates().keys())),
-				);
-			}),
-		);
+		const result: Uint8Array[] = [];
+		updates.length > 0 &&
+			result.push(
+				encoding.encode((encoder) => {
+					encoding.writeVarUint(encoder, messageSync);
+					encoding.writeVarUint(encoder, messageSyncUpdate); // update
+					encoding.writeVarUint8Array(encoder, Y.mergeUpdates(updates));
+				}),
+			);
+		aw.states.size > 0 &&
+			result.push(
+				encoding.encode((encoder) => {
+					encoding.writeVarUint(encoder, messageAwareness);
+					encoding.writeVarUint8Array(
+						encoder,
+						awarenessProtocol.encodeAwarenessUpdate(aw, array.from(aw.getStates().keys())),
+					);
+				}),
+			);
 
-	return result;
+		return result;
+	} finally {
+		aw.destroy();
+	}
 };
 
 const encodeSyncStep = (value: Uint8Array, syncStep: number): Uint8Array =>
