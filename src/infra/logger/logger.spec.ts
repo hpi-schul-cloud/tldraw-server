@@ -21,7 +21,13 @@ describe('Logger', () => {
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
-			providers: [Logger, { provide: WINSTON_MODULE_PROVIDER, useValue: createMock<WinstonLogger>() }],
+			providers: [
+				Logger,
+				{
+					provide: WINSTON_MODULE_PROVIDER,
+					useValue: createMock<WinstonLogger>(),
+				},
+			],
 		}).compile();
 
 		logger = await module.resolve(Logger);
@@ -67,7 +73,12 @@ describe('Logger', () => {
 			const error = new Error('custom error');
 			const message: RequestLoggingBody = {
 				userId: '123',
-				request: { url: 'http://localhost', method: 'GET', params: { id: '1' }, query: { page: '1' } },
+				request: {
+					url: 'http://localhost',
+					method: 'GET',
+					params: { id: '1' },
+					query: { page: '1' },
+				},
 				error,
 			};
 			logger.http(message, error.stack);
