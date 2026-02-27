@@ -12,7 +12,7 @@
 	},
 	"scripts": {
 		"build": "nest build",
-		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+		"format": "prettier --write \"src/**/*.ts\"",
 		"start": "nest start server",
 		"start:server:dev": "nest start server --watch",
 		"start:server:debug": "nest start server --debug --watch",

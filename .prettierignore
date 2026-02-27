@@ -1,3 +1,3 @@
 ansible
 .github
-**/authorization-api-client/*.*
+**/authorization-api-client/**
