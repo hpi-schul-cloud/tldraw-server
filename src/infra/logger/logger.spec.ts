@@ -9,12 +9,12 @@ describe('Logger', () => {
 	let logger: Logger;
 	let processStdoutWriteSpy: jest.SpyInstance<
 		boolean,
-		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
+		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error | null) => void) | undefined],
 		unknown
 	>;
 	let processStderrWriteSpy: jest.SpyInstance<
 		boolean,
-		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error) => void) | undefined],
+		[str: string | Uint8Array, encoding?: BufferEncoding | undefined, cb?: ((err?: Error | null) => void) | undefined],
 		unknown
 	>;
 	let winstonLogger: DeepMocked<WinstonLogger>;
