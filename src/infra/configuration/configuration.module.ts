@@ -1,39 +1,38 @@
+/* eslint-disable no-process-env */
 import { DynamicModule, Module } from '@nestjs/common';
-import { ConfigModule, ConfigModuleOptions } from '@nestjs/config';
-import { Configuration } from './configuration.service.js';
+import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config';
+import { ConfigurationFactory } from './configuration.factory.js';
 
-const getEnvConfig = (): ConfigModuleOptions => {
-	const envConfig = {
+const getNodeEnv = (): string => process.env.NODE_ENV ?? 'development';
+const envFilesHighestPriorityFirst = ['.env', `.env.${getNodeEnv()}`];
+const loadEnvConfigInOrder = (): ConfigModuleOptions => {
+	return {
 		cache: true,
-		envFilePath: '.env',
-		ignoreEnvFile: false,
+		envFilePath: envFilesHighestPriorityFirst,
 	};
-
-	if (process.env.NODE_ENV === 'test') {
-		envConfig.envFilePath = '.env.test';
-	}
-
-	if (process.env.NODE_ENV === 'production') {
-		envConfig.ignoreEnvFile = true;
-	}
-
-	return envConfig;
 };
 
 @Module({})
 export class ConfigurationModule {
-	public static register<T extends object>(Constructor: new () => T): DynamicModule {
+	public static register<T extends object>(
+		configInjectionToken: string,
+		configConstructor: new () => T,
+	): DynamicModule {
 		return {
-			imports: [ConfigModule.forRoot(getEnvConfig())],
+			imports: [ConfigModule.forRoot(loadEnvConfigInOrder())],
 			providers: [
-				Configuration,
 				{
-					provide: Constructor,
-					useFactory: (config: Configuration): T => config.getAllValidConfigsByType(Constructor),
-					inject: [Configuration],
+					provide: configInjectionToken,
+					useFactory: (configService: ConfigService): T => {
+						const factory = new ConfigurationFactory(configService);
+						const config = factory.loadAndValidateConfigs(configConstructor);
+
+						return config;
+					},
+					inject: [ConfigService],
 				},
 			],
-			exports: [Configuration, Constructor],
+			exports: [configInjectionToken],
 			module: ConfigurationModule,
 		};
 	}
