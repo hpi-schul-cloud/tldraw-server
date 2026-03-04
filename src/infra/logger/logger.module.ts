@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { utilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { ConfigurationModule } from '../configuration/configuration.module.js';
-import { LoggerConfig } from './logger.config.js';
+import { LOGGER_CONFIG, LoggerConfig } from './logger.config.js';
 import { Logger } from './logger.js';
 
 @Module({
 	imports: [
 		WinstonModule.forRootAsync({
-			imports: [ConfigurationModule.register(LoggerConfig)],
+			imports: [ConfigurationModule.register(LOGGER_CONFIG, LoggerConfig)],
 			useFactory: (config: LoggerConfig) => {
 				return {
 					levels: winston.config.syslog.levels,
@@ -27,7 +27,7 @@ import { Logger } from './logger.js';
 					],
 				};
 			},
-			inject: [LoggerConfig],
+			inject: [LOGGER_CONFIG],
 		}),
 	],
 	providers: [Logger],

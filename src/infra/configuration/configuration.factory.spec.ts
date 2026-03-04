@@ -1,10 +1,11 @@
+/* eslint-disable max-classes-per-file */
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { StringToBoolean } from '@shared/controller/transformer';
 import { IsBoolean, IsString } from 'class-validator';
-import { ConfigProperty, Configuration } from './configuration.decorator';
-import { ConfigurationFactory } from './configuration.factory';
+import { StringToBoolean } from '../../shared/transformer/index.js';
+import { ConfigProperty, Configuration } from './configuration.decorator.js';
+import { ConfigurationFactory } from './configuration.factory.js';
 
 @Configuration()
 class TestConfig {
@@ -156,7 +157,7 @@ describe(ConfigurationFactory.name, () => {
 
 			it('should throw error', () => {
 				expect(() => configFactory.loadAndValidateConfigs(InvalidConfig)).toThrow(
-					`The class InvalidConfig is not decorated with @Configuration()`
+					`The class InvalidConfig is not decorated with @Configuration()`,
 				);
 			});
 		});

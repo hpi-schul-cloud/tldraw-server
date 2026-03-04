@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { Client } from 'minio';
 import { ConfigurationModule } from '../configuration/configuration.module.js';
 import { LoggerModule } from '../logger/logger.module.js';
-import { StorageConfig } from './storage.config.js';
+import { STORAGE_CONFIG, StorageConfig } from './storage.config.js';
 import { StorageService } from './storage.service.js';
 
 @Module({
-	imports: [LoggerModule, ConfigurationModule.register(StorageConfig)],
+	imports: [LoggerModule, ConfigurationModule.register(STORAGE_CONFIG, StorageConfig)],
 	providers: [
 		StorageService,
 		{
@@ -20,7 +20,7 @@ import { StorageService } from './storage.service.js';
 					secretKey: config.S3_SECRET_KEY,
 				});
 			},
-			inject: [StorageConfig],
+			inject: [STORAGE_CONFIG],
 		},
 	],
 	exports: [StorageService],

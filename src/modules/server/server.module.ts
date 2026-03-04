@@ -13,11 +13,11 @@ import { TldrawDocumentController } from './api/tldraw-document.controller.js';
 import { WebsocketGateway } from './api/websocket.gateway.js';
 import { REDIS_FOR_DELETION, REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from './server.const.js';
 import { TldrawDocumentService } from './service/tldraw-document.service.js';
-import { TldrawServerConfig } from './tldraw-server.config.js';
+import { TLDRAW_SERVER_CONFIG, TldrawServerConfig } from './tldraw-server.config.js';
 
 @Module({
 	imports: [
-		ConfigurationModule.register(TldrawServerConfig),
+		ConfigurationModule.register(TLDRAW_SERVER_CONFIG, TldrawServerConfig),
 		YRedisClientModule.register(),
 		YRedisServiceModule.register(),
 		RedisModule.registerFor(REDIS_FOR_DELETION),

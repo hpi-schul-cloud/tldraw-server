@@ -3,7 +3,7 @@ import { ConfigurationModule } from '../configuration/configuration.module.js';
 import { Logger } from '../logger/logger.js';
 import { LoggerModule } from '../logger/logger.module.js';
 import { RedisAdapter } from './interfaces/redis-adapter.js';
-import { RedisConfig } from './redis.config.js';
+import { REDIS_CONFIG, RedisConfig } from './redis.config.js';
 import { RedisFactory } from './redis.factory.js';
 
 @Module({})
@@ -11,7 +11,7 @@ export class RedisModule {
 	public static registerFor(token: string): DynamicModule {
 		return {
 			module: RedisModule,
-			imports: [LoggerModule, ConfigurationModule.register(RedisConfig)],
+			imports: [LoggerModule, ConfigurationModule.register(REDIS_CONFIG, RedisConfig)],
 			providers: [
 				{
 					provide: token,
@@ -23,7 +23,7 @@ export class RedisModule {
 
 						return redisAdapter;
 					},
-					inject: [RedisConfig, Logger],
+					inject: [REDIS_CONFIG, Logger],
 				},
 			],
 			exports: [token],

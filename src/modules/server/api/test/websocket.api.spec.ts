@@ -10,7 +10,7 @@ import { ResponsePayloadBuilder } from '../../../../infra//authorization/respons
 import { AuthorizationService } from '../../../../infra/authorization/index.js';
 import { WebSocketCloseCode } from '../../../../shared/type/websocket-close-code.js';
 import { ServerModule } from '../../server.module.js';
-import { TldrawServerConfig } from '../../tldraw-server.config.js';
+import { TLDRAW_SERVER_CONFIG, TldrawServerConfig } from '../../tldraw-server.config.js';
 
 describe('Websocket Api Test', () => {
 	let app: INestApplication;
@@ -28,7 +28,7 @@ describe('Websocket Api Test', () => {
 		app = moduleFixture.createNestApplication();
 		await app.init();
 		authorizationService = await app.resolve(AuthorizationService);
-		tldrawServerConfig = await app.resolve(TldrawServerConfig);
+		tldrawServerConfig = await app.resolve(TLDRAW_SERVER_CONFIG);
 	});
 
 	afterAll(async () => {

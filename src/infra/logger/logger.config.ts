@@ -1,5 +1,6 @@
-import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum } from 'class-validator';
+import { StringToBoolean } from '../../shared/transformer/index.js';
+import { ConfigProperty, Configuration } from '../configuration/index.js';
 
 export enum LoggerLogLevel {
 	emerg = 'emerg',
@@ -12,11 +13,15 @@ export enum LoggerLogLevel {
 	debug = 'debug',
 }
 
+export const LOGGER_CONFIG = 'LOGGER_CONFIG';
+@Configuration()
 export class LoggerConfig {
 	@IsEnum(LoggerLogLevel)
+	@ConfigProperty()
 	public LOGGER_LOG_LEVEL!: LoggerLogLevel;
 
 	@IsBoolean()
-	@Transform(({ value }) => value === 'true')
+	@StringToBoolean()
+	@ConfigProperty()
 	public LOGGER_EXIT_ON_ERROR = true;
 }

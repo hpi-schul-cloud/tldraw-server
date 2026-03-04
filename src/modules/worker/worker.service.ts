@@ -5,7 +5,7 @@ import { Logger } from '../../infra/logger/index.js';
 import { RedisAdapter, StreamMessageReply, Task, XAutoClaimResponse } from '../../infra/redis/index.js';
 import { StorageService } from '../../infra/storage/index.js';
 import { decodeRedisRoomStreamName, RoomStreamInfos, YRedisClient, YRedisDoc } from '../../infra/y-redis/index.js';
-import { WorkerConfig } from './worker.config.js';
+import { WORKER_CONFIG, WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 
 interface Job {
@@ -23,7 +23,7 @@ export class WorkerService implements Job, OnModuleDestroy {
 		private readonly storageService: StorageService,
 		@Inject(REDIS_FOR_WORKER) private readonly redis: RedisAdapter,
 		private readonly logger: Logger,
-		private readonly config: WorkerConfig,
+		@Inject(WORKER_CONFIG) private readonly config: WorkerConfig,
 		private readonly yRedisClient: YRedisClient,
 	) {
 		this.logger.setContext(WorkerService.name);

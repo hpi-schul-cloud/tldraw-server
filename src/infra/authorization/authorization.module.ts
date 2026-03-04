@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigurationModule } from '../configuration/configuration.module.js';
 import { LoggerModule } from '../logger/logger.module.js';
 import { AuthorizationApi, Configuration } from './authorization-api-client/index.js';
-import { AuthorizationConfig } from './authorization.config.js';
+import { AUTHORIZATION_CONFIG, AuthorizationConfig } from './authorization.config.js';
 import { AuthorizationService } from './authorization.service.js';
 
 @Module({
-	imports: [LoggerModule, ConfigurationModule.register(AuthorizationConfig)],
+	imports: [LoggerModule, ConfigurationModule.register(AUTHORIZATION_CONFIG, AuthorizationConfig)],
 	providers: [
 		{
 			provide: AuthorizationApi,
@@ -17,7 +17,7 @@ import { AuthorizationService } from './authorization.service.js';
 
 				return authorizationApi;
 			},
-			inject: [AuthorizationConfig],
+			inject: [AUTHORIZATION_CONFIG],
 		},
 		AuthorizationService,
 	],

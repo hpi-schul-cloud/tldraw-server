@@ -4,6 +4,7 @@ import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config
 import { ConfigurationFactory } from './configuration.factory.js';
 
 const getNodeEnv = (): string => process.env.NODE_ENV ?? 'development';
+console.log(`Loading environment variables from: ${getNodeEnv()}`); // This log is useful to verify that the correct .env file is being loaded
 const envFilesHighestPriorityFirst = ['.env', `.env.${getNodeEnv()}`];
 const loadEnvConfigInOrder = (): ConfigModuleOptions => {
 	return {

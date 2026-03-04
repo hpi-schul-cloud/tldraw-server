@@ -8,9 +8,9 @@ import { streamMessageReplyFactory, xAutoClaimResponseFactory } from '../../infr
 import { StorageService } from '../../infra/storage/index.js';
 import { YRedisClient } from '../../infra/y-redis/index.js';
 import { yRedisDocFactory } from '../../infra/y-redis/testing/index.js';
-import { WorkerConfig } from './worker.config.js';
 import { REDIS_FOR_WORKER } from './worker.const.js';
 import { WorkerService } from './worker.service.js';
+import { WORKER_CONFIG } from './worker.config.js';
 
 const mapStreamMessageRepliesToTask = (streamMessageReplies: StreamMessageReply[]) => {
 	const tasks: Task[] = [];
@@ -56,7 +56,7 @@ describe(WorkerService.name, () => {
 					useValue: createMock<Logger>(),
 				},
 				{
-					provide: WorkerConfig,
+					provide: WORKER_CONFIG,
 					useValue: {
 						WORKER_TRY_CLAIM_COUNT: 1,
 						WORKER_TASK_DEBOUNCE: 1,

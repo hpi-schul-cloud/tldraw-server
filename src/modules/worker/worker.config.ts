@@ -1,12 +1,16 @@
-import { Transform } from 'class-transformer';
 import { IsNumber, IsPositive } from 'class-validator';
+import { ConfigProperty, Configuration } from '../../infra/configuration/index.js';
+import { StringToNumber } from '../../shared/transformer/index.js';
 
+export const WORKER_CONFIG = 'WORKER_CONFIG';
+@Configuration()
 export class WorkerConfig {
 	/**
 	 * After this timeout, a worker will pick up a task and clean up a stream.
 	 */
 	@IsNumber()
-	@Transform(({ value }) => parseInt(value))
+	@StringToNumber()
+	@ConfigProperty()
 	public WORKER_TASK_DEBOUNCE = 10000;
 
 	/**
@@ -14,15 +18,18 @@ export class WorkerConfig {
 	 */
 	@IsNumber()
 	@IsPositive()
-	@Transform(({ value }) => parseInt(value))
+	@StringToNumber()
+	@ConfigProperty()
 	public WORKER_MIN_MESSAGE_LIFETIME = 60000;
 
 	@IsNumber()
-	@Transform(({ value }) => parseInt(value))
+	@StringToNumber()
+	@ConfigProperty()
 	public WORKER_TRY_CLAIM_COUNT = 5;
 
 	@IsNumber()
 	@IsPositive()
-	@Transform(({ value }) => parseInt(value))
+	@StringToNumber()
+	@ConfigProperty()
 	public WORKER_IDLE_BREAK_MS = 1000;
 }

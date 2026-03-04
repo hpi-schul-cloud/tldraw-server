@@ -4,8 +4,8 @@ import { BucketItem, BucketStream, Client } from 'minio';
 import { Readable } from 'stream';
 import * as Y from 'yjs';
 import { Logger } from '../logger/index.js';
-import { StorageConfig } from './storage.config.js';
 import { StorageService } from './storage.service.js';
+import { STORAGE_CONFIG } from './storage.config.js';
 
 describe('StorageService', () => {
 	let service: StorageService;
@@ -21,7 +21,7 @@ describe('StorageService', () => {
 					useValue: createMock<Client>(),
 				},
 				{
-					provide: StorageConfig,
+					provide: STORAGE_CONFIG,
 					useValue: {
 						S3_BUCKET: bucketName,
 					},

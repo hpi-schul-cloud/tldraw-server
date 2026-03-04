@@ -1,11 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Client } from 'minio';
 import { Stream } from 'stream';
 import * as Y from 'yjs';
 import { Logger } from '../logger/index.js';
 import { DocumentStorage } from '../y-redis/storage.js';
-import { StorageConfig } from './storage.config.js';
+import { STORAGE_CONFIG, StorageConfig } from './storage.config.js';
 
 export const encodeS3ObjectName = (room: string, docid: string, r = ''): string =>
 	`${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
@@ -22,7 +22,7 @@ const readStream = (stream: Stream): Promise<Buffer> =>
 export class StorageService implements DocumentStorage, OnModuleInit {
 	public constructor(
 		private readonly client: Client,
-		private readonly config: StorageConfig,
+		@Inject(STORAGE_CONFIG) private readonly config: StorageConfig,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);

@@ -14,7 +14,7 @@ import { RedisAdapter } from '../../../infra/redis/index.js';
 import { YRedisClient, YRedisDoc, YRedisService, YRedisUser, YRedisUserFactory } from '../../../infra/y-redis/index.js';
 import { WebSocketCloseCode } from '../../../shared/type/websocket-close-code.js';
 import { REDIS_FOR_SUBSCRIBE_OF_DELETION, UWS } from '../server.const.js';
-import { TldrawServerConfig } from '../tldraw-server.config.js';
+import { TLDRAW_SERVER_CONFIG, TldrawServerConfig } from '../tldraw-server.config.js';
 
 interface RequestHeaderInfos {
 	headerWsExtensions: string;
@@ -30,7 +30,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		private readonly yRedisClient: YRedisClient,
 		private readonly authorizationService: AuthorizationService,
 		@Inject(REDIS_FOR_SUBSCRIBE_OF_DELETION) private readonly redisAdapter: RedisAdapter,
-		private readonly config: TldrawServerConfig,
+		@Inject(TLDRAW_SERVER_CONFIG) private readonly config: TldrawServerConfig,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(WebsocketGateway.name);
