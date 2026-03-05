@@ -27,7 +27,7 @@ export class TypeGuard {
 
 	public static checkNumber(value: unknown): number {
 		if (!TypeGuard.isNumber(value)) {
-			throw new Error('Type is not a number');
+			throw new TypeError('Type is not a number');
 		}
 
 		return value;
@@ -41,7 +41,7 @@ export class TypeGuard {
 
 	public static checkString(value: unknown): string {
 		if (!TypeGuard.isString(value)) {
-			throw new Error('Type is not a string');
+			throw new TypeError('Type is not a string');
 		}
 
 		return value;
@@ -69,7 +69,7 @@ export class TypeGuard {
 
 	public static checkArray(value: unknown): [] {
 		if (!TypeGuard.isArray(value)) {
-			throw new Error('Type is not an array.');
+			throw new TypeError('Type is not an array.');
 		}
 
 		return value;
@@ -83,7 +83,7 @@ export class TypeGuard {
 
 	public static checkArrayOfStrings(value: unknown): string[] {
 		if (!TypeGuard.isArrayOfStrings(value)) {
-			throw new Error('Type is not an array of strings.');
+			throw new TypeError('Type is not an array of strings.');
 		}
 
 		return value;
@@ -97,7 +97,7 @@ export class TypeGuard {
 
 	public static checkArrayWithElements<T>(value: unknown): [T, ...T[]] {
 		if (!TypeGuard.isArrayWithElements<T>(value)) {
-			throw new Error('Type is not an array with elements.');
+			throw new TypeError('Type is not an array with elements.');
 		}
 
 		return value;
@@ -111,7 +111,7 @@ export class TypeGuard {
 
 	public static checkDefinedObject(value: unknown): object {
 		if (!TypeGuard.isDefinedObject(value)) {
-			throw new Error('Type is not an object.');
+			throw new TypeError('Type is not an object.');
 		}
 
 		return value;
@@ -201,7 +201,7 @@ export class TypeGuard {
 		}
 
 		if (missingKeys.length > 0) {
-			throw toThrow ?? new Error(`Object lacks these properties: ${String(keys)}.`);
+			throw toThrow ?? new TypeError(`Object lacks these properties: ${String(keys)}.`);
 		}
 
 		return obj as EnsureKeysAreSet<T, K>;
