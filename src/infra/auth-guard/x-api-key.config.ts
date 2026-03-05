@@ -1,8 +1,12 @@
-import { Transform } from 'class-transformer';
 import { IsArray } from 'class-validator';
+import { CommaSeparatedStringToArray } from '../../shared/transformer/index.js';
+import { ConfigProperty, Configuration } from '../configuration/index.js';
 
+export const X_API_KEY_CONFIG = 'X_API_KEY_CONFIG';
+@Configuration()
 export class XApiKeyConfig {
-	@Transform(({ value }) => value.split(',').map((part: string) => (part.split(':').pop() ?? '').trim()))
+	@CommaSeparatedStringToArray()
 	@IsArray()
-	public X_API_ALLOWED_KEYS!: string[];
+	@ConfigProperty('X_API_ALLOWED_KEYS')
+	public xApiAllowedKeys!: string[];
 }

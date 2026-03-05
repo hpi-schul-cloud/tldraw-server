@@ -1,24 +1,34 @@
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { IsBoolean, IsNumber, IsString } from 'class-validator';
+import { StringToBoolean } from '../../shared/transformer/index.js';
+import { ConfigProperty, Configuration } from '../configuration/index.js';
 
+export const STORAGE_CONFIG = 'STORAGE_CONFIG';
+@Configuration()
 export class StorageConfig {
 	@IsString()
-	public S3_ENDPOINT!: string;
+	@ConfigProperty('S3_ENDPOINT')
+	public s3Endpoint!: string;
 
 	@IsString()
-	public S3_BUCKET!: string;
+	@ConfigProperty('S3_BUCKET')
+	public s3Bucket!: string;
 
 	@IsNumber()
 	@Type(() => Number)
-	public S3_PORT!: number;
+	@ConfigProperty('S3_PORT')
+	public s3Port!: number;
 
 	@IsBoolean()
-	@Transform(({ value }) => value === 'true')
-	public S3_SSL!: boolean;
+	@StringToBoolean()
+	@ConfigProperty('S3_SSL')
+	public s3Ssl!: boolean;
 
 	@IsString()
-	public S3_ACCESS_KEY!: string;
+	@ConfigProperty('S3_ACCESS_KEY')
+	public s3AccessKey!: string;
 
 	@IsString()
-	public S3_SECRET_KEY!: string;
+	@ConfigProperty('S3_SECRET_KEY')
+	public s3SecretKey!: string;
 }

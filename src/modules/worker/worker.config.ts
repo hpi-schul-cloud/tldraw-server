@@ -1,28 +1,35 @@
-import { Transform } from 'class-transformer';
 import { IsNumber, IsPositive } from 'class-validator';
+import { ConfigProperty, Configuration } from '../../infra/configuration/index.js';
+import { StringToNumber } from '../../shared/transformer/index.js';
 
+export const WORKER_CONFIG = 'WORKER_CONFIG';
+@Configuration()
 export class WorkerConfig {
 	/**
 	 * After this timeout, a worker will pick up a task and clean up a stream.
 	 */
 	@IsNumber()
-	@Transform(({ value }) => parseInt(value))
-	public WORKER_TASK_DEBOUNCE = 10000;
+	@StringToNumber()
+	@ConfigProperty('WORKER_TASK_DEBOUNCE')
+	public workerTaskDebounce = 10000;
 
 	/**
 	 * Minimum lifetime of y* update messages in redis streams.
 	 */
 	@IsNumber()
 	@IsPositive()
-	@Transform(({ value }) => parseInt(value))
-	public WORKER_MIN_MESSAGE_LIFETIME = 60000;
+	@StringToNumber()
+	@ConfigProperty('WORKER_MIN_MESSAGE_LIFETIME')
+	public workerMinMessageLifetime = 60000;
 
 	@IsNumber()
-	@Transform(({ value }) => parseInt(value))
-	public WORKER_TRY_CLAIM_COUNT = 5;
+	@StringToNumber()
+	@ConfigProperty('WORKER_TRY_CLAIM_COUNT')
+	public workerTryClaimCount = 5;
 
 	@IsNumber()
 	@IsPositive()
-	@Transform(({ value }) => parseInt(value))
-	public WORKER_IDLE_BREAK_MS = 1000;
+	@StringToNumber()
+	@ConfigProperty('WORKER_IDLE_BREAK_MS')
+	public workerIdleBreakMs = 1000;
 }

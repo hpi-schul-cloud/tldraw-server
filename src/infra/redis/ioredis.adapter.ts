@@ -26,7 +26,7 @@ export class IoRedisAdapter implements RedisAdapter {
 	) {
 		this.logger.setContext(IoRedisAdapter.name);
 
-		this.redisPrefix = this.config.REDIS_PREFIX;
+		this.redisPrefix = this.config.redisPrefix;
 		this.redisDeleteStreamName = `${this.redisPrefix}:delete`;
 		this.redisWorkerStreamName = `${this.redisPrefix}:worker`;
 		this.redisWorkerGroupName = `${this.redisPrefix}:worker`;

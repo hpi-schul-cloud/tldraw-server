@@ -1,13 +1,13 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { collectDefaultMetrics, Gauge, Histogram, register } from 'prom-client';
-import { MetricConfig } from './metrics.config.js';
+import { MetricConfig, METRICS_CONFIG } from './metrics.config.js';
 
 @Injectable()
 export class MetricsService implements OnModuleInit {
-	public constructor(private config: MetricConfig) {}
+	public constructor(@Inject(METRICS_CONFIG) private readonly config: MetricConfig) {}
 
 	public onModuleInit(): void {
-		if (this.config.METRICS_COLLECT_DEFAULT) {
+		if (this.config.metricsCollectDefault) {
 			collectDefaultMetrics();
 		}
 	}
