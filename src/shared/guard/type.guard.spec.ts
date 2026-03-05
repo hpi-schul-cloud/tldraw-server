@@ -370,6 +370,50 @@ describe('TypeGuard', () => {
 		});
 	});
 
+	describe('isArrayOfStrings', () => {
+		describe('when passing type of value is an array of strings', () => {
+			it('should return true', () => {
+				expect(TypeGuard.isArrayOfStrings(['', '', ''])).toBe(true);
+			});
+		});
+
+		describe('when passing type of value is NOT an array of strings', () => {
+			it('should return false', () => {
+				expect(TypeGuard.isArrayOfStrings([1, 2, 3])).toBe(false);
+			});
+
+			it('should return false', () => {
+				expect(TypeGuard.isArrayOfStrings(['a', 'b', 3])).toBe(false);
+			});
+
+			it('should return false', () => {
+				expect(TypeGuard.isArrayOfStrings([{}, {}, {}])).toBe(false);
+			});
+		});
+	});
+
+	describe('checkArrayOfStrings', () => {
+		describe('when passing type of value is an array of strings', () => {
+			it('should return value', () => {
+				expect(TypeGuard.checkArrayOfStrings(['', '', ''])).toEqual(['', '', '']);
+			});
+		});
+
+		describe('when passing type of value is NOT an array of strings', () => {
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkArrayOfStrings([1, 2, 3])).toThrow('Type is not an array of strings.');
+			});
+
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkArrayOfStrings(['a', 'b', 3])).toThrow('Type is not an array of strings.');
+			});
+
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkArrayOfStrings([{}, {}, {}])).toThrow('Type is not an array of strings.');
+			});
+		});
+	});
+
 	describe('isArrayWithElements', () => {
 		describe('when passing type of value is an array with elements', () => {
 			it('should return true', () => {
@@ -684,6 +728,18 @@ describe('TypeGuard', () => {
 
 			it('should be throw an error', () => {
 				expect(() => TypeGuard.checkKeyInObject(undefined, 'zzz')).toThrow('Type is not an object.');
+			});
+		});
+
+		describe('checkKeysInObject', () => {
+			it('should be return the key value', () => {
+				const result = TypeGuard.checkKeysInObject({ x1: 'abc', x2: 'bcd' }, ['x1', 'x2']);
+				expect(result).toEqual({ x1: 'abc', x2: 'bcd' });
+			});
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkKeysInObject({ x1: 'abc', x2: 'bcd' }, ['b1'])).toThrow(
+					'Object has missing key. Required are: [\"b1\"]. Get object keys: [\"x1\",\"x2\"]',
+				);
 			});
 		});
 

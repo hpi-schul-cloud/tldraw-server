@@ -4,7 +4,7 @@ import { CommaSeparatedStringToArray } from './comma-separated-string-to-array.t
 describe('CommaSeparatedStringToArray()', () => {
 	class TestDto {
 		@CommaSeparatedStringToArray()
-		items!: string[];
+		public items!: string[];
 	}
 
 	it('should transform a comma separated string to an array of trimmed strings', () => {

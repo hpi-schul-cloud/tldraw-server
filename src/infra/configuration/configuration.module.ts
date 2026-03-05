@@ -1,4 +1,3 @@
-/* eslint-disable no-process-env */
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config';
 import { ConfigurationFactory } from './configuration.factory.js';

@@ -11,6 +11,7 @@ export function CommaSeparatedStringToArray(): PropertyDecorator {
 			if (params.value.trim() === '') {
 				return [];
 			}
+
 			return params.value.split(',').map((item: string) => item.trim());
 		}
 

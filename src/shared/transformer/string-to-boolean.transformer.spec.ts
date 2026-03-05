@@ -6,10 +6,10 @@ describe('ToBooleanTransformer Decorator', () => {
 	describe('when transform a string to boolean', () => {
 		class WithBooleanDto {
 			@StringToBoolean()
-			booleanProp!: boolean;
+			public booleanProp!: boolean;
 
 			@StringToBoolean()
-			optionalBooleanProp?: boolean;
+			public optionalBooleanProp?: boolean;
 		}
 
 		it('should ignore undefined and null values', () => {

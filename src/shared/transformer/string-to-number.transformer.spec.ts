@@ -5,7 +5,7 @@ describe('ToNumberTransformer Decorator', () => {
 	describe('when transform a string to number', () => {
 		class WithNumberDto {
 			@StringToNumber()
-			booleanProp!: boolean;
+			public booleanProp!: boolean;
 		}
 
 		it('should transform from string to number', () => {
