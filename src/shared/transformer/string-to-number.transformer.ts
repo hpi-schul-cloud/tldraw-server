@@ -1,4 +1,5 @@
 import { Transform, TransformFnParams } from 'class-transformer';
+import { TypeGuard } from '../guard/type.guard.js';
 
 /**
  * Decorator to transform a number-string value to a number.
@@ -7,8 +8,14 @@ import { Transform, TransformFnParams } from 'class-transformer';
  */
 export function StringToNumber(): PropertyDecorator {
 	return Transform((params: TransformFnParams) => {
-		const str = params.obj[params.key] as string;
+		if (TypeGuard.isNumber(params.value)) {
+			return params.value;
+		}
 
-		return parseInt(str);
+		TypeGuard.checkString(params.obj[params.key]);
+
+		const str = params.obj[params.key];
+
+		return Number.parseInt(str);
 	});
 }
