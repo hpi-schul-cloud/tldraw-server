@@ -7,7 +7,7 @@ export class MetricsService implements OnModuleInit {
 	public constructor(@Inject(METRICS_CONFIG) private readonly config: MetricConfig) {}
 
 	public onModuleInit(): void {
-		if (this.config.METRICS_COLLECT_DEFAULT) {
+		if (this.config.metricsCollectDefault) {
 			collectDefaultMetrics();
 		}
 	}

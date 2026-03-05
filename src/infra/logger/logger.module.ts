@@ -12,8 +12,8 @@ import { Logger } from './logger.js';
 			useFactory: (config: LoggerConfig) => {
 				return {
 					levels: winston.config.syslog.levels,
-					level: config.LOGGER_LOG_LEVEL,
-					exitOnError: config.LOGGER_EXIT_ON_ERROR,
+					level: config.loggerLogLevel,
+					exitOnError: config.loggerExitOnError,
 					transports: [
 						new winston.transports.Console({
 							handleExceptions: true,

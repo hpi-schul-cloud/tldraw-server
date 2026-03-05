@@ -14,7 +14,7 @@ export class RedisFactory {
 
 	public async createRedisInstance(): Promise<RedisAdapter> {
 		let redisInstance: Redis;
-		if (this.config.REDIS_CLUSTER_ENABLED) {
+		if (this.config.redisClusterEnabled) {
 			redisInstance = await this.createRedisSentinelInstance();
 		} else {
 			redisInstance = this.createNewRedisInstance();
@@ -25,15 +25,15 @@ export class RedisFactory {
 	}
 
 	private createNewRedisInstance(): Redis {
-		const redisUrl = this.config.REDIS_URL;
+		const redisUrl = this.config.redisUrl;
 		const redisInstance = new Redis(redisUrl);
 
 		return redisInstance;
 	}
 
 	private async createRedisSentinelInstance(): Promise<Redis> {
-		const sentinelName = this.config.REDIS_SENTINEL_NAME;
-		const sentinelPassword = this.config.REDIS_SENTINEL_PASSWORD;
+		const sentinelName = this.config.redisSentinelName;
+		const sentinelPassword = this.config.redisSentinelPassword;
 		const sentinels = await this.discoverSentinelHosts();
 		this.logger.info(`Discovered sentinels: ${JSON.stringify(sentinels)}`);
 
@@ -50,7 +50,7 @@ export class RedisFactory {
 	private async discoverSentinelHosts(): Promise<{ host: string; port: number }[]> {
 		const resolveSrv = util.promisify(dns.resolveSrv);
 		try {
-			const records = await resolveSrv(this.config.REDIS_SENTINEL_SERVICE_NAME);
+			const records = await resolveSrv(this.config.redisSentinelServiceName);
 
 			const hosts = records.map((record) => ({
 				host: record.name,

@@ -7,28 +7,28 @@ export const STORAGE_CONFIG = 'STORAGE_CONFIG';
 @Configuration()
 export class StorageConfig {
 	@IsString()
-	@ConfigProperty()
-	public S3_ENDPOINT!: string;
+	@ConfigProperty('S3_ENDPOINT')
+	public s3Endpoint!: string;
 
 	@IsString()
-	@ConfigProperty()
-	public S3_BUCKET!: string;
+	@ConfigProperty('S3_BUCKET')
+	public s3Bucket!: string;
 
 	@IsNumber()
 	@Type(() => Number)
-	@ConfigProperty()
-	public S3_PORT!: number;
+	@ConfigProperty('S3_PORT')
+	public s3Port!: number;
 
 	@IsBoolean()
 	@StringToBoolean()
-	@ConfigProperty()
-	public S3_SSL!: boolean;
+	@ConfigProperty('S3_SSL')
+	public s3Ssl!: boolean;
 
 	@IsString()
-	@ConfigProperty()
-	public S3_ACCESS_KEY!: string;
+	@ConfigProperty('S3_ACCESS_KEY')
+	public s3AccessKey!: string;
 
 	@IsString()
-	@ConfigProperty()
-	public S3_SECRET_KEY!: string;
+	@ConfigProperty('S3_SECRET_KEY')
+	public s3SecretKey!: string;
 }

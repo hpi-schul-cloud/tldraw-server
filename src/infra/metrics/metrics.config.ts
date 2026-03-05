@@ -7,6 +7,6 @@ export const METRICS_CONFIG = 'METRICS_CONFIG';
 export class MetricConfig {
 	@IsBoolean()
 	@StringToBoolean()
-	@ConfigProperty()
-	public METRICS_COLLECT_DEFAULT = true;
+	@ConfigProperty('METRICS_COLLECT_DEFAULT')
+	public metricsCollectDefault = true;
 }

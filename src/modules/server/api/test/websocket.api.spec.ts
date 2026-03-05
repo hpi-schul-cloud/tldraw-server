@@ -37,7 +37,7 @@ describe('Websocket Api Test', () => {
 
 	const createWsClient = (room: string) => {
 		const ydoc = new Doc();
-		const serverUrl = tldrawServerConfig.TLDRAW_WEBSOCKET_URL;
+		const serverUrl = tldrawServerConfig.tldrawWebsocketUrl;
 		const prefix = 'y';
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore

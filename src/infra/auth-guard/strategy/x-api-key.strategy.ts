@@ -11,7 +11,7 @@ export class XApiKeyStrategy extends PassportStrategy(Strategy, StrategyType.API
 	}
 
 	public validate(apiKey: string): boolean {
-		if (this.config.X_API_ALLOWED_KEYS.includes(apiKey)) {
+		if (this.config.xApiAllowedKeys.includes(apiKey)) {
 			return true;
 		}
 		throw new UnauthorizedException();

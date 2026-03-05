@@ -43,7 +43,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	public onModuleInit(): void {
 		this.yRedisService.start();
 
-		this.webSocketServer.ws(`${this.config.TLDRAW_WEBSOCKET_PATH}/:room`, {
+		this.webSocketServer.ws(`${this.config.tldrawWebsocketPath}/:room`, {
 			compression: SHARED_COMPRESSOR,
 			maxPayloadLength: 100 * 1024 * 1024,
 			idleTimeout: 60,
@@ -54,9 +54,9 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			close: (ws) => this.closeCallback(ws),
 		});
 
-		this.webSocketServer.listen(this.config.TLDRAW_WEBSOCKET_PORT, (t) => {
+		this.webSocketServer.listen(this.config.tldrawWebsocketPort, (t) => {
 			if (t) {
-				this.logger.info(`Websocket Server is running on port ${this.config.TLDRAW_WEBSOCKET_PORT}`);
+				this.logger.info(`Websocket Server is running on port ${this.config.tldrawWebsocketPort}`);
 			}
 		});
 

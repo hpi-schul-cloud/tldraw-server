@@ -10,8 +10,8 @@ export class WorkerConfig {
 	 */
 	@IsNumber()
 	@StringToNumber()
-	@ConfigProperty()
-	public WORKER_TASK_DEBOUNCE = 10000;
+	@ConfigProperty('WORKER_TASK_DEBOUNCE')
+	public workerTaskDebounce = 10000;
 
 	/**
 	 * Minimum lifetime of y* update messages in redis streams.
@@ -19,17 +19,17 @@ export class WorkerConfig {
 	@IsNumber()
 	@IsPositive()
 	@StringToNumber()
-	@ConfigProperty()
-	public WORKER_MIN_MESSAGE_LIFETIME = 60000;
+	@ConfigProperty('WORKER_MIN_MESSAGE_LIFETIME')
+	public workerMinMessageLifetime = 60000;
 
 	@IsNumber()
 	@StringToNumber()
-	@ConfigProperty()
-	public WORKER_TRY_CLAIM_COUNT = 5;
+	@ConfigProperty('WORKER_TRY_CLAIM_COUNT')
+	public workerTryClaimCount = 5;
 
 	@IsNumber()
 	@IsPositive()
 	@StringToNumber()
-	@ConfigProperty()
-	public WORKER_IDLE_BREAK_MS = 1000;
+	@ConfigProperty('WORKER_IDLE_BREAK_MS')
+	public workerIdleBreakMs = 1000;
 }

@@ -17,11 +17,11 @@ export const LOGGER_CONFIG = 'LOGGER_CONFIG';
 @Configuration()
 export class LoggerConfig {
 	@IsEnum(LoggerLogLevel)
-	@ConfigProperty()
-	public LOGGER_LOG_LEVEL!: LoggerLogLevel;
+	@ConfigProperty('LOGGER_LOG_LEVEL')
+	public loggerLogLevel!: LoggerLogLevel;
 
 	@IsBoolean()
 	@StringToBoolean()
-	@ConfigProperty()
-	public LOGGER_EXIT_ON_ERROR = true;
+	@ConfigProperty('LOGGER_EXIT_ON_ERROR')
+	public loggerExitOnError = true;
 }

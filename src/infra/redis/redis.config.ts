@@ -8,29 +8,29 @@ export class RedisConfig {
 	@IsBoolean()
 	@IsOptional()
 	@StringToBoolean()
-	@ConfigProperty()
-	public REDIS_CLUSTER_ENABLED!: boolean;
+	@ConfigProperty('REDIS_CLUSTER_ENABLED')
+	public redisClusterEnabled!: boolean;
 
 	@IsUrl({ protocols: ['redis'], require_tld: false })
-	@ValidateIf((o: RedisConfig) => !o.REDIS_CLUSTER_ENABLED)
-	@ConfigProperty()
-	public REDIS_URL!: string;
+	@ValidateIf((o: RedisConfig) => !o.redisClusterEnabled)
+	@ConfigProperty('REDIS_URL')
+	public redisUrl!: string;
 
 	@IsString()
-	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED)
-	@ConfigProperty()
-	public REDIS_SENTINEL_SERVICE_NAME!: string;
+	@ValidateIf((o: RedisConfig) => o.redisClusterEnabled)
+	@ConfigProperty('REDIS_SENTINEL_SERVICE_NAME')
+	public redisSentinelServiceName!: string;
 
 	@IsString()
-	@ConfigProperty()
-	public REDIS_PREFIX = 'y';
+	@ConfigProperty('REDIS_PREFIX')
+	public redisPrefix = 'y';
 
 	@IsString()
-	@ConfigProperty()
-	public REDIS_SENTINEL_NAME = 'myprimary';
+	@ConfigProperty('REDIS_SENTINEL_NAME')
+	public redisSentinelName = 'myprimary';
 
 	@IsString()
-	@ValidateIf((o: RedisConfig) => o.REDIS_CLUSTER_ENABLED)
-	@ConfigProperty()
-	public REDIS_SENTINEL_PASSWORD!: string;
+	@ValidateIf((o: RedisConfig) => o.redisClusterEnabled)
+	@ConfigProperty('REDIS_SENTINEL_PASSWORD')
+	public redisSentinelPassword!: string;
 }

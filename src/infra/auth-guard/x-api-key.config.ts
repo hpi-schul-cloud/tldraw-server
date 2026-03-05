@@ -7,6 +7,6 @@ export const X_API_KEY_CONFIG = 'X_API_KEY_CONFIG';
 export class XApiKeyConfig {
 	@CommaSeparatedStringToArray()
 	@IsArray()
-	@ConfigProperty()
-	public X_API_ALLOWED_KEYS!: string[];
+	@ConfigProperty('X_API_ALLOWED_KEYS')
+	public xApiAllowedKeys!: string[];
 }

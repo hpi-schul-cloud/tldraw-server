@@ -6,39 +6,39 @@ export const TLDRAW_SERVER_CONFIG = 'TLDRAW_SERVER_CONFIG';
 @Configuration()
 export class TldrawServerConfig {
 	@IsString()
-	@ConfigProperty()
-	public TLDRAW_WEBSOCKET_PATH = '';
+	@ConfigProperty('TLDRAW_WEBSOCKET_PATH')
+	public tldrawWebsocketPath = '';
 
 	@IsNumber()
 	@StringToNumber()
-	@ConfigProperty()
-	public TLDRAW_WEBSOCKET_PORT = 3345;
+	@ConfigProperty('TLDRAW_WEBSOCKET_PORT')
+	public tldrawWebsocketPort = 3345;
 
 	@IsUrl({ protocols: ['wss', 'ws'], require_tld: false })
-	@ConfigProperty()
-	public TLDRAW_WEBSOCKET_URL!: string;
+	@ConfigProperty('TLDRAW_WEBSOCKET_URL')
+	public tldrawWebsocketUrl!: string;
 
 	@StringToBoolean()
 	@IsBoolean()
-	@ConfigProperty()
-	public TLDRAW_ASSETS_ENABLED = true;
+	@ConfigProperty('TLDRAW_ASSETS_ENABLED')
+	public tldrawAssetsEnabled = true;
 
 	@StringToNumber()
 	@IsNumber()
-	@ConfigProperty()
-	public TLDRAW_ASSETS_MAX_SIZE_BYTES = 10485760;
+	@ConfigProperty('TLDRAW_ASSETS_MAX_SIZE_BYTES')
+	public tldrawAssetsMaxSizeBytes = 10485760;
 
 	@CommaSeparatedStringToArray()
 	@IsArray()
-	@ConfigProperty()
-	public TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'];
+	@ConfigProperty('TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST')
+	public tldrawAssetsAllowedMimeTypesList = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'];
 
 	@StringToBoolean()
 	@IsBoolean()
-	@ConfigProperty()
-	public FEATURE_TLDRAW_ENABLED!: boolean;
+	@ConfigProperty('FEATURE_TLDRAW_ENABLED')
+	public featureTldrawEnabled!: boolean;
 
 	@IsUrl({ protocols: ['https', 'http'], require_tld: false })
-	@ConfigProperty()
-	public NOT_AUTHENTICATED_REDIRECT_URL!: string;
+	@ConfigProperty('NOT_AUTHENTICATED_REDIRECT_URL')
+	public notAuthenticatedRedirectUrl!: string;
 }

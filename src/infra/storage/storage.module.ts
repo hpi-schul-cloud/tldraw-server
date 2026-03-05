@@ -13,11 +13,11 @@ import { StorageService } from './storage.service.js';
 			provide: Client,
 			useFactory: (config: StorageConfig): Client => {
 				return new Client({
-					endPoint: config.S3_ENDPOINT,
-					port: config.S3_PORT,
-					useSSL: config.S3_SSL,
-					accessKey: config.S3_ACCESS_KEY,
-					secretKey: config.S3_SECRET_KEY,
+					endPoint: config.s3Endpoint,
+					port: config.s3Port,
+					useSSL: config.s3Ssl,
+					accessKey: config.s3AccessKey,
+					secretKey: config.s3SecretKey,
 				});
 			},
 			inject: [STORAGE_CONFIG],
