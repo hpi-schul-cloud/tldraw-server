@@ -848,4 +848,57 @@ describe('TypeGuard', () => {
 			});
 		});
 	});
+	describe('isBuffer', () => {
+		describe('when passing type of value is a buffer', () => {
+			it('should be return true', () => {
+				const buffer = Buffer.from('buffer');
+				expect(TypeGuard.isBuffer(buffer)).toBe(true);
+			});
+		});
+
+		describe('when passing type of value is NOT a buffer', () => {
+			it('should be return false', () => {
+				expect(TypeGuard.isBuffer(undefined)).toBe(false);
+			});
+
+			it('should be return false', () => {
+				expect(TypeGuard.isBuffer(null)).toBe(false);
+			});
+
+			it('should be return false', () => {
+				expect(TypeGuard.isBuffer({})).toBe(false);
+			});
+
+			it('should be return false', () => {
+				expect(TypeGuard.isBuffer(1)).toBe(false);
+			});
+		});
+	});
+
+	describe('checkBuffer', () => {
+		describe('when passing type of value is a buffer', () => {
+			it('should be return value', () => {
+				const buffer = Buffer.from('buffer');
+				expect(TypeGuard.checkBuffer(buffer)).toEqual(buffer);
+			});
+		});
+
+		describe('when passing type of value is NOT a buffer', () => {
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkBuffer(undefined)).toThrow('Type is not a buffer.');
+			});
+
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkBuffer(null)).toThrow('Type is not a buffer.');
+			});
+
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkBuffer({})).toThrow('Type is not a buffer.');
+			});
+
+			it('should throw an error', () => {
+				expect(() => TypeGuard.checkBuffer(1)).toThrow('Type is not a buffer.');
+			});
+		});
+	});
 });

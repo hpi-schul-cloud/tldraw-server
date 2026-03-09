@@ -226,4 +226,18 @@ export class TypeGuard {
 
 		return value;
 	}
+
+	public static isBuffer(value: unknown): value is Buffer {
+		const isBuffer = Buffer.isBuffer(value);
+
+		return isBuffer;
+	}
+
+	public static checkBuffer(value: unknown): Buffer {
+		if (!TypeGuard.isBuffer(value)) {
+			throw new Error('Type is not a buffer.');
+		}
+
+		return value;
+	}
 }

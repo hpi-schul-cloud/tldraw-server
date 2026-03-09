@@ -1,6 +1,7 @@
 import { RedisKey } from 'ioredis';
 import { array, map } from 'lib0';
-import { StreamMessageReply, StreamMessagesReply, TypeGuard } from '../../infra/redis/index.js';
+import { StreamMessageReply, StreamMessagesReply } from '../../infra/redis/index.js';
+import { TypeGuard } from '../../shared/guard/type.guard.js';
 import { YRedisMessage } from './interfaces/stream-message.js';
 
 /* This file contains the implementation of the functions,
