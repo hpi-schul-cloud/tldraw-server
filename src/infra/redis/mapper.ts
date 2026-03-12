@@ -1,4 +1,5 @@
-import { RedisGuard, TypeGuard } from './guards/index.js';
+import { TypeGuard } from '../../shared/guard/type.guard.js';
+import { RedisGuard } from './guards/index.js';
 import {
 	Compact,
 	DocName,
@@ -17,7 +18,7 @@ export function mapToXAutoClaimResponse(value: unknown): XAutoClaimResponse {
 		return { nextId: '', messages: null };
 	}
 
-	const unknownArray = TypeGuard.checkUnknownArrayWithElements(value);
+	const unknownArray = TypeGuard.checkArrayWithElements(value);
 	const xItems = RedisGuard.checkXItems(unknownArray[1]);
 	const redisKey = TypeGuard.isString(unknownArray[0])
 		? TypeGuard.checkString(unknownArray[0])
@@ -49,10 +50,10 @@ export function mapToStreamMessagesReply(streamReply: XReadBufferReply | unknown
 		return [];
 	}
 
-	const unknownArray = TypeGuard.checkUnknownArrayWithElements(streamReply);
+	const unknownArray = TypeGuard.checkArrayWithElements(streamReply);
 
 	const result = unknownArray.map((entry) => {
-		const entryArray = TypeGuard.checkUnknownArrayWithElements(entry);
+		const entryArray = TypeGuard.checkArrayWithElements(entry);
 		const key = TypeGuard.checkBuffer(entryArray[0]);
 		const messages = RedisGuard.checkXItems(entryArray[1]);
 

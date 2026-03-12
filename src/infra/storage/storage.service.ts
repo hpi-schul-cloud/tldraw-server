@@ -1,11 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Client } from 'minio';
 import { Stream } from 'stream';
 import * as Y from 'yjs';
 import { Logger } from '../logger/index.js';
 import { DocumentStorage } from '../y-redis/storage.js';
-import { StorageConfig } from './storage.config.js';
+import { STORAGE_CONFIG, StorageConfig } from './storage.config.js';
 
 export const encodeS3ObjectName = (room: string, docid: string, r = ''): string =>
 	`${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
@@ -22,30 +22,30 @@ const readStream = (stream: Stream): Promise<Buffer> =>
 export class StorageService implements DocumentStorage, OnModuleInit {
 	public constructor(
 		private readonly client: Client,
-		private readonly config: StorageConfig,
+		@Inject(STORAGE_CONFIG) private readonly config: StorageConfig,
 		private readonly logger: Logger,
 	) {
 		this.logger.setContext(StorageService.name);
 	}
 
 	public async onModuleInit(): Promise<void> {
-		const bucketExists = await this.client.bucketExists(this.config.S3_BUCKET);
+		const bucketExists = await this.client.bucketExists(this.config.s3Bucket);
 
 		if (!bucketExists) {
-			await this.client.makeBucket(this.config.S3_BUCKET);
+			await this.client.makeBucket(this.config.s3Bucket);
 		}
 	}
 
 	public async persistDoc(room: string, docname: string, ydoc: Y.Doc): Promise<void> {
 		const objectName = encodeS3ObjectName(room, docname, randomUUID());
-		await this.client.putObject(this.config.S3_BUCKET, objectName, Buffer.from(Y.encodeStateAsUpdateV2(ydoc)));
+		await this.client.putObject(this.config.s3Bucket, objectName, Buffer.from(Y.encodeStateAsUpdateV2(ydoc)));
 	}
 
 	public async retrieveDoc(room: string, docname: string): Promise<{ doc: Uint8Array; references: string[] } | null> {
 		this.logger.info('retrieving doc room=' + room + ' docname=' + docname);
 
 		const objNames = await this.client
-			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname), true)
+			.listObjectsV2(this.config.s3Bucket, encodeS3ObjectName(room, docname), true)
 			.toArray();
 		const references: string[] = objNames.map((obj) => obj.name);
 
@@ -57,7 +57,7 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 
 		let updates: Uint8Array[] = await Promise.all(
 			references.map(async (ref) => {
-				const stream = await this.client.getObject(this.config.S3_BUCKET, ref);
+				const stream = await this.client.getObject(this.config.s3Bucket, ref);
 
 				const readStreamPomise = readStream(stream).catch(() => {
 					throw new Error('Error on storage stream read');
@@ -79,16 +79,16 @@ export class StorageService implements DocumentStorage, OnModuleInit {
 	}
 
 	public async deleteReferences(_room: string, _docname: string, storeReferences: string[]): Promise<void> {
-		await this.client.removeObjects(this.config.S3_BUCKET, storeReferences);
+		await this.client.removeObjects(this.config.s3Bucket, storeReferences);
 	}
 
 	public async deleteDocument(room: string, docname: string): Promise<void> {
 		const objNames = await this.client
-			.listObjectsV2(this.config.S3_BUCKET, encodeS3ObjectName(room, docname), true)
+			.listObjectsV2(this.config.s3Bucket, encodeS3ObjectName(room, docname), true)
 			.toArray();
 		const objectsList = objNames.map((obj) => obj.name);
 
-		await this.client.removeObjects(this.config.S3_BUCKET, objectsList);
+		await this.client.removeObjects(this.config.s3Bucket, objectsList);
 	}
 
 	public destroy(): Promise<void> {

@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { XApiKeyConfig } from '../x-api-key.config.js';
+import { X_API_KEY_CONFIG, XApiKeyConfig } from '../x-api-key.config.js';
 import { XApiKeyStrategy } from './x-api-key.strategy.js';
 
 describe('XApiKeyStrategy', () => {
@@ -15,14 +15,14 @@ describe('XApiKeyStrategy', () => {
 			providers: [
 				XApiKeyStrategy,
 				{
-					provide: XApiKeyConfig,
+					provide: X_API_KEY_CONFIG,
 					useValue: createMock<XApiKeyConfig>(),
 				},
 			],
 		}).compile();
 
 		strategy = module.get(XApiKeyStrategy);
-		config = module.get(XApiKeyConfig);
+		config = module.get(X_API_KEY_CONFIG);
 	});
 
 	afterAll(async () => {
@@ -37,7 +37,7 @@ describe('XApiKeyStrategy', () => {
 		describe('when a valid api key is provided', () => {
 			const setup = () => {
 				const CORRECT_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
-				config.X_API_ALLOWED_KEYS = [CORRECT_API_KEY];
+				config.xApiAllowedKeys = [CORRECT_API_KEY];
 
 				return { CORRECT_API_KEY };
 			};
@@ -50,7 +50,7 @@ describe('XApiKeyStrategy', () => {
 		describe('when an invalid api key is provided', () => {
 			const setup = () => {
 				const INVALID_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4BAD';
-				config.X_API_ALLOWED_KEYS = ['some-other-key'];
+				config.xApiAllowedKeys = ['some-other-key'];
 
 				return { INVALID_API_KEY };
 			};
@@ -63,7 +63,7 @@ describe('XApiKeyStrategy', () => {
 		describe('when no api keys are allowed', () => {
 			const setup = () => {
 				const ANY_API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
-				config.X_API_ALLOWED_KEYS = [];
+				config.xApiAllowedKeys = [];
 
 				return { ANY_API_KEY };
 			};

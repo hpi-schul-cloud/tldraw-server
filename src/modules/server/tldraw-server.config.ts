@@ -1,33 +1,44 @@
-import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
+import { ConfigProperty, Configuration } from '../../infra/configuration/index.js';
+import { CommaSeparatedStringToArray, StringToBoolean, StringToNumber } from '../../shared/transformer/index.js';
 
+export const TLDRAW_SERVER_CONFIG = 'TLDRAW_SERVER_CONFIG';
+@Configuration()
 export class TldrawServerConfig {
 	@IsString()
-	public TLDRAW_WEBSOCKET_PATH = '';
+	@ConfigProperty('TLDRAW_WEBSOCKET_PATH')
+	public tldrawWebsocketPath = '';
 
 	@IsNumber()
-	@Transform(({ value }) => parseInt(value))
-	public TLDRAW_WEBSOCKET_PORT = 3345;
+	@StringToNumber()
+	@ConfigProperty('TLDRAW_WEBSOCKET_PORT')
+	public tldrawWebsocketPort = 3345;
 
 	@IsUrl({ protocols: ['wss', 'ws'], require_tld: false })
-	public TLDRAW_WEBSOCKET_URL!: string;
+	@ConfigProperty('TLDRAW_WEBSOCKET_URL')
+	public tldrawWebsocketUrl!: string;
 
-	@Transform(({ value }) => value === 'true')
+	@StringToBoolean()
 	@IsBoolean()
-	public TLDRAW_ASSETS_ENABLED = true;
+	@ConfigProperty('TLDRAW_ASSETS_ENABLED')
+	public tldrawAssetsEnabled = true;
 
-	@Transform(({ value }) => parseInt(value))
+	@StringToNumber()
 	@IsNumber()
-	public TLDRAW_ASSETS_MAX_SIZE_BYTES = 10485760;
+	@ConfigProperty('TLDRAW_ASSETS_MAX_SIZE_BYTES')
+	public tldrawAssetsMaxSizeBytes = 10485760;
 
-	@Transform(({ value }) => value.split(','))
+	@CommaSeparatedStringToArray()
 	@IsArray()
-	public TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'];
+	@ConfigProperty('TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST')
+	public tldrawAssetsAllowedMimeTypesList = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'];
 
-	@Transform(({ value }) => value === 'true')
+	@StringToBoolean()
 	@IsBoolean()
-	public FEATURE_TLDRAW_ENABLED!: boolean;
+	@ConfigProperty('FEATURE_TLDRAW_ENABLED')
+	public featureTldrawEnabled!: boolean;
 
 	@IsUrl({ protocols: ['https', 'http'], require_tld: false })
-	public NOT_AUTHENTICATED_REDIRECT_URL!: string;
+	@ConfigProperty('NOT_AUTHENTICATED_REDIRECT_URL')
+	public notAuthenticatedRedirectUrl!: string;
 }

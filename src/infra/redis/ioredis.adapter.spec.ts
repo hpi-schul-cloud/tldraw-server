@@ -12,7 +12,7 @@ describe(IoRedisAdapter.name, () => {
 	const buildParams = async () => {
 		const logger = createMock<Logger>();
 		const config = createMock<RedisConfig>({
-			REDIS_PREFIX: testPrefix,
+			redisPrefix: testPrefix,
 		});
 		const redis = createMock<Redis>();
 		const redisAdapter = new IoRedisAdapter(redis, config, logger);

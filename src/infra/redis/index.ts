@@ -1,4 +1,3 @@
-export { TypeGuard } from './guards/type.guard.js';
 export {
 	RedisAdapter,
 	StreamMessageReply,

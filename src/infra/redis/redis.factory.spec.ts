@@ -29,12 +29,12 @@ describe(RedisFactory.name, () => {
 
 				const config = new RedisConfig();
 
-				config.REDIS_URL = sentinelServiceName;
-				config.REDIS_CLUSTER_ENABLED = true;
-				config.REDIS_SENTINEL_SERVICE_NAME = sentinelServiceName;
-				config.REDIS_PREFIX = redisPrefix;
-				config.REDIS_SENTINEL_NAME = sentinelName;
-				config.REDIS_SENTINEL_PASSWORD = sentinelPassword;
+				config.redisUrl = sentinelServiceName;
+				config.redisClusterEnabled = true;
+				config.redisSentinelServiceName = sentinelServiceName;
+				config.redisPrefix = redisPrefix;
+				config.redisSentinelName = sentinelName;
+				config.redisSentinelPassword = sentinelPassword;
 
 				const name1 = 'name1';
 				const name2 = 'name2';
@@ -95,7 +95,7 @@ describe(RedisFactory.name, () => {
 				const config = new RedisConfig();
 				const redisUrl = 'redis://localhost:6379';
 
-				config.REDIS_URL = redisUrl;
+				config.redisUrl = redisUrl;
 
 				const resolveSrv = jest.fn();
 				jest.spyOn(util, 'promisify').mockReturnValueOnce(resolveSrv);
