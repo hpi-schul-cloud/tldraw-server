@@ -61,7 +61,7 @@
 		"@openapitools/openapi-generator-cli": "^2.30.0",
 		"@types/express": "^5.0.6",
 		"@types/jest": "^30.0.0",
-		"@types/node": "^22.9.0",
+		"@types/node": "^24.12.2",
 		"@types/passport": "^1.0.17",
 		"@types/passport-strategy": "^0.2.38",
 		"@types/supertest": "^7.2.0",
