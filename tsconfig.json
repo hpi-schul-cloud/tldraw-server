@@ -1,8 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "es2022",
-		"module": "nodeNext",
-		"moduleResolution": "nodeNext",
+		"module": "node20",
 		"declaration": true,
 		"removeComments": true,
 		"emitDecoratorMetadata": true,
