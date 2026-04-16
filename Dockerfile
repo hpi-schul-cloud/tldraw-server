@@ -1,6 +1,4 @@
-FROM docker.io/node:22-alpine
-
-RUN apk add --no-cache gcompat build-base
+FROM docker.io/node:24-trixie-slim
 
 ENV TZ=Europe/Berlin
 RUN mkdir /app && chown -R node:node /app
