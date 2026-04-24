@@ -28,11 +28,14 @@ export class AuthorizationService {
 			const token = this.getToken(req);
 
 			response = await this.fetchAuthorization(room, token);
-		} catch (error) {
-			if (error.message === 'JWT not found') {
+		} catch (error: unknown) {
+			const errorMessage =
+				error && typeof error === 'object' && 'message' in error ? String(error.message) : 'Unknown error';
+
+			if (errorMessage === 'JWT not found') {
 				response = this.createErrorResponsePayload(WebSocketCloseCode.Unauthorized, 'JWT not found');
 			} else {
-				response = this.createErrorResponsePayload(WebSocketCloseCode.InternalError, error.message);
+				response = this.createErrorResponsePayload(WebSocketCloseCode.InternalError, errorMessage);
 			}
 		}
 
