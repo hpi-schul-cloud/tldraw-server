@@ -50,7 +50,7 @@ describe(RedisFactory.name, () => {
 					{ name: name2, port: port2 },
 				];
 				const resolveSrv = jest.fn().mockResolvedValueOnce(records);
-				jest.mocked(util.promisify).mockReturnValueOnce(resolveSrv as any);
+				jest.mocked(util.promisify).mockReturnValueOnce(resolveSrv);
 				// @ts-ignore
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
@@ -103,7 +103,7 @@ describe(RedisFactory.name, () => {
 				config.redisUrl = redisUrl;
 
 				const resolveSrv = jest.fn();
-				jest.mocked(util.promisify).mockReturnValueOnce(resolveSrv as any);
+				jest.mocked(util.promisify).mockReturnValueOnce(resolveSrv);
 
 				const redisMock = createMock<Redis>();
 				// @ts-ignore
