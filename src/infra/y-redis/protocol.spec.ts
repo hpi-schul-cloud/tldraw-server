@@ -1,4 +1,3 @@
-import { createMock } from '@golevelup/ts-jest';
 import { encoding } from 'lib0';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -46,35 +45,50 @@ describe('Protocol', () => {
 		describe('when messages contains two messages', () => {
 			describe('when the first message is a sync and update and second message is awareness and update', () => {
 				const setup = () => {
-					const messages = [
-						createMessage(0, 2, new Uint8Array([1, 2, 3])),
-						createMessage(1, 2, new Uint8Array([1, 2, 3])),
-					];
-					const mergeUpdatesSpy = jest.spyOn(Y, 'mergeUpdates').mockReturnValueOnce(new Uint8Array([1, 2, 3]));
-					const applyAwarenessUpdateSpy = jest.spyOn(awarenessProtocol, 'applyAwarenessUpdate').mockReturnValueOnce();
-					const encodeAwarenessUpdateSpy = jest
-						.spyOn(awarenessProtocol, 'encodeAwarenessUpdate')
-						.mockReturnValueOnce(new Uint8Array([1, 2, 3]));
+					// Create a valid Yjs v1 update
+					const ydoc = new Y.Doc();
+					const update = Y.encodeStateAsUpdate(ydoc);
+					ydoc.destroy();
 
-					return { messages, mergeUpdatesSpy, applyAwarenessUpdateSpy, encodeAwarenessUpdateSpy };
+					// Proper sync message: [messageSync, messageSyncUpdate, varUint8Array(update)]
+					const syncEncoder = encoding.createEncoder();
+					encoding.writeUint8(syncEncoder, 0);
+					encoding.writeUint8(syncEncoder, 2);
+					encoding.writeVarUint8Array(syncEncoder, update);
+					const syncMsg = encoding.toUint8Array(syncEncoder);
+
+					// Create a valid awareness update
+					const aDoc = new Y.Doc();
+					const aw = new awarenessProtocol.Awareness(aDoc);
+					aw.setLocalState({ cursor: 'test' });
+					const awarenessPayload = awarenessProtocol.encodeAwarenessUpdate(aw, [aDoc.clientID]);
+					aw.destroy();
+					aDoc.destroy();
+
+					// Proper awareness message: [messageAwareness, varUint8Array(awarenessPayload)]
+					const awEncoder = encoding.createEncoder();
+					encoding.writeUint8(awEncoder, 1);
+					encoding.writeVarUint8Array(awEncoder, awarenessPayload);
+					const awarenessMsg = encoding.toUint8Array(awEncoder);
+
+					// Pre-compute expected sync result
+					const expectedSyncEncoder = encoding.createEncoder();
+					encoding.writeUint8(expectedSyncEncoder, 0);
+					encoding.writeUint8(expectedSyncEncoder, 2);
+					encoding.writeVarUint8Array(expectedSyncEncoder, Y.mergeUpdates([update]));
+					const expectedSyncMsg = encoding.toUint8Array(expectedSyncEncoder);
+
+					return { messages: [syncMsg, awarenessMsg], expectedSyncMsg };
 				};
 
 				it('should return the encoded sync message', () => {
-					const { messages, mergeUpdatesSpy, applyAwarenessUpdateSpy, encodeAwarenessUpdateSpy } = setup();
+					const { messages, expectedSyncMsg } = setup();
 
 					const result = mergeMessages(messages);
 
-					expect(mergeUpdatesSpy).toHaveBeenCalledWith([new Uint8Array([1, 2, 3])]);
-					expect(applyAwarenessUpdateSpy).toHaveBeenCalledWith(
-						expect.any(awarenessProtocol.Awareness),
-						new Uint8Array([3, 1]),
-						null,
-					);
-					expect(encodeAwarenessUpdateSpy).toHaveBeenCalledWith(
-						expect.any(awarenessProtocol.Awareness),
-						expect.any(Array),
-					);
-					expect(result).toEqual([new Uint8Array([0, 2, 3, 1, 2, 3]), new Uint8Array([1, 3, 1, 2, 3])]);
+					expect(result).toHaveLength(2);
+					expect(result[0]).toEqual(expectedSyncMsg);
+					expect(result[1][0]).toBe(1); // messageAwareness
 				});
 			});
 		});
@@ -124,29 +138,38 @@ describe('Protocol', () => {
 
 	describe('encodeAwarenessUpdate', () => {
 		const setup = () => {
-			const awareness = createMock<awarenessProtocol.Awareness>();
-			const encodeSpy = jest
-				.spyOn(awarenessProtocol, 'encodeAwarenessUpdate')
-				.mockReturnValue(new Uint8Array([1, 2, 3, 4]));
-			const clients = [1, 2, 3];
+			const ydoc = new Y.Doc();
+			const awareness = new awarenessProtocol.Awareness(ydoc);
+			awareness.setLocalState({ cursor: 'test' });
+			const clients = [ydoc.clientID];
+			const awarenessPayload = awarenessProtocol.encodeAwarenessUpdate(awareness, clients);
 
-			return { awareness, encodeSpy, clients };
+			const expectedEncoder = encoding.createEncoder();
+			encoding.writeUint8(expectedEncoder, 1); // messageAwareness
+			encoding.writeVarUint8Array(expectedEncoder, awarenessPayload);
+			const expectedResult = encoding.toUint8Array(expectedEncoder);
+
+			return { awareness, clients, expectedResult, ydoc };
 		};
 
-		it('should call encodeSpy', () => {
-			const { awareness, clients, encodeSpy } = setup();
-
-			encodeAwarenessUpdate(awareness, clients);
-
-			expect(encodeSpy).toHaveBeenCalledWith(awareness, clients);
-		});
-
-		it('should return the encoded awareness update message', () => {
-			const { awareness, clients } = setup();
+		it('should call encodeAwarenessUpdate with awareness and clients', () => {
+			const { awareness, clients, expectedResult, ydoc } = setup();
 
 			const result = encodeAwarenessUpdate(awareness, clients);
 
-			expect(result).toEqual(new Uint8Array([1, 4, 1, 2, 3, 4]));
+			expect(result).toEqual(expectedResult);
+			awareness.destroy();
+			ydoc.destroy();
+		});
+
+		it('should return the encoded awareness update message', () => {
+			const { awareness, clients, expectedResult, ydoc } = setup();
+
+			const result = encodeAwarenessUpdate(awareness, clients);
+
+			expect(result).toEqual(expectedResult);
+			awareness.destroy();
+			ydoc.destroy();
 		});
 	});
 

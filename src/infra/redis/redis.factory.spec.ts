@@ -12,6 +12,11 @@ jest.mock('ioredis', () => {
 	};
 });
 
+jest.mock('util', () => ({
+	...jest.requireActual('util'),
+	promisify: jest.fn(),
+}));
+
 jest.mock<IoRedisAdapter>('./ioredis.adapter.js');
 
 describe(RedisFactory.name, () => {
@@ -45,7 +50,7 @@ describe(RedisFactory.name, () => {
 					{ name: name2, port: port2 },
 				];
 				const resolveSrv = jest.fn().mockResolvedValueOnce(records);
-				jest.spyOn(util, 'promisify').mockReturnValueOnce(resolveSrv);
+				jest.mocked(util.promisify).mockReturnValueOnce(resolveSrv as any);
 				// @ts-ignore
 				const constructorSpy = jest.spyOn(Redis.prototype, 'constructor');
 
@@ -98,7 +103,7 @@ describe(RedisFactory.name, () => {
 				config.redisUrl = redisUrl;
 
 				const resolveSrv = jest.fn();
-				jest.spyOn(util, 'promisify').mockReturnValueOnce(resolveSrv);
+				jest.mocked(util.promisify).mockReturnValueOnce(resolveSrv as any);
 
 				const redisMock = createMock<Redis>();
 				// @ts-ignore
