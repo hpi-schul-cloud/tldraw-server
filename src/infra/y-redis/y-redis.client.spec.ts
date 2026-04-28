@@ -1,5 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as encoding from 'lib0/encoding';
 import * as Awareness from 'y-protocols/awareness';
 import * as Y from 'yjs';
 import { Doc, encodeStateAsUpdateV2 } from 'yjs';
@@ -320,49 +321,68 @@ describe(YRedisClient.name, () => {
 	describe('handleMessageUpdates', () => {
 		describe('when a message is messageSyncUpdate', () => {
 			const setup = () => {
+				const sourceDoc = new Doc();
+				sourceDoc.getMap('data').set('key', 'value');
+				const update = Y.encodeStateAsUpdate(sourceDoc);
+				sourceDoc.destroy();
+
+				// Encode as proper sync message: [messageSync, messageSyncUpdate, varUint8Array(update)]
+				const encoder = encoding.createEncoder();
+				encoding.writeVarUint(encoder, protocol.messageSync);
+				encoding.writeVarUint(encoder, protocol.messageSyncUpdate);
+				encoding.writeVarUint8Array(encoder, update);
+				const message = Buffer.from(encoding.toUint8Array(encoder));
+
 				const ydoc = new Doc();
 				const awareness = createMock<Awareness.Awareness>();
-				const message = Buffer.from([protocol.messageSync, protocol.messageSyncUpdate, 0x54, 0x45, 0x53, 0x54]);
-
 				const messages = yRedisMessageFactory.build({ messages: [message] });
 
-				const spyApplyUpdate = jest.spyOn(Y, 'applyUpdate');
-				spyApplyUpdate.mockReturnValueOnce(undefined);
-
-				return { ydoc, awareness, messages, spyApplyUpdate };
+				return { ydoc, awareness, messages };
 			};
 
 			it('should call Y.applyUpdate with correct params', () => {
-				const { ydoc, awareness, messages, spyApplyUpdate } = setup();
+				const { ydoc, awareness, messages } = setup();
 
 				// @ts-ignore it is private method
 				yRedisClient.handleMessageUpdates(messages, ydoc, awareness);
 
-				expect(spyApplyUpdate).toHaveBeenCalledWith(ydoc, expect.anything());
+				expect(ydoc.getMap('data').get('key')).toBe('value');
+				ydoc.destroy();
 			});
 		});
 
 		describe('when a message is messageSyncAwareness', () => {
 			const setup = () => {
-				const ydoc = new Doc();
-				const awareness = createMock<Awareness.Awareness>();
-				const message = Buffer.from([protocol.messageAwareness, 0x54, 0x45, 0x53, 0x54]);
+				const sourceDoc = new Doc();
+				const sourceAwareness = new Awareness.Awareness(sourceDoc);
+				sourceAwareness.setLocalState({ cursor: 42 });
+				const awarenessUpdate = Awareness.encodeAwarenessUpdate(sourceAwareness, [sourceDoc.clientID]);
+				const clientID = sourceDoc.clientID;
+				sourceAwareness.destroy();
+				sourceDoc.destroy();
 
+				// Encode as proper awareness message: [messageAwareness, varUint8Array(awarenessUpdate)]
+				const encoder = encoding.createEncoder();
+				encoding.writeVarUint(encoder, protocol.messageAwareness);
+				encoding.writeVarUint8Array(encoder, awarenessUpdate);
+				const message = Buffer.from(encoding.toUint8Array(encoder));
+
+				const ydoc = new Doc();
+				const awareness = new Awareness.Awareness(ydoc);
 				const messages = yRedisMessageFactory.build({ messages: [message] });
 
-				const spyApplyAwarenessUpdate = jest.spyOn(Awareness, 'applyAwarenessUpdate');
-				spyApplyAwarenessUpdate.mockReturnValueOnce(undefined);
-
-				return { ydoc, awareness, messages, spyApplyAwarenessUpdate };
+				return { ydoc, awareness, messages, clientID };
 			};
 
 			it('should call Y.applyAwarenessUpdate with correct params', () => {
-				const { ydoc, awareness, messages, spyApplyAwarenessUpdate } = setup();
+				const { ydoc, awareness, messages, clientID } = setup();
 
 				// @ts-ignore it is private method
 				yRedisClient.handleMessageUpdates(messages, ydoc, awareness);
 
-				expect(spyApplyAwarenessUpdate).toHaveBeenCalledWith(awareness, expect.anything(), null);
+				expect(awareness.getStates().get(clientID)).toEqual({ cursor: 42 });
+				awareness.destroy();
+				ydoc.destroy();
 			});
 		});
 	});

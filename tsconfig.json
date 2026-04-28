@@ -9,8 +9,9 @@
 		"allowSyntheticDefaultImports": true,
 		"sourceMap": true,
 		"outDir": "./dist",
-		"baseUrl": "./src",
+		"rootDir": "./src",
 		"incremental": true,
+		"tsBuildInfoFile": "./dist/.tsbuildinfo",
 		"strictNullChecks": true,
 		"noImplicitAny": true,
 		"strictBindCallApply": true,
@@ -18,7 +19,8 @@
 		"noFallthroughCasesInSwitch": true,
 		"strictFunctionTypes": true,
 		"strictPropertyInitialization": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"types": ["jest"]
 	},
 	"exclude": ["scripts", "dist"]
 }

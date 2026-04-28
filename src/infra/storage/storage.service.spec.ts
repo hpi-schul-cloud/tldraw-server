@@ -49,24 +49,22 @@ describe('StorageService', () => {
 				client.putObject.mockResolvedValueOnce(uploadedObjectInfoMock);
 				const room = 'room';
 				const docname = 'docname';
-				const r = new Uint8Array(0);
-				const yDocMock = createMock<Y.Doc>();
-				const yDocMockEncoded = new Uint8Array(1);
-				jest.spyOn(Y, 'encodeStateAsUpdateV2').mockReturnValueOnce(yDocMockEncoded);
+				const yDoc = new Y.Doc();
+				const yDocEncoded = Y.encodeStateAsUpdateV2(yDoc);
 				const uuidRegex = /room\/docname\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
 
-				return { room, docname, r, uploadedObjectInfoMock, yDocMock, yDocMockEncoded, uuidRegex };
+				return { room, docname, uploadedObjectInfoMock, yDoc, yDocEncoded, uuidRegex };
 			};
 
 			it('should call putObject', async () => {
-				const { room, docname, yDocMock, uuidRegex, yDocMockEncoded } = setup();
+				const { room, docname, yDoc, uuidRegex, yDocEncoded } = setup();
 
-				await service.persistDoc(room, docname, yDocMock);
+				await service.persistDoc(room, docname, yDoc);
 
 				expect(client.putObject).toHaveBeenCalledWith(
 					bucketName,
 					expect.stringMatching(uuidRegex),
-					Buffer.from(yDocMockEncoded),
+					Buffer.from(yDocEncoded),
 				);
 			});
 		});
@@ -74,19 +72,17 @@ describe('StorageService', () => {
 		describe('when putObject rejects', () => {
 			const setup = () => {
 				const error = new Error();
-				const yDocMock = createMock<Y.Doc>();
-				const yDocMockEncoded = new Uint8Array(1);
+				const yDoc = new Y.Doc();
 
 				client.putObject.mockRejectedValueOnce(error);
-				jest.spyOn(Y, 'encodeStateAsUpdateV2').mockReturnValueOnce(yDocMockEncoded);
 
-				return { error, yDocMock };
+				return { error, yDoc };
 			};
 
 			it('should throw an error', async () => {
-				const { error, yDocMock } = setup();
+				const { error, yDoc } = setup();
 
-				await expect(service.persistDoc('room', 'docname', yDocMock)).rejects.toThrow(error);
+				await expect(service.persistDoc('room', 'docname', yDoc)).rejects.toThrow(error);
 			});
 		});
 	});
@@ -190,43 +186,28 @@ describe('StorageService', () => {
 						const returnValue = { toArray: jest.fn().mockResolvedValueOnce(objNames) };
 						client.listObjectsV2.mockReturnValueOnce(returnValue as unknown as BucketStream<BucketItem>);
 
-						const dataChunk = new Uint8Array(5);
-						const stream = new Readable({
-							read() {
-								this.emit('data', dataChunk);
-								this.emit('end');
-							},
-						});
-						client.getObject.mockResolvedValueOnce(stream);
-						client.getObject.mockResolvedValueOnce(stream);
+						const validUpdate = Y.encodeStateAsUpdateV2(new Y.Doc());
+						const makeStream = () =>
+							new Readable({
+								read() {
+									this.emit('data', validUpdate);
+									this.emit('end');
+								},
+							});
+						client.getObject.mockResolvedValueOnce(makeStream());
+						client.getObject.mockResolvedValueOnce(makeStream());
 
-						const doc = new Uint8Array(0);
-						const mergeUpdatesV2Spy = jest.spyOn(Y, 'mergeUpdatesV2').mockReturnValueOnce(doc);
+						const doc = Y.mergeUpdatesV2([Buffer.from(validUpdate), Buffer.from(validUpdate)]);
 
-						return { doc, mergeUpdatesV2Spy, dataChunk };
+						return { doc };
 					};
 
-					// How is this case possible?
-					/* it('should remove null chunks', async () => {
-						const { mergeUpdatesV2Spy, dataChunk } = setup();
-
-						await service.retrieveDoc('room', 'docname');
-
-						expect(mergeUpdatesV2Spy).toHaveBeenCalledWith([
-							Buffer.concat([Buffer.from(dataChunk)]),
-							Buffer.concat([Buffer.from(dataChunk)]),
-						]);
-					}); */
-
 					it('should call mergeUpdatesV2 with updates', async () => {
-						const { mergeUpdatesV2Spy, dataChunk } = setup();
+						const { doc } = setup();
 
-						await service.retrieveDoc('room', 'docname');
+						const result = await service.retrieveDoc('room', 'docname');
 
-						expect(mergeUpdatesV2Spy).toHaveBeenCalledWith([
-							Buffer.concat([Buffer.from(dataChunk)]),
-							Buffer.concat([Buffer.from(dataChunk)]),
-						]);
+						expect(result?.doc).toEqual(doc);
 					});
 
 					it('should return doc and references', async () => {
@@ -276,29 +257,26 @@ describe('StorageService', () => {
 
 			describe('when retrieveDoc returns doc', () => {
 				const setup = () => {
-					const doc = new Uint8Array(0);
+					const doc = Y.encodeStateAsUpdateV2(new Y.Doc());
 					jest.spyOn(service, 'retrieveDoc').mockResolvedValueOnce({ doc, references: [] });
 
-					const stateVector = new Uint8Array(1);
-					jest.spyOn(Y, 'encodeStateVectorFromUpdateV2').mockReturnValueOnce(stateVector);
-
-					return { doc, stateVector };
+					return { doc };
 				};
 
 				it('should call encodeStateVectorFromUpdateV2', async () => {
 					const { doc } = setup();
 
-					await service.retrieveStateVector('room', 'docname');
+					const result = await service.retrieveStateVector('room', 'docname');
 
-					expect(Y.encodeStateVectorFromUpdateV2).toHaveBeenCalledWith(doc);
+					expect(result).toEqual(Y.encodeStateVectorFromUpdateV2(doc));
 				});
 
 				it('should return state vector', async () => {
-					const { stateVector } = setup();
+					const { doc } = setup();
 
 					const result = await service.retrieveStateVector('room', 'docname');
 
-					expect(result).toBe(stateVector);
+					expect(result).toEqual(Y.encodeStateVectorFromUpdateV2(doc));
 				});
 			});
 		});
