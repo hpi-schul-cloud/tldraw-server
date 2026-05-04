@@ -58,9 +58,9 @@ export class RedisFactory {
 			}));
 
 			return hosts;
-		} catch (err) {
-			this.logger.info('Error during service discovery:', err);
-			throw err;
+		} catch (error: unknown) {
+			this.logger.info('Error during service discovery:', String(error));
+			throw error;
 		}
 	}
 }
