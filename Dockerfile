@@ -11,7 +11,7 @@ COPY src ./src
 RUN npm run build
 RUN npm prune --production
 
-FROM  gcr.io/distroless/nodejs24-debian13:nonroot AS production
+FROM gcr.io/distroless/nodejs24-debian13:nonroot AS production
 
 WORKDIR /app
 
