@@ -26,4 +26,4 @@ USER nonroot
 
 EXPOSE 3345 3349 9090
 
-CMD ["/nodejs/bin/node", "dist/apps/tldraw-server.app.js"]
+CMD ["dist/apps/tldraw-server.app.js"]
