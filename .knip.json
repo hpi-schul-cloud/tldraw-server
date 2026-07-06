@@ -1,0 +1,13 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"src/apps/*.ts!",
+		"scripts/**/*.{js,ts}!"
+	],
+	"project": [
+		"**/*.{js,ts}!"
+	],
+	"ignore": [
+		"src/infra/authorization/authorization-api-client/**/*"
+	]
+}

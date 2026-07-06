@@ -9,8 +9,6 @@ export type XItems = XItem[];
 
 export type XReadBufferReply = [key: Buffer, items: XItems][] | null;
 
-export type XRangeResponse = [id: string, fields: string[]][];
-
 export interface XAutoClaimResponse {
 	nextId: RedisKey;
 	messages: StreamMessageReply[] | null;
