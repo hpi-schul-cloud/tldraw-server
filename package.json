@@ -26,8 +26,7 @@
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-		"generate-client:authorization": "node ./scripts/generate-client.js -u 'http://localhost:3030/api/v3/docs-json/' -p 'src/infra/authorization/authorization-api-client' -c 'openapitools-config.json' -f 'operationId:AuthorizationReferenceController_authorizeByReference'",
-		"knip": "knip"
+		"generate-client:authorization": "node ./scripts/generate-client.js -u 'http://localhost:3030/api/v3/docs-json/' -p 'src/infra/authorization/authorization-api-client' -c 'openapitools-config.json' -f 'operationId:AuthorizationReferenceController_authorizeByReference'"
 	},
 	"overrides": {
 		"multer": "2.2.0",
@@ -77,7 +76,6 @@
 		"fishery": "^2.4.0",
 		"globals": "^17.7.0",
 		"jest": "^30.4.2",
-		"knip": "^6.24.0",
 		"prettier": "^3.8.4",
 		"redis-memory-server": "^0.17.0",
 		"supertest": "^7.2.2",
