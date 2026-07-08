@@ -14,6 +14,8 @@ import * as Y from 'yjs';
 
 export const messageSync = 0;
 export const messageAwareness = 1;
+export const messageAuth = 2;
+export const messageQueryAwareness = 3;
 
 export const messageSyncStep1 = 0;
 export const messageSyncStep2 = 1;

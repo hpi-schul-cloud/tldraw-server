@@ -8,6 +8,6 @@
 		"**/*.{js,ts}!"
 	],
 	"ignore": [
-		"src/infra/authorization/authorization-api-client/**/*"
+		"src/infra/**/*"
 	]
 }

@@ -7,7 +7,7 @@ import { Logger } from '../logger/index.js';
 import { DocumentStorage } from '../y-redis/storage.js';
 import { STORAGE_CONFIG, StorageConfig } from './storage.config.js';
 
-const encodeS3ObjectName = (room: string, docid: string, r = ''): string =>
+export const encodeS3ObjectName = (room: string, docid: string, r = ''): string =>
 	`${encodeURIComponent(room)}/${encodeURIComponent(docid)}/${r}`;
 
 const readStream = (stream: Stream): Promise<Buffer> =>
