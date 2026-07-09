@@ -19,7 +19,7 @@ export default [
 	{
 		ignores: ['**/eslint.config.mjs', '**/ansible', '**/.github', 'src/infra/authorization/authorization-api-client'],
 	},
-	...compat.extends('plugin:@typescript-eslint/stylistic-type-checked', 'plugin:prettier/recommended'),
+	...compat.extends('plugin:@typescript-eslint/stylistic-type-checked'),
 	{
 		plugins: {
 			'@typescript-eslint': typescriptEslintEslintPlugin,

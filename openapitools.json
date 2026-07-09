@@ -2,6 +2,30 @@
   "$schema": "./node_modules/@openapitools/openapi-generator-cli/config.schema.json",
   "spaces": 2,
   "generator-cli": {
-    "version": "7.9.0"
+    "version": "7.9.0",
+    "generators": {
+      "authorization-api": {
+        "generatorName": "typescript-fetch",
+        "inputSpec": "http://localhost:3030/api/v3/docs-json/",
+        "output": "./src/infra/authorization/authorization-api-client",
+        "skipValidateSpec": true,
+        "enablePostProcessFile": true,
+        "openapiNormalizer": {
+          "FILTER": "operationId:AuthorizationReferenceController_authorizeByReference"
+        },
+        "additionalProperties": {
+          "apiPackage": "api",
+          "enumNameSuffix": "",
+          "enumPropertyNaming": "UPPERCASE",
+          "fileNaming": "kebab-case",
+          "generateAliasAsModel": true,
+          "importFileExtension": ".js",
+          "modelPackage": "models",
+          "supportsES6": true,
+          "withInterfaces": true,
+          "withSeparateModelsAndApi": true
+        }
+      }
+    }
   }
 }
