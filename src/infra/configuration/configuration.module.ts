@@ -3,7 +3,7 @@ import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config
 import { ConfigurationFactory } from './configuration.factory.js';
 
 const getNodeEnv = (): string => process.env.NODE_ENV ?? 'development';
-const envFilesHighestPriorityFirst = [`.env.${getNodeEnv()}`, '.env'];
+const envFilesHighestPriorityFirst = ['.env', `.env.${getNodeEnv()}`];
 const loadEnvConfigInOrder = (): ConfigModuleOptions => {
 	return {
 		cache: true,
