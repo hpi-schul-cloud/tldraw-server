@@ -5,23 +5,21 @@
     "version": "7.9.0",
     "generators": {
       "authorization-api": {
-        "generatorName": "typescript-axios",
-        "inputSpec": "http://localhost:3030/api/v3/docs-json",
+        "generatorName": "typescript-fetch",
+        "inputSpec": "http://localhost:3030/api/v3/docs-json/",
         "output": "./src/infra/authorization/authorization-api-client",
         "skipValidateSpec": true,
         "enablePostProcessFile": true,
         "openapiNormalizer": {
-          "FILTER": "operationId:AuthorizationReferenceController_authorizeByReference|AuthorizationReferenceController_authorizeByReferences|AuthorizationReferenceController_createToken|AuthorizationReferenceController_resolveToken"
-        },
-        "globalProperty": {
-          "models": "AuthorizationBodyParams:AuthorizationContextParams:AuthorizedResponse:CreateAccessTokenParams:AccessTokenResponse:AccessTokenParams:AccessTokenPayloadResponse:AuthorizedByReferenceResponse:AuthorizationManyReferencesBodyParams",
-          "apis": "",
-          "supportingFiles": ""
+          "FILTER": "operationId:AuthorizationReferenceController_authorizeByReference"
         },
         "additionalProperties": {
           "apiPackage": "api",
           "enumNameSuffix": "",
           "enumPropertyNaming": "UPPERCASE",
+          "fileNaming": "kebab-case",
+          "generateAliasAsModel": true,
+          "importFileExtension": ".js",
           "modelPackage": "models",
           "supportsES6": true,
           "withInterfaces": true,
