@@ -84,3 +84,19 @@ jobs:
         run: npm ci --prefer-offline --no-audit
       - name: lint
         run: npm run lint
+  circular_dependency_check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Setup node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        run: npm ci --ignore-scripts --prefer-offline --no-audit
+      - name: Build
+        run: npm run build
+      - name: Check circular dependencies
+        run: npx madge@latest --circular .
