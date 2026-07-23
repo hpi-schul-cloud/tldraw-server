@@ -4,6 +4,3 @@
  * Do not use wildcard exports.                              *
  * Do not export *.app.module.ts here; import them directly. *
  *********************************************************** */
-
-export { AuthorizationModule } from './authorization.module.js';
-export { AuthorizationService } from './authorization.service.js';
