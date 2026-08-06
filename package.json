@@ -67,7 +67,7 @@
 		"@nestjs/testing": "^11.1.28",
 		"@openapitools/openapi-generator-cli": "^2.40.1",
 		"@types/jest": "^30.0.0",
-		"@types/node": "^24.12.2",
+		"@types/node": "^26.1.2",
 		"@types/passport": "^1.0.17",
 		"@types/supertest": "^7.2.1",
 		"@types/ws": "^8.18.1",
