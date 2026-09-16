@@ -12,6 +12,7 @@ permissions:
 
 env:
   NODE_VERSION: '24'
+  MINIO_VERSION: 'latest'
 jobs:
   tests_cov:
     runs-on: ubuntu-latest
@@ -27,11 +28,15 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
         run: npm ci --prefer-offline --no-audit
+      - name: Prepare MinIO image from Quay for infleet action
+        run: |
+          docker pull "quay.io/minio/minio:${MINIO_VERSION}"
+          docker tag "quay.io/minio/minio:${MINIO_VERSION}" "minio/minio:${MINIO_VERSION}"
       - name: Start UP MinIO
         uses: infleet/minio-action@d7e8e8b87654846dc56cc2352f3395f3064b2d79 # v0.0.2
         with:
           port: "9000"
-          version: "latest"
+          version: ${{ env.MINIO_VERSION }}
           username: "miniouser"
           password: "miniouser"
       - name: test:cov - test all with coverage
