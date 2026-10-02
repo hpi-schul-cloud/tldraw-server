@@ -28,9 +28,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
         run: npm ci --prefer-offline --no-audit
+      - name: Verify Docker is accessible
+        run: |
+          docker version
+          docker ps
+          docker run --rm hello-world
       - name: test:cov - test all with coverage
         timeout-minutes: 15
         run: export RUN_WITHOUT_JEST_COVERAGE='true' && export NODE_OPTIONS='--max_old_space_size=4096' && ./node_modules/.bin/jest --shard=${{ matrix.shard }}/${{ strategy.job-total }} --coverage --force-exit
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
       - name: save-coverage
         run: mv coverage/lcov.info coverage/${{matrix.shard}}.info
       - name: "upload-artifacts"
