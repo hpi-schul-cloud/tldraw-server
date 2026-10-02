@@ -18,19 +18,6 @@ jobs:
     strategy:
       matrix:
         shard: [1]
-    services:
-      docker:
-        image: docker:dind
-        env:
-          DOCKER_TLS_CERTDIR: ''
-        ports:
-          - 2375:2375
-        options: >-
-          --privileged
-          --health-cmd "docker info"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -40,24 +27,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
         run: npm ci --prefer-offline --no-audit
-      - name: Wait for Docker service
-        run: |
-          for i in {1..30}; do
-            if docker -H tcp://127.0.0.1:2375 info > /dev/null 2>&1; then
-              echo "Docker is ready"
-              break
-            fi
-            echo "Waiting for Docker... attempt $i"
-            sleep 2
-          done
-          docker -H tcp://127.0.0.1:2375 info
+      - name: Setup Testcontainers Cloud Client
+        uses: atomicjar/testcontainers-cloud-setup-action@v1
+        with:
+          token: ${{ secrets.TC_CLOUD_TOKEN }}
       - name: test:cov - test all with coverage
         timeout-minutes: 15
         run: export RUN_WITHOUT_JEST_COVERAGE='true' && export NODE_OPTIONS='--max_old_space_size=4096' && ./node_modules/.bin/jest --shard=${{ matrix.shard }}/${{ strategy.job-total }} --coverage --force-exit
-        env:
-          DOCKER_HOST: tcp://127.0.0.1:2375
-          TESTCONTAINERS_HOST_OVERRIDE: 127.0.0.1
-          TESTCONTAINERS_RYUK_DISABLED: 'true'
       - name: save-coverage
         run: mv coverage/lcov.info coverage/${{matrix.shard}}.info
       - name: "upload-artifacts"
