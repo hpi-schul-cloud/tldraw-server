@@ -1,6 +1,8 @@
+import { ConfigService } from '@nestjs/config';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
 import * as array from 'lib0/array';
 import * as promise from 'lib0/promise';
 import { WebSocket } from 'ws';
@@ -14,13 +16,34 @@ import { TLDRAW_SERVER_CONFIG, TldrawServerConfig } from '../../tldraw-server.co
 
 describe('Websocket Api Test', () => {
 	let app: INestApplication;
+	let seaweedFsContainer: StartedTestContainer;
 	let authorizationService: DeepMocked<AuthorizationService>;
 	let tldrawServerConfig: TldrawServerConfig;
 
 	beforeAll(async () => {
+		seaweedFsContainer = await new GenericContainer('chrislusf/seaweedfs:latest')
+			.withCommand(['mini', '-dir=/data', '-bucket=ydocs'])
+			.withExposedPorts(8333)
+			.withWaitStrategy(Wait.forListeningPorts())
+			.start();
+
 		const moduleFixture = await Test.createTestingModule({
 			imports: [ServerModule],
 		})
+			.overrideProvider(ConfigService)
+			.useValue({
+				get: (key: string) => {
+					if (key === 'S3_ENDPOINT') {
+						return seaweedFsContainer.getHost();
+					}
+
+					if (key === 'S3_PORT') {
+						return seaweedFsContainer.getMappedPort(8333).toString();
+					}
+
+					return process.env[key];
+				},
+			})
 			.overrideProvider(AuthorizationService)
 			.useValue(createMock<AuthorizationService>())
 			.compile();
@@ -32,7 +55,8 @@ describe('Websocket Api Test', () => {
 	});
 
 	afterAll(async () => {
-		await app.close();
+		await app?.close();
+		await seaweedFsContainer?.stop();
 	});
 
 	const createWsClient = (room: string) => {

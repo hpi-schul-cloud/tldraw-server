@@ -23,5 +23,6 @@ module.exports = {
 	testEnvironment: 'node',
 	globalSetup: '<rootDir>/../scripts/testing/globalSetup.ts',
 	globalTeardown: '<rootDir>/../scripts/testing/globalTeardown.ts',
+	testTimeout: 30000,
 	forceExit: true,
 };
