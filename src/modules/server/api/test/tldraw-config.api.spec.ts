@@ -1,8 +1,6 @@
-import { ConfigService } from '@nestjs/config';
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
-import { TestApiClient } from '../../../../infra/testing/index.js';
+import { StartedTestContainer } from 'testcontainers';
+import { TestApiClient, createTestAppWithContainers } from '../../../../infra/testing/index.js';
 import { ServerModule } from '../../server.module.js';
 
 describe('Tldraw-Config Api Test', () => {
@@ -11,34 +9,7 @@ describe('Tldraw-Config Api Test', () => {
 	let seaweedFsContainer: StartedTestContainer;
 
 	beforeAll(async () => {
-		seaweedFsContainer = await new GenericContainer('chrislusf/seaweedfs:latest')
-			.withCommand(['mini', '-dir=/data', '-bucket=ydocs'])
-			.withExposedPorts(8333)
-			.withWaitStrategy(Wait.forListeningPorts())
-			.start();
-
-		const moduleFixture = await Test.createTestingModule({
-			imports: [ServerModule],
-		})
-			.overrideProvider(ConfigService)
-			.useValue({
-				get: (key: string) => {
-					if (key === 'S3_ENDPOINT') {
-						return seaweedFsContainer.getHost();
-					}
-
-					if (key === 'S3_PORT') {
-						return seaweedFsContainer.getMappedPort(8333).toString();
-					}
-
-					return process.env[key];
-				},
-			})
-			.compile();
-
-		app = moduleFixture.createNestApplication();
-		await app.init();
-
+		({ app, seaweedFsContainer } = await createTestAppWithContainers([ServerModule]));
 		testApiClient = new TestApiClient(app, 'tldraw/config');
 	});
 

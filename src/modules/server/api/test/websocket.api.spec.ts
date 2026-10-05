@@ -1,8 +1,6 @@
-import { ConfigService } from '@nestjs/config';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
+import { StartedTestContainer } from 'testcontainers';
 import * as array from 'lib0/array';
 import * as promise from 'lib0/promise';
 import { WebSocket } from 'ws';
@@ -10,6 +8,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { Doc, encodeStateAsUpdateV2 } from 'yjs';
 import { ResponsePayloadBuilder } from '../../../../infra//authorization/response.builder.js';
 import { AuthorizationService } from '../../../../infra/authorization/index.js';
+import { createTestAppWithContainers } from '../../../../infra/testing/index.js';
 import { WebSocketCloseCode } from '../../../../shared/type/websocket-close-code.js';
 import { ServerModule } from '../../server.module.js';
 import { TLDRAW_SERVER_CONFIG, TldrawServerConfig } from '../../tldraw-server.config.js';
@@ -21,35 +20,10 @@ describe('Websocket Api Test', () => {
 	let tldrawServerConfig: TldrawServerConfig;
 
 	beforeAll(async () => {
-		seaweedFsContainer = await new GenericContainer('chrislusf/seaweedfs:latest')
-			.withCommand(['mini', '-dir=/data', '-bucket=ydocs'])
-			.withExposedPorts(8333)
-			.withWaitStrategy(Wait.forListeningPorts())
-			.start();
+		({ app, seaweedFsContainer } = await createTestAppWithContainers([ServerModule], (moduleBuilder) =>
+			moduleBuilder.overrideProvider(AuthorizationService).useValue(createMock<AuthorizationService>()),
+		));
 
-		const moduleFixture = await Test.createTestingModule({
-			imports: [ServerModule],
-		})
-			.overrideProvider(ConfigService)
-			.useValue({
-				get: (key: string) => {
-					if (key === 'S3_ENDPOINT') {
-						return seaweedFsContainer.getHost();
-					}
-
-					if (key === 'S3_PORT') {
-						return seaweedFsContainer.getMappedPort(8333).toString();
-					}
-
-					return process.env[key];
-				},
-			})
-			.overrideProvider(AuthorizationService)
-			.useValue(createMock<AuthorizationService>())
-			.compile();
-
-		app = moduleFixture.createNestApplication();
-		await app.init();
 		authorizationService = await app.resolve(AuthorizationService);
 		tldrawServerConfig = await app.resolve(TLDRAW_SERVER_CONFIG);
 	});

@@ -1,8 +1,6 @@
-import { ConfigService } from '@nestjs/config';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
+import { StartedTestContainer } from 'testcontainers';
 import { WebSocket } from 'ws';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
@@ -10,6 +8,7 @@ import { Doc } from 'yjs';
 import { AuthorizationService } from '../../infra/authorization/authorization.service.js';
 import { IoRedisAdapter } from '../../infra/redis/ioredis.adapter.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
+import { createTestAppWithContainers } from '../../infra/testing/index.js';
 import { computeRedisRoomStreamName } from '../../infra/y-redis/helper.js';
 import { REDIS_FOR_DELETION } from '../../modules/server/server.const.js';
 import { ServerModule } from '../../modules/server/server.module.js';
@@ -33,35 +32,10 @@ describe('Worker Api Test', () => {
 	process.env.TLDRAW_WEBSOCKET_PORT = port.toString();
 
 	beforeAll(async () => {
-		seaweedFsContainer = await new GenericContainer('chrislusf/seaweedfs:latest')
-			.withCommand(['mini', '-dir=/data', '-bucket=ydocs'])
-			.withExposedPorts(8333)
-			.withWaitStrategy(Wait.forListeningPorts())
-			.start();
+		({ app, seaweedFsContainer } = await createTestAppWithContainers([ServerModule, WorkerModule], (moduleBuilder) =>
+			moduleBuilder.overrideProvider(AuthorizationService).useValue(createMock<AuthorizationService>()),
+		));
 
-		const moduleFixture = await Test.createTestingModule({
-			imports: [ServerModule, WorkerModule],
-		})
-			.overrideProvider(ConfigService)
-			.useValue({
-				get: (key: string) => {
-					if (key === 'S3_ENDPOINT') {
-						return seaweedFsContainer.getHost();
-					}
-
-					if (key === 'S3_PORT') {
-						return seaweedFsContainer.getMappedPort(8333).toString();
-					}
-
-					return process.env[key];
-				},
-			})
-			.overrideProvider(AuthorizationService)
-			.useValue(createMock<AuthorizationService>())
-			.compile();
-
-		app = moduleFixture.createNestApplication();
-		await app.init();
 		authorizationService = await app.resolve(AuthorizationService);
 		workerService = await app.resolve(WorkerService);
 		storageService = await app.resolve(StorageService);
