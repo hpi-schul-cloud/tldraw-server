@@ -21,14 +21,10 @@ import { mapValues } from '../runtime.js';
 export interface AuthorizationContextParams {
     /**
      * Define for which action the operation should be performend.
-     * @type {string}
-     * @memberof AuthorizationContextParams
      */
     action: AuthorizationContextParamsAction;
     /**
      * User permissions that are needed to execute the operation.
-     * @type {Array<string>}
-     * @memberof AuthorizationContextParams
      */
     requiredPermissions: Array<AuthorizationContextParamsRequiredPermissions>;
 }
@@ -39,7 +35,7 @@ export interface AuthorizationContextParams {
  */
 export const AuthorizationContextParamsAction = {
     READ: 'read',
-    WRITE: 'write'
+    WRITE: 'write',
 } as const;
 export type AuthorizationContextParamsAction = typeof AuthorizationContextParamsAction[keyof typeof AuthorizationContextParamsAction];
 
@@ -235,7 +231,7 @@ export const AuthorizationContextParamsRequiredPermissions = {
     USER_LOGIN_MIGRATION_FORCE: 'USER_LOGIN_MIGRATION_FORCE',
     USER_MIGRATE: 'USER_MIGRATE',
     USER_UPDATE: 'USER_UPDATE',
-    YEARS_EDIT: 'YEARS_EDIT'
+    YEARS_EDIT: 'YEARS_EDIT',
 } as const;
 export type AuthorizationContextParamsRequiredPermissions = typeof AuthorizationContextParamsRequiredPermissions[keyof typeof AuthorizationContextParamsRequiredPermissions];
 
@@ -264,11 +260,11 @@ export function AuthorizationContextParamsFromJSONTyped(json: any, ignoreDiscrim
     };
 }
 
-  export function AuthorizationContextParamsToJSON(json: any): AuthorizationContextParams {
-      return AuthorizationContextParamsToJSONTyped(json, false);
-  }
+export function AuthorizationContextParamsToJSON(json: any): AuthorizationContextParams {
+    return AuthorizationContextParamsToJSONTyped(json, false);
+}
 
-  export function AuthorizationContextParamsToJSONTyped(value?: AuthorizationContextParams | null, ignoreDiscriminator: boolean = false): any {
+export function AuthorizationContextParamsToJSONTyped(value?: AuthorizationContextParams | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
