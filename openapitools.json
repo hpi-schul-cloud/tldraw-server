@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@openapitools/openapi-generator-cli/config.schema.json",
   "spaces": 2,
   "generator-cli": {
-    "version": "7.9.0",
+    "version": "7.25.0",
     "generators": {
       "authorization-api": {
         "generatorName": "typescript-fetch",
@@ -12,6 +12,13 @@
         "enablePostProcessFile": true,
         "openapiNormalizer": {
           "FILTER": "operationId:AuthorizationReferenceController_authorizeByReference"
+        },
+        "globalProperty": {
+          "apiDocs": false,
+          "modelDocs": false,
+          "models": "AuthorizationBodyParams:AuthorizationContextParams:AuthorizedResponse:CreateAccessTokenParams:AccessTokenResponse:AccessTokenParams:AccessTokenPayloadResponse",
+          "apis": "",
+          "supportingFiles": ""
         },
         "additionalProperties": {
           "apiPackage": "api",

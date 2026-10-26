@@ -1,24 +1,21 @@
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { TestApiClient } from '../../../../infra/testing/index.js';
+import { StartedTestContainer } from 'testcontainers';
+import { TestApiClient, createTestAppWithContainers } from '../../../../infra/testing/index.js';
 import { ServerModule } from '../../server.module.js';
 
 describe('Tldraw-Document Api Test', () => {
 	let app: INestApplication;
+	let seaweedFsContainer: StartedTestContainer;
 	const baseRoute = 'tldraw-document';
 	const xApiKey = 'randomString';
 
 	beforeAll(async () => {
-		const moduleFixture = await Test.createTestingModule({
-			imports: [ServerModule],
-		}).compile();
-
-		app = moduleFixture.createNestApplication();
-		await app.init();
+		({ app, seaweedFsContainer } = await createTestAppWithContainers([ServerModule]));
 	});
 
 	afterAll(async () => {
-		await app.close();
+		await app?.close();
+		await seaweedFsContainer?.stop();
 	});
 
 	describe('deleteByDocName', () => {

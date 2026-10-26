@@ -1,6 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { StartedTestContainer } from 'testcontainers';
 import { WebSocket } from 'ws';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
@@ -8,6 +8,7 @@ import { Doc } from 'yjs';
 import { AuthorizationService } from '../../infra/authorization/authorization.service.js';
 import { IoRedisAdapter } from '../../infra/redis/ioredis.adapter.js';
 import { StorageService } from '../../infra/storage/storage.service.js';
+import { createTestAppWithContainers } from '../../infra/testing/index.js';
 import { computeRedisRoomStreamName } from '../../infra/y-redis/helper.js';
 import { REDIS_FOR_DELETION } from '../../modules/server/server.const.js';
 import { ServerModule } from '../../modules/server/server.module.js';
@@ -16,6 +17,7 @@ import { WorkerService } from './worker.service.js';
 
 describe('Worker Api Test', () => {
 	let app: INestApplication;
+	let seaweedFsContainer: StartedTestContainer;
 	let authorizationService: DeepMocked<AuthorizationService>;
 	let workerService: WorkerService;
 	let storageService: StorageService;
@@ -30,15 +32,10 @@ describe('Worker Api Test', () => {
 	process.env.TLDRAW_WEBSOCKET_PORT = port.toString();
 
 	beforeAll(async () => {
-		const moduleFixture = await Test.createTestingModule({
-			imports: [ServerModule, WorkerModule],
-		})
-			.overrideProvider(AuthorizationService)
-			.useValue(createMock<AuthorizationService>())
-			.compile();
+		({ app, seaweedFsContainer } = await createTestAppWithContainers([ServerModule, WorkerModule], (moduleBuilder) =>
+			moduleBuilder.overrideProvider(AuthorizationService).useValue(createMock<AuthorizationService>()),
+		));
 
-		app = moduleFixture.createNestApplication();
-		await app.init();
 		authorizationService = await app.resolve(AuthorizationService);
 		workerService = await app.resolve(WorkerService);
 		storageService = await app.resolve(StorageService);
@@ -46,7 +43,8 @@ describe('Worker Api Test', () => {
 	});
 
 	afterAll(async () => {
-		await app.close();
+		await app?.close();
+		await seaweedFsContainer?.stop();
 	});
 
 	const createWsClient = (room: string) => {

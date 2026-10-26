@@ -29,20 +29,14 @@ import {
 export interface AuthorizationBodyParams {
     /**
      * 
-     * @type {AuthorizationContextParams}
-     * @memberof AuthorizationBodyParams
      */
     context: AuthorizationContextParams;
     /**
      * The entity or domain object the operation should be performed on.
-     * @type {string}
-     * @memberof AuthorizationBodyParams
      */
     referenceType: AuthorizationBodyParamsReferenceType;
     /**
      * The id of the entity/domain object of the defined referenceType.
-     * @type {string}
-     * @memberof AuthorizationBodyParams
      */
     referenceId: string;
 }
@@ -64,7 +58,7 @@ export const AuthorizationBodyParamsReferenceType = {
     BOARDNODES: 'boardnodes',
     CONTEXT_EXTERNAL_TOOLS: 'context-external-tools',
     EXTERNAL_TOOLS: 'external-tools',
-    INSTANCES: 'instances'
+    INSTANCES: 'instances',
 } as const;
 export type AuthorizationBodyParamsReferenceType = typeof AuthorizationBodyParamsReferenceType[keyof typeof AuthorizationBodyParamsReferenceType];
 
@@ -95,11 +89,11 @@ export function AuthorizationBodyParamsFromJSONTyped(json: any, ignoreDiscrimina
     };
 }
 
-  export function AuthorizationBodyParamsToJSON(json: any): AuthorizationBodyParams {
-      return AuthorizationBodyParamsToJSONTyped(json, false);
-  }
+export function AuthorizationBodyParamsToJSON(json: any): AuthorizationBodyParams {
+    return AuthorizationBodyParamsToJSONTyped(json, false);
+}
 
-  export function AuthorizationBodyParamsToJSONTyped(value?: AuthorizationBodyParams | null, ignoreDiscriminator: boolean = false): any {
+export function AuthorizationBodyParamsToJSONTyped(value?: AuthorizationBodyParams | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

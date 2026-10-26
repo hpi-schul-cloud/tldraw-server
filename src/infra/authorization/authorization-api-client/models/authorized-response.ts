@@ -21,14 +21,10 @@ import { mapValues } from '../runtime.js';
 export interface AuthorizedResponse {
     /**
      * 
-     * @type {string}
-     * @memberof AuthorizedResponse
      */
     userId: string;
     /**
      * 
-     * @type {boolean}
-     * @memberof AuthorizedResponse
      */
     isAuthorized: boolean;
 }
@@ -57,11 +53,11 @@ export function AuthorizedResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     };
 }
 
-  export function AuthorizedResponseToJSON(json: any): AuthorizedResponse {
-      return AuthorizedResponseToJSONTyped(json, false);
-  }
+export function AuthorizedResponseToJSON(json: any): AuthorizedResponse {
+    return AuthorizedResponseToJSONTyped(json, false);
+}
 
-  export function AuthorizedResponseToJSONTyped(value?: AuthorizedResponse | null, ignoreDiscriminator: boolean = false): any {
+export function AuthorizedResponseToJSONTyped(value?: AuthorizedResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }

@@ -12,23 +12,27 @@
  * Do not edit the class manually.
  */
 
-
 import * as runtime from '../runtime.js';
-import type {
-  ApiValidationError,
-  AuthorizationBodyParams,
-  AuthorizedResponse,
-} from '../models/index.js';
 import {
+    type ApiValidationError,
     ApiValidationErrorFromJSON,
     ApiValidationErrorToJSON,
+} from '../models/api-validation-error.js';
+import {
+    type AuthorizationBodyParams,
     AuthorizationBodyParamsFromJSON,
     AuthorizationBodyParamsToJSON,
+} from '../models/authorization-body-params.js';
+import {
+    type AuthorizedResponse,
     AuthorizedResponseFromJSON,
     AuthorizedResponseToJSON,
-} from '../models/index.js';
+} from '../models/authorized-response.js';
 
 export interface AuthorizationReferenceControllerAuthorizeByReferenceRequest {
+    /**
+     * 
+     */
     authorizationBodyParams: AuthorizationBodyParams;
 }
 
@@ -39,6 +43,14 @@ export interface AuthorizationReferenceControllerAuthorizeByReferenceRequest {
  * @interface AuthorizationApiInterface
  */
 export interface AuthorizationApiInterface {
+    /**
+     * Creates request options for authorizationReferenceControllerAuthorizeByReference without sending the request
+     * @param {AuthorizationBodyParams} authorizationBodyParams 
+     * @throws {RequiredError}
+     * @memberof AuthorizationApiInterface
+     */
+    authorizationReferenceControllerAuthorizeByReferenceRequestOpts(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest): Promise<runtime.RequestOpts>;
+
     /**
      * 
      * @summary Checks if user is authorized to perform the given operation.
@@ -62,9 +74,9 @@ export interface AuthorizationApiInterface {
 export class AuthorizationApi extends runtime.BaseAPI implements AuthorizationApiInterface {
 
     /**
-     * Checks if user is authorized to perform the given operation.
+     * Creates request options for authorizationReferenceControllerAuthorizeByReference without sending the request
      */
-    async authorizationReferenceControllerAuthorizeByReferenceRaw(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizedResponse>> {
+    async authorizationReferenceControllerAuthorizeByReferenceRequestOpts(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest): Promise<runtime.RequestOpts> {
         if (requestParameters['authorizationBodyParams'] == null) {
             throw new runtime.RequiredError(
                 'authorizationBodyParams',
@@ -86,13 +98,24 @@ export class AuthorizationApi extends runtime.BaseAPI implements AuthorizationAp
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
-        const response = await this.request({
-            path: `/authorization/by-reference`,
+
+        let urlPath = `/authorization/by-reference`;
+
+        return {
+            path: urlPath,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: AuthorizationBodyParamsToJSON(requestParameters['authorizationBodyParams']),
-        }, initOverrides);
+        };
+    }
+
+    /**
+     * Checks if user is authorized to perform the given operation.
+     */
+    async authorizationReferenceControllerAuthorizeByReferenceRaw(requestParameters: AuthorizationReferenceControllerAuthorizeByReferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizedResponse>> {
+        const requestOptions = await this.authorizationReferenceControllerAuthorizeByReferenceRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizedResponseFromJSON(jsonValue));
     }

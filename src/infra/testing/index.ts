@@ -6,3 +6,4 @@
  *********************************************************** */
 
 export { TestApiClient } from './test-api-client.js';
+export { createTestAppWithContainers } from './create-test-app-with-containers.js';
