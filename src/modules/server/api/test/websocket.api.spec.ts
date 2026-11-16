@@ -37,9 +37,16 @@ describe('Websocket Api Test', () => {
 		const ydoc = new Doc();
 		const serverUrl = tldrawServerConfig.tldrawWebsocketUrl;
 		const prefix = 'y';
+		// y-websocket does not forward any options to the underlying WebSocket, so a small
+		// wrapper is used to make sure test clients connect with an allowed Origin header.
+		class AllowedOriginWebSocket extends WebSocket {
+			public constructor(address: string, protocols?: string | string[]) {
+				super(address, protocols, { origin: tldrawServerConfig.tldrawAllowedOrigins[0] });
+			}
+		}
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore
-			WebSocketPolyfill: WebSocket,
+			WebSocketPolyfill: AllowedOriginWebSocket,
 			connect: true,
 			disableBc: true,
 		});
@@ -55,6 +62,24 @@ describe('Websocket Api Test', () => {
 
 			return isSynced;
 		});
+
+	describe('origin validation', () => {
+		it('should reject a connection attempt from an unknown origin', async () => {
+			const room = Math.random().toString(36).substring(7);
+			// Build the URL from the actually configured port, since TLDRAW_WEBSOCKET_URL is only used
+			// as a client-facing reference value and is not guaranteed to match the port the server
+			// is actually bound to in every environment.
+			const serverUrl = `ws://localhost:${tldrawServerConfig.tldrawWebsocketPort}/y-${room}`;
+
+			const client = new WebSocket(serverUrl, undefined, { origin: 'https://evil.example' });
+
+			const response = await new Promise<{ statusCode?: number }>((resolve) => {
+				client.on('unexpected-response', (req, res) => resolve(res));
+			});
+
+			expect(response.statusCode).toBe(403);
+		});
+	});
 
 	describe('when clients have permission for room', () => {
 		describe('when two clients connect to the same doc before any changes', () => {

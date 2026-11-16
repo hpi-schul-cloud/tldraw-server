@@ -69,10 +69,20 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 		try {
 			let aborted = false;
 			const { headerWsKey, headerWsProtocol, headerWsExtensions } = this.extractHeaderInfos(req);
+			const origin = req.getHeader('origin');
 
 			res.onAborted(() => {
 				aborted = true;
 			});
+
+			if (!this.isAllowedOrigin(origin)) {
+				res.cork(() => {
+					res.writeStatus('403 Forbidden').end('Origin not allowed');
+				});
+				this.logger.warning(`Rejected websocket connection attempt from disallowed origin: ${origin}`);
+
+				return;
+			}
 
 			const authPayload = await this.authorizationService.hasPermission(req);
 			if (aborted) return;
@@ -87,6 +97,10 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 			});
 			this.logger.warning(error);
 		}
+	}
+
+	private isAllowedOrigin(origin: string): boolean {
+		return this.config.tldrawAllowedOrigins.includes(origin);
 	}
 
 	private extractHeaderInfos(req: HttpRequest): RequestHeaderInfos {
