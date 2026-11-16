@@ -30,7 +30,7 @@
 		"generate-client:authorization-api": "openapi-generator-cli generate -c ./openapitools.json --generator-key authorization-api"
 	},
 	"overrides": {
-		"multer": "^2.4.0",
+		"multer": "^2.5.0",
 		"js-yaml": "^4.3.2",
 		"brace-expansion": "^5.0.12",
 		"@typescript-eslint/parser": "$@typescript-eslint/parser"
