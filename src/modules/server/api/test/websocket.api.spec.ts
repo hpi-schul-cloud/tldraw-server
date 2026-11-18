@@ -62,17 +62,19 @@ describe('Websocket Api Test', () => {
 		});
 
 	describe('origin validation', () => {
-		it('should reject a connection attempt from an unknown origin', async () => {
+		it.each(['https://evil.example', undefined, 'null'])('should reject origin %s before authorization', async (origin) => {
 			const room = Math.random().toString(36).substring(7);
 			const serverUrl = `${tldrawServerConfig.tldrawWebsocketUrl}/y-${room}`;
+			const authorizationCalls = authorizationService.hasPermission.mock.calls.length;
 
-			const client = new WebSocket(serverUrl, undefined, { origin: 'https://evil.example' });
+			const client = new WebSocket(serverUrl, undefined, { origin });
 
 			const response = await new Promise<{ statusCode?: number }>((resolve) => {
 				client.on('unexpected-response', (req, res) => resolve(res));
 			});
 
 			expect(response.statusCode).toBe(403);
+			expect(authorizationService.hasPermission).toHaveBeenCalledTimes(authorizationCalls);
 		});
 	});
 
