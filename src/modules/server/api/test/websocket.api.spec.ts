@@ -64,10 +64,7 @@ describe('Websocket Api Test', () => {
 	describe('origin validation', () => {
 		it('should reject a connection attempt from an unknown origin', async () => {
 			const room = Math.random().toString(36).substring(7);
-			// Build the URL from the actually configured port, since TLDRAW_WEBSOCKET_URL is only used
-			// as a client-facing reference value and is not guaranteed to match the port the server
-			// is actually bound to in every environment.
-			const serverUrl = `ws://localhost:${tldrawServerConfig.tldrawWebsocketPort}/y-${room}`;
+			const serverUrl = `${tldrawServerConfig.tldrawWebsocketUrl}/y-${room}`;
 
 			const client = new WebSocket(serverUrl, undefined, { origin: 'https://evil.example' });
 
