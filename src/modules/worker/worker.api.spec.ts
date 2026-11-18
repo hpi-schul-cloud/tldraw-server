@@ -12,6 +12,7 @@ import { createTestAppWithContainers } from '../../infra/testing/index.js';
 import { computeRedisRoomStreamName } from '../../infra/y-redis/helper.js';
 import { REDIS_FOR_DELETION } from '../../modules/server/server.const.js';
 import { ServerModule } from '../../modules/server/server.module.js';
+import { TLDRAW_SERVER_CONFIG, TldrawServerConfig } from '../server/tldraw-server.config.js';
 import { WorkerModule } from './worker.module.js';
 import { WorkerService } from './worker.service.js';
 
@@ -22,6 +23,7 @@ describe('Worker Api Test', () => {
 	let workerService: WorkerService;
 	let storageService: StorageService;
 	let ioRedisAdapter: IoRedisAdapter;
+	let tldrawServerConfig: TldrawServerConfig;
 
 	// This port must be different from the one used in the websocket api test
 	// because tests are executed parallel and therefore we can have port conflicts.
@@ -40,6 +42,7 @@ describe('Worker Api Test', () => {
 		workerService = await app.resolve(WorkerService);
 		storageService = await app.resolve(StorageService);
 		ioRedisAdapter = await app.resolve(REDIS_FOR_DELETION);
+		tldrawServerConfig = await app.resolve(TLDRAW_SERVER_CONFIG);
 	});
 
 	afterAll(async () => {
@@ -51,9 +54,14 @@ describe('Worker Api Test', () => {
 		const ydoc = new Doc();
 		const serverUrl = url;
 		const prefix = 'y';
+		class AllowedOriginWebSocket extends WebSocket {
+			public constructor(address: string, protocols?: string | string[]) {
+				super(address, protocols, { origin: tldrawServerConfig.tldrawAllowedOrigin });
+			}
+		}
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore
-			WebSocketPolyfill: WebSocket,
+			WebSocketPolyfill: AllowedOriginWebSocket,
 			connect: true,
 			disableBc: true,
 		});

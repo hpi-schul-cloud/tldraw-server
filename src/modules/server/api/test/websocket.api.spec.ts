@@ -37,9 +37,14 @@ describe('Websocket Api Test', () => {
 		const ydoc = new Doc();
 		const serverUrl = tldrawServerConfig.tldrawWebsocketUrl;
 		const prefix = 'y';
+		class AllowedOriginWebSocket extends WebSocket {
+			public constructor(address: string, protocols?: string | string[]) {
+				super(address, protocols, { origin: tldrawServerConfig.tldrawAllowedOrigin });
+			}
+		}
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {
 			// @ts-ignore
-			WebSocketPolyfill: WebSocket,
+			WebSocketPolyfill: AllowedOriginWebSocket,
 			connect: true,
 			disableBc: true,
 		});
@@ -55,6 +60,23 @@ describe('Websocket Api Test', () => {
 
 			return isSynced;
 		});
+
+	describe('origin validation', () => {
+		it.each(['https://evil.example', undefined, 'null'])('should reject origin %s before authorization', async (origin) => {
+			const room = Math.random().toString(36).substring(7);
+			const serverUrl = `${tldrawServerConfig.tldrawWebsocketUrl}/y-${room}`;
+			const authorizationCalls = authorizationService.hasPermission.mock.calls.length;
+
+			const client = new WebSocket(serverUrl, undefined, { origin });
+
+			const response = await new Promise<{ statusCode?: number }>((resolve) => {
+				client.on('unexpected-response', (req, res) => resolve(res));
+			});
+
+			expect(response.statusCode).toBe(403);
+			expect(authorizationService.hasPermission).toHaveBeenCalledTimes(authorizationCalls);
+		});
+	});
 
 	describe('when clients have permission for room', () => {
 		describe('when two clients connect to the same doc before any changes', () => {
