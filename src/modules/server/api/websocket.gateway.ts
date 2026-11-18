@@ -100,7 +100,7 @@ export class WebsocketGateway implements OnModuleInit, OnModuleDestroy {
 	}
 
 	private isAllowedOrigin(origin: string): boolean {
-		return this.config.tldrawAllowedOrigins.includes(origin);
+		return origin === this.config.tldrawAllowedOrigin;
 	}
 
 	private extractHeaderInfos(req: HttpRequest): RequestHeaderInfos {

@@ -37,11 +37,9 @@ describe('Websocket Api Test', () => {
 		const ydoc = new Doc();
 		const serverUrl = tldrawServerConfig.tldrawWebsocketUrl;
 		const prefix = 'y';
-		// y-websocket does not forward any options to the underlying WebSocket, so a small
-		// wrapper is used to make sure test clients connect with an allowed Origin header.
 		class AllowedOriginWebSocket extends WebSocket {
 			public constructor(address: string, protocols?: string | string[]) {
-				super(address, protocols, { origin: tldrawServerConfig.tldrawAllowedOrigins[0] });
+				super(address, protocols, { origin: tldrawServerConfig.tldrawAllowedOrigin });
 			}
 		}
 		const provider = new WebsocketProvider(serverUrl, prefix + '-' + room, ydoc, {

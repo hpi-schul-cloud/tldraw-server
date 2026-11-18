@@ -33,10 +33,9 @@ export class TldrawServerConfig {
 	@ConfigProperty('TLDRAW_ASSETS_ALLOWED_MIME_TYPES_LIST')
 	public tldrawAssetsAllowedMimeTypesList = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'];
 
-	@CommaSeparatedStringToArray()
-	@IsArray()
-	@ConfigProperty('TLDRAW_ALLOWED_ORIGINS')
-	public tldrawAllowedOrigins!: string[];
+	@IsUrl({ protocols: ['https', 'http'], require_tld: false })
+	@ConfigProperty('TLDRAW_ALLOWED_ORIGIN')
+	public tldrawAllowedOrigin!: string;
 
 	@StringToBoolean()
 	@IsBoolean()
